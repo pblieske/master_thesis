@@ -1,4 +1,4 @@
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/fschur/robust_deconfounding/CI?label=build)
+[![Build Status](https://app.travis-ci.com/fschur/robust_deconfounding.svg?token=pYfyy5csz8JR86HGpneh&branch=main)](https://travis-ci.com/fschur/robust_deconfounding)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![arXiv](https://img.shields.io/badge/arXiv-2002.05551-b31b1b.svg)](https://arxiv.org/abs/)
 
