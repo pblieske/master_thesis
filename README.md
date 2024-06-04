@@ -1,6 +1,6 @@
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/fschur/{repo}/CI?label=build)
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/fschur/robust_deconfounding/CI?label=build)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![arXiv](https://img.shields.io/badge/arXiv-2002.05551-b31b1b.svg)](https://arxiv.org/abs/2002.05551)
+[![arXiv](https://img.shields.io/badge/arXiv-2002.05551-b31b1b.svg)](https://arxiv.org/abs/)
 
 # DecoR: Deconfounding Time Series with Robust Regression
 This repository provides source code for the paper 
