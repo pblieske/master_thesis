@@ -1,13 +1,14 @@
-language: python
-
 python:
   - "3.11"
 
 
 # command to install dependencies
 install:
-  - pip install .
   - pip install -r requirements.txt
+  - pip install .
 
 # command to run tests
-script: travis_wait 59 pytest -s tests
+script:
+    - pytest
+    - python -m unittest discover -s tests -p "*_test.py"
+    - python -m unittest discover -s tests -p "test_*.py"
