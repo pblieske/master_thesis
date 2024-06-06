@@ -33,6 +33,18 @@ class BaseRobustRegression:
         """
         raise NotImplementedError("Must be implemented by subclass.")
 
+    @staticmethod
+    def _validate_inputs(x, y):
+        """Validates the input data and basis."""
+        if len(y) != len(x) or len(y) == 0:
+            raise ValueError("Data and basis must have the same length and be non-empty.")
+
+    @staticmethod
+    def _add_intercept(x):
+        """Adds an intercept column to the design matrix."""
+        n = len(x)
+        return np.hstack((np.ones((n, 1)), x))
+
     @property
     def coef_(self) -> NDArray:
         """Returns the coefficients of the regression model, excluding the intercept."""
@@ -66,7 +78,7 @@ class Torrent(BaseRobustRegression):
 
     def __init__(self, a: float, fit_intercept: bool = True, max_iter: int = 100):
         super().__init__(fit_intercept)
-        if (a <= 0) | (a >= 1):
+        if not 0 < a < 1:
             raise ValueError("'a' must be in the range (0, 1).")
         self.a = a
         self.max_iter = max_iter
@@ -77,11 +89,9 @@ class Torrent(BaseRobustRegression):
         n = len(y)
         y = y.reshape(n, -1)
 
-        if (n != len(x)) | (n == 0):
-            raise ValueError("Data and basis must have the same length and be non-empty.")
-
+        self._validate_inputs(x, y)
         if self.fit_intercept:
-            x = np.vstack((np.ones(n), x.T)).T
+            x = self._add_intercept(x)
 
         an = int(self.a * n)
         if an == 0:
@@ -90,7 +100,7 @@ class Torrent(BaseRobustRegression):
         self.inliers = list(range(n))
         self.predicted_inliers.append(self.inliers)
 
-        for i in range(self.max_iter):
+        for _ in range(self.max_iter):
             self.model = sm.OLS(y[self.inliers], x[self.inliers]).fit()
 
             err = np.linalg.norm(y - self.model.predict(x).reshape(n, -1), axis=1)
@@ -113,7 +123,7 @@ class BFS(BaseRobustRegression):
 
     def __init__(self, a: float, fit_intercept: bool = True):
         super().__init__(fit_intercept)
-        if (a <= 0) | (a >= 1):
+        if not 0 < a < 1:
             raise ValueError("a must be in the range (0, 1).")
 
         self.a = a
@@ -123,11 +133,9 @@ class BFS(BaseRobustRegression):
         n = y.shape[0]
         y = y.reshape(n, -1)
 
-        if (n != len(x)) | (n == 0):
-            raise ValueError("Data and basis must have the same length and be non-empty.")
-
+        self._validate_inputs(x, y)
         if self.fit_intercept:
-            x = np.vstack((np.ones(n), x.T)).T
+            x = self._add_intercept(x)
 
         an = int(self.a * n)
         if an == 0:

@@ -20,11 +20,17 @@ class DecoR:
         self.xn = None
         self.yn = None
 
+    def _validate_inputs(self, x: NDArray, y: NDArray):
+        n = len(y)
+        if n != len(x) or n == 0:
+            raise ValueError("Data must have the same length and be non-empty.")
+        if self.basis is not None and n != len(self.basis):
+            raise ValueError("Data and basis must have the same length.")
+
     def fit(self, x: NDArray, y: NDArray) -> Self:
         """Fit the regression model after transforming the data using a provided basis."""
+        self._validate_inputs(x, y)
         n = len(y)
-        if (n != len(x)) | (n != len(self.basis)) | (n == 0):
-            raise ValueError("Data and basis must have the same length and be non-empty.")
 
         if self.basis is None:
             self.xn = sp.fft.fft(x.T, norm="forward").T

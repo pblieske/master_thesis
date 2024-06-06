@@ -15,7 +15,7 @@ the experimental results reported in the paper.
 To install the minimal dependencies needed to use the meta-learning algorithms, run in the main directory of this 
 repository
 ```bash
-pip install .
+pip install -e .
 ``` 
 
 For full support of all scripts in the repository, for instance to reproduce the experiments, further dependencies need
