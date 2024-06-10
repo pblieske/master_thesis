@@ -48,7 +48,7 @@ class BaseRobustRegression:
     @property
     def coef_(self) -> NDArray:
         """Returns the coefficients of the regression model, excluding the intercept."""
-        return self.model.params[1:] if self.fit_intercept else self.model.params
+        return self.model.params
 
     @property
     def intercept_(self) -> Optional[float]:
