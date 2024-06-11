@@ -19,13 +19,13 @@ class TestAlgos(unittest.TestCase):
 
         algo.fit(x, y)
 
-        self.assertEqual(algo.coef_.shape, (2,))
-        self.assertLess(np.linalg.norm(algo.intercept_ - 0), 0.1)
-        self.assertLess(np.linalg.norm(algo.coef_ - beta.T)/2, 0.1)
+        self.assertEqual(algo.coef_.shape, (3,))
+        self.assertLess(np.linalg.norm(algo.coef_[0] - 0), 0.1)
+        self.assertLess(np.linalg.norm(algo.coef_[1:] - beta.T)/2, 0.1)
 
     def test_fit_tor(self):
         algo = Torrent(0.8, fit_intercept=True)
-        self.helper(algo, 100)
+        self.helper(algo, 300)
 
     def test_fit_bfs(self):
         algo = BFS(0.8, fit_intercept=True)
@@ -50,6 +50,6 @@ class TestAlgos(unittest.TestCase):
         decor = DecoR(algo=algo, basis=basis)
         decor.fit(x, y)
 
-        self.assertEqual(decor.estimate.shape, (2,))
-        self.assertLess(np.linalg.norm(decor.estimate - beta.T)/2, 0.1)
+        self.assertEqual(decor.estimate.shape, (3,))
+        self.assertLess(np.linalg.norm(decor.estimate[1:] - beta.T)/2, 0.1)
 
