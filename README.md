@@ -4,7 +4,7 @@
 
 # DecoR: Deconfounding Time Series with Robust Regression
 This repository provides source code for the paper 
-[*DecoR: Deconfounding Time Series with Robust Regression*](https://arxiv.org/2406.07005). 
+[*DecoR: Deconfounding Time Series with Robust Regression*](https://arxiv.org/abs/2406.07005). 
 In particular, the **robust-deconfounding** package implements robust deconfounding method **DecoR** and the robust linear 
 regression methods **Torrent** and **BFS**.
 
