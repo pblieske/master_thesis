@@ -36,6 +36,13 @@ def plot_settings():
     return [[ibm_cb[1], ibm_cb[1]], [ibm_cb[4], ibm_cb[4]], [ibm_cb[2], ibm_cb[2]]], ibm_cb
 
 
+def r_squared(x: NDArray, y_true: NDArray, beta: NDArray) -> float:
+    y_pred = x @ beta
+    u = ((y_true - y_pred) ** 2).sum()
+    v = ((y_true - y_true.mean()) ** 2).sum()
+    return 1-u/v
+
+
 def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, method: str) -> NDArray:
     """
     Estimates the causal coefficient(s) using DecorR with 'method' as robust regression algorithm.
