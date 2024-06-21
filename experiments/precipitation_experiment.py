@@ -40,7 +40,7 @@ Authors: Sebastian Sippel, Nicolai Meinshausen, Anna Merrifield, Flavio Lehner, 
 Erich Fischer and Reto Knutti
 url: https://journals.ametsoc.org/view/journals/clim/32/17/jcli-d-18-0882.1.xml
 """
-model = Ridge(alpha=1.0, fit_intercept=False)  # LinearRegression(fit_intercept=False, copy_X=True)
+model = Ridge(alpha=1.0, fit_intercept=False)
 model.fit(X_detrended, yn)
 ridge_coef = model.coef_
 
