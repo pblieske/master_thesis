@@ -5,3 +5,4 @@ statsmodels
 pandas
 seaborn
 setuptools
+scikit-learn
