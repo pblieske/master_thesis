@@ -17,15 +17,15 @@ os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 
 # load pre-processed datasets
-X = np.load("./data_2/X.npy", allow_pickle=True)
+X = np.load("./data/X.npy", allow_pickle=True)
 X = X.reshape(len(X), -1)
 X = X - np.mean(X, axis=0)
 
-X_detrended = np.load("./data_2/X_detrended.npy", allow_pickle=True)
+X_detrended = np.load("./data/X_detrended.npy", allow_pickle=True)
 X_detrended = X_detrended.reshape(len(X_detrended), -1)
 X_detrended = X_detrended - np.mean(X_detrended, axis=0)
 
-y = np.load("./data_2/y.npy", allow_pickle=True)
+y = np.load("./data/y.npy", allow_pickle=True)
 yn = np.mean(y, axis=(1, 2))
 yn = yn - np.mean(yn)
 n = yn.shape[0]
@@ -78,7 +78,7 @@ plt.clf()
 Compares predicted values with true values
 """
 
-t = np.load("./data_2/time.npy", allow_pickle=True)
+t = np.load("./data/time.npy", allow_pickle=True)
 
 values = np.concatenate([np.expand_dims(yn, 1),
                          np.expand_dims(X@ridge_coef - np.mean(X@ridge_coef), 1),
