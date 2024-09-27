@@ -6,7 +6,8 @@ import seaborn as sns
 import pylab
 
 import sys
-sys.path.append('C:/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_thesis/code/master_thesis')
+sys.path.insert(0, 'C:/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_thesis/code/master_thesis')
+print(sys.path)
 
 from robust_deconfounding.robust_regression import Torrent, BFS
 from robust_deconfounding.decor import DecoR
