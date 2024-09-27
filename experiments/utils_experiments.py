@@ -12,7 +12,7 @@ print(sys.path)
 from robust_deconfounding.robust_regression import Torrent, BFS
 from robust_deconfounding.decor import DecoR
 from robust_deconfounding.utils import cosine_basis, haarMatrix
-from synthetic_data import BLPDataGenerator, OUDataGenerator
+from experiments.synthetic_data import BLPDataGenerator, OUDataGenerator
 
 
 def plot_settings():
