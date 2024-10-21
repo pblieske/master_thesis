@@ -1,6 +1,7 @@
 from typing import Optional, Self
 from numpy.typing import NDArray
 import scipy as sp
+import numpy as np
 
 from .robust_regression import BaseRobustRegression
 
@@ -42,6 +43,30 @@ class DecoR:
         self.algo.fit(self.xn, self.yn)
 
         return self
+    
+    def fit_coef(self, x:NDArray, y: NDArray, L:int) -> Self:
+        """
+            Fit the regression model after transforming the data using the a provided basis.
+            Coefficient coresponds to the cosine expansion f(x)=c_0+sum_{k=1}^\infty c_k cos(\pi k x)
+        """
+        self._validate_inputs(x,y)
+        n=len(y)
+        if self.basis is None:
+            self.xn = sp.fft.fft(x.T, norm="forward").T
+            self.yn = sp.fft.fft(y, norm="forward")
+        else:
+            P_temp = [np.cos(np.pi * x * k) for k in range(L)]
+            print(P_temp)
+            P = np.hstack(( np.vstack(P_temp))).T
+            print(P)
+            self.xn = self.basis.T @ P / n
+            print(self.x)
+            self.yn = self.basis.T @ y / n
+
+        self.algo.fit(self.xn, self.yn)
+
+        return self
+
 
     @property
     def estimate(self) -> NDArray:

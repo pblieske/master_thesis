@@ -65,7 +65,7 @@ for i in range(len(noise_vars)):
         for _ in range(m):
             data_values = get_data(n, **data_args, noise_var=noise_vars[i])
 
-            estimates_decor = get_results(**data_values, **method_args)
+            estimates_decor = get_results(**data_values, **method_args, L=np.floor(n**(-3/4), dtype=int))
             res["DecoR"][-1].append(np.linalg.norm(estimates_decor - data_args["beta"].T, ord=1))
 
             estimates_ols = get_results(**data_values, method="ols", a=method_args["a"])

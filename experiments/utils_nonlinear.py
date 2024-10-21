@@ -46,7 +46,7 @@ def r_squared(x: NDArray, y_true: NDArray, beta: NDArray) -> float:
     return 1-u/v
 
 
-def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, method: str) -> NDArray:
+def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method: str) -> NDArray:
     """
     Estimates the causal coefficient(s) using DecorR with 'method' as robust regression algorithm.
 
@@ -70,7 +70,7 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, method: str) -
             algo = BFS(a=a, fit_intercept=False)
 
         algon = DecoR(algo, basis)
-        algon.fit(x, y)
+        algon.fit_coef(x, y, L)
 
         return algon.estimate
 
