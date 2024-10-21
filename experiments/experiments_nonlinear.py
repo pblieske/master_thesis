@@ -38,7 +38,7 @@ data_args = {
     "process_type": "blpnl",       # "ou" | "blp" | "blpnl"
     "basis_type": "cosine",     # "cosine" | "haar"
     "fraction": 0.25,
-    "beta": np.array([[3.]]),
+    "beta": np.array([1]),
     "band": list(range(0, 50))  # list(range(0, 50)) | None
 }
 

@@ -285,7 +285,7 @@ class BLPNonlinearDataGenerator(BaseDataGenerator):
         Returns:
             tuple[NDArray, NDArray]: The generated data (x, y).
         """
-        eu, ex, ey = self.get_noise_vars(n, [0, 0, 1])
+        eu, ex, ey = self.get_noise_vars(n, [1, 1, 1])
         band_idx = self.get_band_idx(n)
 
         basis = self.get_basis(n)
@@ -299,16 +299,16 @@ class BLPNonlinearDataGenerator(BaseDataGenerator):
         x = x_band + u + ex
 
         "Rescalling of the variables"
-        max=np.max(np.concatenate(u, x))
-        min=np.min(np.concatenate(u, x))
+        max=np.max(x)
+        min=np.min(x)
         diff=max-min
         x=(x-min)/diff
-        u=(u-min)/diff
+        u=u/diff
 
         k = self.basis_transform(u, outlier_points, basis, n)
 
-        if self.beta==1:
-            y = (x - np.full(shape=10, fill_value=0.5, dtype=np.int))**2 + ey + 10 * k
+        if self.beta[0]==1:
+            y = (x -np.full((n, 1), 0.5, dtype=float))**2 + ey + 10 * k
         else:
             raise ValueError("Function not implemented.")
 
