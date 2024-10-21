@@ -57,22 +57,23 @@ num_data = [4 * 2 ** k for k in range(0, 5)] + [1024]       # [4, 8, 10]
 
 for i in range(len(noise_vars)):
     print("Noise Variance: ", noise_vars[i])
-    res = {"DecoR": [], "ols": []}
+    res = {"DecoR": []}
     for n in num_data:
         print("number of data points: ", n)
         res["DecoR"].append([])
-        res["ols"].append([])
         for _ in range(m):
             data_values = get_data(n, **data_args, noise_var=noise_vars[i])
+            L_temp=max(np.floor(n**(-3/4)).astype(int),1)
+            estimates_decor = get_results(**data_values, **method_args, L=L_temp)
 
-            estimates_decor = get_results(**data_values, **method_args, L=np.floor(n**(-3/4), dtype=int))
-            res["DecoR"][-1].append(np.linalg.norm(estimates_decor - data_args["beta"].T, ord=1))
-
+            res["DecoR"][-1].append(np.linalg.norm(estimates_decor - data_args["beta"].T, ord=2))
+            """"
             estimates_ols = get_results(**data_values, method="ols", a=method_args["a"])
             res["ols"][-1].append(np.linalg.norm(estimates_ols - data_args["beta"].T, ord=1))
+            """
 
-    res["DecoR"], res["ols"] = np.array(res["DecoR"]), np.array(res["ols"])
-
+    res["DecoR"] = np.array(res["DecoR"])
+    print(res)
     plot_results(res, num_data, m, colors=colors[i])
 """
 # ----------------------------------
