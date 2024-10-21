@@ -255,3 +255,60 @@ class BLPDataGenerator(BaseDataGenerator):
         y = x @ self.beta + ey + 10 * k
 
         return x, y
+
+class BLPNonlinearDataGenerator(BaseDataGenerator):
+    """
+    Generates data with confounding concentrated in a specific frequency band.
+    The relation between x and y is assumued to be nonlinear and specified by the integer f.
+    Attributes:
+        band (list[int]): Frequency band for concentrated confounding (inclusive).
+    """
+    def __init__(self, basis_type: str, beta: NDArray, noise_var: float, band: list[int]):
+        super().__init__(basis_type, beta, noise_var)
+        self.band = band
+
+    def get_band_idx(self, n: int) -> NDArray:
+        """
+        Generates an indicator vector for the specified frequency band.
+        """
+        return np.array([1 if i in self.band else 0 for i in range(n)]).reshape(-1, 1)
+
+    def generate_data(self, n: int, outlier_points: NDArray) -> tuple[NDArray, NDArray]:
+        """
+        Generates data from discretized band-limited processes with confounding.
+
+        Args:
+            n (int): Number of data points.
+            outlier_points (NDArray): Indicator vector for outlier data points.
+
+        Returns:
+            tuple[NDArray, NDArray]: The generated data (x, y).
+        """
+        eu, ex, ey = self.get_noise_vars(n, [0, 0, 1])
+        band_idx = self.get_band_idx(n)
+
+        basis = self.get_basis(n)
+
+        weights = np.random.uniform(0, 1, size=(n, 1))
+        u_band = basis @ (weights * band_idx)
+        u = u_band + eu
+
+        weights = np.random.uniform(0, 1, size=(n, 1))
+        x_band = basis @ (weights * band_idx)
+        x = x_band + u + ex
+
+        "Rescalling of the variables"
+        max=np.max(np.concatenate(u, x))
+        min=np.min(np.concatenate(u, x))
+        diff=max-min
+        x=(x-min)/diff
+        u=(u-min)/diff
+
+        k = self.basis_transform(u, outlier_points, basis, n)
+
+        if self.beta==1:
+            y = (x - np.full(shape=10, fill_value=0.5, dtype=np.int))**2 + ey + 10 * k
+        else:
+            raise ValueError("Function not implemented.")
+
+        return x, y
