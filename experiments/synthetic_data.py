@@ -260,6 +260,7 @@ class BLPNonlinearDataGenerator(BaseDataGenerator):
     """
     Generates data with confounding concentrated in a specific frequency band.
     The relation between x and y is assumued to be nonlinear and specified by the integer f.
+    f=1: Quadratic function
     Attributes:
         band (list[int]): Frequency band for concentrated confounding (inclusive).
     """

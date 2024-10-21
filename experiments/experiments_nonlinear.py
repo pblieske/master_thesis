@@ -35,7 +35,7 @@ np.random.seed(SEED)
 random.seed(SEED)
 
 data_args = {
-    "process_type": "blp",       # "ou" | "blp
+    "process_type": "blpnl",       # "ou" | "blp" | "blpnl"
     "basis_type": "cosine",     # "cosine" | "haar"
     "fraction": 0.25,
     "beta": np.array([[3.]]),
@@ -74,7 +74,7 @@ for i in range(len(noise_vars)):
     res["DecoR"], res["ols"] = np.array(res["DecoR"]), np.array(res["ols"])
 
     plot_results(res, num_data, m, colors=colors[i])
-
+"""
 # ----------------------------------
 # plotting
 # ----------------------------------
@@ -112,3 +112,4 @@ plt.legend(handles=get_handles(), loc="upper right")
 
 plt.tight_layout()
 plt.show()
+"""

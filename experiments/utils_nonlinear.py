@@ -12,7 +12,7 @@ print(sys.path)
 from robust_deconfounding.robust_regression import Torrent, BFS
 from robust_deconfounding.decor import DecoR
 from robust_deconfounding.utils import cosine_basis, haarMatrix
-from experiments.synthetic_data import BLPDataGenerator, OUDataGenerator
+from experiments.synthetic_data import BLPDataGenerator, OUDataGenerator, BLPNonlinearDataGenerator
 
 
 def plot_settings():
@@ -90,7 +90,7 @@ def get_data(n: int, process_type: str, basis_type: str, fraction: float, beta: 
 
     Args:
         n (int): Number of data points.
-        process_type (str): Type of data generation process ("ou" or "blp").
+        process_type (str): Type of data generation process ("ou", "blp", "blpnl").
         basis_type (str): Type of basis transformation ("cosine" or "haar").
         fraction (float): Fraction of outliers in the data.
         beta (NDArray): True coefficient vector for the linear relationship.
@@ -107,6 +107,8 @@ def get_data(n: int, process_type: str, basis_type: str, fraction: float, beta: 
         generator = OUDataGenerator(basis_type=basis_type, beta=beta, noise_var=noise_var)
     elif process_type == "blp":
         generator = BLPDataGenerator(basis_type=basis_type, beta=beta, noise_var=noise_var, band=band)
+    elif process_type=="blpnl":
+        generator = BLPNonlinearDataGenerator(basis_type=basis_type, beta=beta, noise_var=noise_var, band=band)
     else:
         raise ValueError("process_type not implemented")
 
