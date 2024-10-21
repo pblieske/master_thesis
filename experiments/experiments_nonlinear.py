@@ -30,7 +30,7 @@ The "num_data" variable is a list of increasing natural numbers that indicate th
 
 colors, ibm_cb = plot_settings()
 
-SEED = 1
+SEED = 2
 np.random.seed(SEED)
 random.seed(SEED)
 
@@ -39,7 +39,7 @@ data_args = {
     "basis_type": "cosine",     # "cosine" | "haar"
     "fraction": 0.25,
     "beta": np.array([1]),
-    "band": list(range(0, 50))  # list(range(0, 50)) | None
+    "band": list(range(0, 10))  # list(range(0, 50)) | None
 }
 
 method_args = {
@@ -47,9 +47,9 @@ method_args = {
     "method": "torrent",        # "torrent" | "bfs"
 }
 
-m = 1000
-noise_vars = [1]
-num_data = [4 * 2 ** k for k in range(0, 5)]      # [4, 8, 10]
+m = 10   #Number of repetitions for the Monte Carlo
+noise_vars = [0.1]
+num_data = [4 * 2 ** k for k in range(1, 12)]      # [4, 8, 10]
 
 # ----------------------------------
 # run experiments
@@ -64,25 +64,23 @@ for i in range(len(noise_vars)):
     for n in num_data:
         print("number of data points: ", n)
         res["DecoR"].append([])
-        L_temp=max(np.floor(n**(1/2)).astype(int),1)
+        L_temp=max(np.floor(1/8*n**(1/2)).astype(int),1)
         basis_tmp = [np.cos(np.pi * test_points * k ) for k in range(L_temp)]
         basis = np.vstack(basis_tmp).T
+        print("number of coefficients: ", L_temp)
 
-        print(L_temp)
         for _ in range(m):
             data_values = get_data(n, **data_args, noise_var=noise_vars[i])
-
             estimates_decor = get_results(**data_values, **method_args, L=L_temp)
             y_est=basis @ estimates_decor
 
-            res["DecoR"][-1].append(np.linalg.norm(y_true-y_est, ord=2))
+            res["DecoR"][-1].append(1/n_x*np.linalg.norm(y_true-y_est, ord=2))
             """"
             estimates_ols = get_results(**data_values, method="ols", a=method_args["a"])
             res["ols"][-1].append(np.linalg.norm(estimates_ols - data_args["beta"].T, ord=1))
             """
 
     res["DecoR"] = np.array(res["DecoR"])
-    print(res)
     plot_results(res, num_data, m, colors=colors[i])
 
 # ----------------------------------

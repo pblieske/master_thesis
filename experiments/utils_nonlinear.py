@@ -144,9 +144,6 @@ def plot_results(res: dict, num_data: list, m: int, colors) -> None:
 
     time = np.repeat(num_data, m)
     method = np.tile(["DecoR"], len(values))
-    print(values.size)
-    print(time.size)
-    print(method.size)
 
     df = pd.DataFrame({"value": values.astype(float),
                        "n": time.astype(float),
@@ -154,5 +151,5 @@ def plot_results(res: dict, num_data: list, m: int, colors) -> None:
 
     sns.lineplot(data=df, x="n", y="value", hue="method", style="method",
                  markers=["X"], dashes=False, errorbar=("ci", 95), err_style="band",
-                 palette=[colors[0], colors[1]], legend=True)
+                 palette=[colors[0]], legend=True)
 
