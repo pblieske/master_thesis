@@ -3,7 +3,7 @@ import random
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
-from utils_experiments import get_results, plot_results, get_data, plot_settings
+from utils_nonlinear import get_results, plot_results, get_data, plot_settings
 
 """
 Short explanation of the variables and what they do:
@@ -48,7 +48,7 @@ method_args = {
 }
 
 m = 1000
-noise_vars = [0, 1, 4]
+noise_vars = [1]
 num_data = [4 * 2 ** k for k in range(0, 5)] + [1024]       # [4, 8, 10]
 
 # ----------------------------------
