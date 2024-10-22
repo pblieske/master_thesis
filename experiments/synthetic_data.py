@@ -33,9 +33,13 @@ class BaseDataGenerator:
         Returns:
             tuple[NDArray, NDArray, NDArray]: Noise arrays for x, y, u.
         """
-
-        noises = [np.random.normal(0, np.sqrt(self.noise_var if i == 2 else 1), size=(n, size))
+        noises = [np.random.uniform(-(self.noise_var if i == 2 else 0), (self.noise_var if i == 2 else 0), size=(n, size))
                   for i, size in enumerate(sizes)]
+
+        """
+        noises = [np.random.normal(0, np.sqrt(self.noise_var if i == 2 else 0), size=(n, size))
+                  for i, size in enumerate(sizes)]
+        """
         return noises
 
     def get_basis(self, n: int):
@@ -290,16 +294,16 @@ class BLPNonlinearDataGenerator(BaseDataGenerator):
 
         basis = self.get_basis(n)
 
-        weights = np.random.uniform(0, 1, size=(n, 1))
+        weights = np.random.uniform(-1, 1, size=(n, 1))
         u_band = basis @ (weights * band_idx)
         basis = self.get_basis(n) 
         u = u_band 
         #k = self.basis_transform(u, outlier_points, basis, n)
-        bandx=list(range(5,20))
+        bandx=list(range(0, 20))
         band_x=np.array([1 if i in bandx else 0 for i in range(n)]).reshape(-1, 1)
-        weights = np.random.uniform(0, 1, size=(n, 1))
-        x_band = basis @ (weights * band_idx)
-        x = x_band + u + ex
+        weights = np.random.uniform(-1, 1, size=(n, 1))
+        x_band = basis @ (weights * band_x)
+        x = x_band + 1/2*u + ex
 
         "Rescalling of the variables"
         max=np.max(x)
