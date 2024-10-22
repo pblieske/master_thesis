@@ -48,7 +48,7 @@ method_args = {
 }
 
 m = 100   #Number of repetitions for the Monte Carlo
-noise_vars = [0.1]
+noise_vars = [0, 0.5, 1]
 num_data = [4 * 2 ** k for k in range(1, 11)]      # [4, 8, 10]
 
 # ----------------------------------
@@ -64,7 +64,7 @@ for i in range(len(noise_vars)):
     for n in num_data:
         print("number of data points: ", n)
         res["DecoR"].append([])
-        L_temp=max(np.floor(1/4*n**(2/5)).astype(int),1)
+        L_temp=max(np.floor(1/4*n**(1/2)).astype(int),1)
         basis_tmp = [np.cos(np.pi * test_points * k ) for k in range(L_temp)]
         basis = np.vstack(basis_tmp).T
         print("number of coefficients: ", L_temp)
@@ -101,13 +101,11 @@ def get_handles():
                      markeredgecolor='w', color=ibm_cb[5], linestyle='-')
     point_3 = Line2D([0], [0], label="$\sigma_{\eta}^2 = $" + str(noise_vars[0]), markersize=10,
                      color=ibm_cb[1], linestyle='-')
-    """
     point_4 = Line2D([0], [0], label="$\sigma_{\eta}^2 = $" + str(noise_vars[1]), markersize=10,
                      color=ibm_cb[4], linestyle='-')
     point_5 = Line2D([0], [0], label="$\sigma_{\eta}^2 = $" + str(noise_vars[2]), markersize=10,
                      color=ibm_cb[2], linestyle='-')
-    """
-    return [ point_2, point_3]
+    return [ point_2, point_3, point_4, point_5]
 
 
 plt.xlabel("number of data points")

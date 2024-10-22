@@ -33,7 +33,7 @@ class BaseDataGenerator:
         Returns:
             tuple[NDArray, NDArray, NDArray]: Noise arrays for x, y, u.
         """
-        noises = [np.random.uniform(-(self.noise_var if i == 2 else 0), (self.noise_var if i == 2 else 0), size=(n, size))
+        noises = [np.random.uniform(-(self.noise_var if i == 2 else 0.2), (self.noise_var if i == 2 else 0.2), size=(n, size))
                   for i, size in enumerate(sizes)]
 
         """
