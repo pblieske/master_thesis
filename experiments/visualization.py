@@ -12,7 +12,7 @@ For this we simulated only one draw for a fixed number of observations n, for Mo
 
 colors, ibm_cb = plot_settings()
 
-SEED = 12345
+SEED = 1
 np.random.seed(SEED)
 random.seed(SEED)
 
@@ -29,14 +29,14 @@ method_args = {
     "method": "torrent",        # "torrent" | "bfs"
 }
 
-noise_vars =  0.5
-n = 2 ** 10  # number of observations
+noise_vars =  0
+n = 2 ** 13  # number of observations
 print("number of observations:", n)
 
 # ----------------------------------
 # run experiments
 # ----------------------------------
-n_x=100
+n_x=200
 test_points = np.array([i / n_x for i in range(0, n_x)])
 y_true=4*(test_points - np.full(n_x, 0.5, dtype=float))**2
 L_temp=max(np.floor(1/4*n**(1/2)).astype(int),1)
@@ -46,14 +46,12 @@ basis = np.vstack(basis_tmp).T
 data_values = get_data(n, **data_args, noise_var=noise_vars)
 estimates_decor = get_results(**data_values, **method_args, L=L_temp)
 y_est=basis @ estimates_decor
-print(np.size(data_values))
 
 # ----------------------------------
 # plotting
 # ----------------------------------
 
 sub=np.linspace(0, n-1, 2**7).astype(int)
-print(colors)
 plt.plot(data_values['x'][sub],data_values['y'][sub], 'o:w', mec = 'black')
 plt.plot(test_points, y_true, '-', color=colors[0][0])
 plt.plot(test_points, y_est, '-', color=colors[1][1])

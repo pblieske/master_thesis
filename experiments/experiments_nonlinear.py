@@ -48,7 +48,7 @@ method_args = {
 }
 
 m = 100   #Number of repetitions for the Monte Carlo
-noise_vars = [0, 0.5, 1]
+noise_vars = [0, 0.2, 0.5]
 num_data = [4 * 2 ** k for k in range(1, 11)]      # [4, 8, 10]
 
 # ----------------------------------
