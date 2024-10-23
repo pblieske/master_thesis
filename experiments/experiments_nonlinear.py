@@ -56,7 +56,7 @@ num_data = [4 * 2 ** k for k in range(1, 11)]      # [4, 8, 10]
 # ----------------------------------
 n_x=100
 test_points = np.array([i / n_x for i in range(1, n_x)])
-y_true=(test_points -np.full((n_x, 1), 0.5, dtype=float))**2
+y_true=4*(test_points -np.full((n_x, 1), 0.5, dtype=float))**2
 
 for i in range(len(noise_vars)):
     print("Noise Variance: ", noise_vars[i])

@@ -12,7 +12,7 @@ For this we simulated only one draw for a fixed number of observations n, for Mo
 
 colors, ibm_cb = plot_settings()
 
-SEED = 2
+SEED = 12345
 np.random.seed(SEED)
 random.seed(SEED)
 
@@ -30,37 +30,33 @@ method_args = {
 }
 
 noise_vars =  0.5
-n = 2 ** 8   # number of observations
+n = 2 ** 10  # number of observations
+print("number of observations:", n)
 
 # ----------------------------------
 # run experiments
 # ----------------------------------
 n_x=100
-test_points = np.array([i / n_x for i in range(1, n_x)])
-y_true=(test_points -np.full((n_x, 1), 0.5, dtype=float))**2
-
-
-res = {"DecoR": []}
-res["DecoR"].append([])
+test_points = np.array([i / n_x for i in range(0, n_x)])
+y_true=4*(test_points - np.full(n_x, 0.5, dtype=float))**2
 L_temp=max(np.floor(1/4*n**(1/2)).astype(int),1)
+print("number of coefficients:", L_temp)
 basis_tmp = [np.cos(np.pi * test_points * k ) for k in range(L_temp)]
 basis = np.vstack(basis_tmp).T
-data_values = get_data(n, **data_args, noise_var=noise_vars[i])
+data_values = get_data(n, **data_args, noise_var=noise_vars)
 estimates_decor = get_results(**data_values, **method_args, L=L_temp)
 y_est=basis @ estimates_decor
-
-res["DecoR"][-1].append(1/n_x*np.linalg.norm(y_true-y_est, ord=1))
-""""
-estimates_ols = get_results(**data_values, method="ols", a=method_args["a"])
-res["ols"][-1].append(np.linalg.norm(estimates_ols - data_args["beta"].T, ord=1))
-"""
-
-res["DecoR"] = np.array(res["DecoR"])
-plot_results(res, num_data, m, colors=colors[i])
+print(np.size(data_values))
 
 # ----------------------------------
 # plotting
 # ----------------------------------
+
+sub=np.linspace(0, n-1, 2**7).astype(int)
+print(colors)
+plt.plot(data_values['x'][sub],data_values['y'][sub], 'o:w', mec = 'black')
+plt.plot(test_points, y_true, '-', color=colors[0][0])
+plt.plot(test_points, y_est, '-', color=colors[1][1])
 
 titles = {"blp": "Band-Limited", "ou": "Ornstein-Uhlenbeck", "blpnl" : "Nonlinear: Band-Limited"}
 titles_basis = {"cosine": "", "haar": ", Haar basis"}
@@ -68,31 +64,22 @@ titles_dim = {1: "", 2: ", 2-dimensional"}
 
 
 def get_handles():
-    """
-    point_1 = Line2D([0], [0], label='OLS', marker='o',
-                     markeredgecolor='w', color=ibm_cb[5], linestyle='-')
-    """
-    point_2 = Line2D([0], [0], label='DecoR', marker='X',
-                     markeredgecolor='w', color=ibm_cb[5], linestyle='-')
-    point_3 = Line2D([0], [0], label="$\sigma_{\eta}^2 = $" + str(noise_vars[0]), markersize=10,
-                     color=ibm_cb[1], linestyle='-')
-    point_4 = Line2D([0], [0], label="$\sigma_{\eta}^2 = $" + str(noise_vars[1]), markersize=10,
-                     color=ibm_cb[4], linestyle='-')
-    point_5 = Line2D([0], [0], label="$\sigma_{\eta}^2 = $" + str(noise_vars[2]), markersize=10,
-                     color=ibm_cb[2], linestyle='-')
-    return [ point_2, point_3, point_4, point_5]
+
+    point_1 = Line2D([0], [0], label='Observations', marker='o', mec='black')
+
+    point_2 = Line2D([0], [0], label='Truth', markeredgecolor='w', color=colors[0][0], linestyle='-')
+    point_3 = Line2D([0], [0], label="Estimate" , color=colors[1][1], linestyle='-')
+
+    return [point_1, point_2, point_3]
 
 
-plt.xlabel("number of data points")
-plt.ylabel("mean absolute error")
+plt.xlabel("x")
+plt.ylabel("y")
 plt.title(titles[data_args["process_type"]]
           + titles_basis[data_args["basis_type"]]
           + titles_dim[len(data_args["beta"])])
-plt.xscale('log')
-plt.xlim(left=num_data[0] - 2)
-plt.hlines(0, num_data[0], num_data[-1], colors='black', linestyles='dashed')
 
-plt.legend(handles=get_handles(), loc="upper right")
+plt.legend(handles=get_handles(), loc="upper left")
 
 plt.tight_layout()
 plt.show()
