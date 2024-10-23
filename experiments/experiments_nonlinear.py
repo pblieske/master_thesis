@@ -64,7 +64,7 @@ for i in range(len(noise_vars)):
     for n in num_data:
         print("number of data points: ", n)
         res["DecoR"].append([])
-        L_temp=max(np.floor(1/4*n**(1/2)).astype(int),1)
+        L_temp=max(np.floor(1/2*n**(1/2)).astype(int),1)
         basis_tmp = [np.cos(np.pi * test_points * k ) for k in range(L_temp)]
         basis = np.vstack(basis_tmp).T
         print("number of coefficients: ", L_temp)

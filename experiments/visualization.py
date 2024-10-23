@@ -29,8 +29,8 @@ method_args = {
     "method": "torrent",        # "torrent" | "bfs"
 }
 
-noise_vars =  0
-n = 2 ** 13  # number of observations
+noise_vars =  0.1
+n = 2 ** 12  # number of observations
 print("number of observations:", n)
 
 # ----------------------------------
@@ -63,7 +63,7 @@ titles_dim = {1: "", 2: ", 2-dimensional"}
 
 def get_handles():
 
-    point_1 = Line2D([0], [0], label='Observations', marker='o', mec='black')
+    point_1 = Line2D([0], [0], label='Observations', marker='o', mec='black', color='w')
 
     point_2 = Line2D([0], [0], label='Truth', markeredgecolor='w', color=colors[0][0], linestyle='-')
     point_3 = Line2D([0], [0], label="Estimate" , color=colors[1][1], linestyle='-')
