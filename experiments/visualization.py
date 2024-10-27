@@ -20,18 +20,18 @@ random.seed(SEED)
 data_args = {
     "process_type": "blpnl",       # "ou" | "blp" | "blpnl"
     "basis_type": "cosine",     # "cosine" | "haar"
-    "fraction": 0.25,
+    "fraction": 0.3,
     "beta": np.array([2]),
     "band": list(range(0, 50))  # list(range(0, 50)) | None
 }
 
 method_args = {
-    "a": 0.7,
+    "a": 0.6,
     "method": "torrent",        # "torrent" | "bfs"
 }
 
 
-noise_vars =  0.1
+noise_vars =  0.2
 n = 2 ** 10 # number of observations
 print("number of observations:", n)
 
@@ -47,9 +47,11 @@ basis_tmp = [np.cos(np.pi * test_points * k ) for k in range( L_temp)]
 basis = np.vstack(basis_tmp).T
 data_values = get_data(n, **data_args, noise_var=noise_vars)
 estimates_decor = get_results(**data_values, **method_args, L=L_temp)
-estimates_fourrier= get_results(**data_values, method="ols", L=L_temp, a=0)
+estimates_fourrier= get_results(**data_values, method="ols", L=L_temp, a=0).T
 y_est=basis @ estimates_decor
-y_fourrier= basis @ estimates_fourrier.T
+y_fourrier= basis @ estimates_fourrier
+y_est=np.ndarray((n_x, 1), buffer=y_est)
+print("$L^2$-error: ", 1/np.sqrt(n_x)*np.linalg.norm(y_true-y_est, ord=2))
 
 # ----------------------------------
 # plotting

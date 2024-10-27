@@ -33,7 +33,7 @@ class BaseDataGenerator:
         Returns:
             tuple[NDArray, NDArray, NDArray]: Noise arrays for x, y, u.
         """
-        noises = [np.random.uniform(-(6*self.noise_var if i == 2 else 1/6), (6*self.noise_var if i == 2 else 1/6), size=(n, size))
+        noises = [np.random.uniform(-(6*self.noise_var if i == 2 else 1), (6*self.noise_var if i == 2 else 1), size=(n, size))
                   for i, size in enumerate(sizes)]
 
         """
@@ -296,7 +296,7 @@ class BLPNonlinearDataGenerator(BaseDataGenerator):
 
         weights = np.random.uniform(-1, 1, size=(n, 1))
         n_sub=int(round(self.fraction*len(self.band), ndigits=0))
-        idx_sub=np.concatenate((np.ones((n_sub,1),  dtype=int), np.zeros((n-n_sub,1),  dtype=int)))
+        idx_sub=np.concatenate((np.ones((np.min([n_sub ,1]),1),  dtype=int), np.zeros((np.max([n-n_sub,n-1]),1),  dtype=int)))
         band_idx_u=band_idx*idx_sub
         u_band = basis @ (weights * band_idx_u)
         u = u_band 
@@ -311,12 +311,15 @@ class BLPNonlinearDataGenerator(BaseDataGenerator):
         diff=max-min
         x=np.divide(x-np.full((n, 1), min, dtype=float), diff)
         #u=u/diff
-        y=functions_nonlinear(x, self.beta[0]) + ey + 2 * u
+        y=functions_nonlinear(x, self.beta[0]) + ey + 10 * u
 
         return x, y
     
 
 def functions_nonlinear(x:NDArray, beta:int):
+    """"
+    returns the value of different nonlinear functions where the type can be choosen over the integer beta
+    """
     n=np.size(x)
     if beta==1:
         y = 4*(x - np.full((n, 1), 0.5, dtype=float))**2 

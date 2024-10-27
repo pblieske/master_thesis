@@ -38,34 +38,35 @@ random.seed(SEED)
 data_args = {
     "process_type": "blpnl",       # "ou" | "blp" | "blpnl"
     "basis_type": "cosine",     # "cosine" | "haar"
-    "fraction": 0.25,
-    "beta": np.array([1]),
-    "band": list(range(0, 10))  # list(range(0, 50)) | None
+    "fraction": 0.3,
+    "beta": np.array([2]),
+    "band": list(range(0, 50))  # list(range(0, 50)) | None
 }
 
 method_args = {
-    "a": 0.7,
+    "a": 0.6,
     "method": "torrent",        # "torrent" | "bfs"
 }
 
-m = 100   #Number of repetitions for the Monte Carlo
-noise_vars = [0, 0.2, 0.5]
-num_data = [4 * 2 ** k for k in range(1, 11)]      # [4, 8, 10]
+m = 200   #Number of repetitions for the Monte Carlo
+noise_vars = [0, 0.5, 1]
+num_data = [4 * 2 ** k for k in range(1, 12)]      # [4, 8, 10]
 
 # ----------------------------------
 # run experiments
 # ----------------------------------
-n_x=100
-test_points = np.array([i / n_x for i in range(1, n_x)])
-y_true=functions_nonlinear(test_points, data_args["beta"][0])
+n_x=200     #Resolution of x-axis
+test_points = np.array([i / n_x for i in range(0, n_x)])
+y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["beta"][0])
 
 for i in range(len(noise_vars)):
     print("Noise Variance: ", noise_vars[i])
-    res = {"DecoR": []}
+    res = {"DecoR": [], "ols": []}
     for n in num_data:
         print("number of data points: ", n)
         res["DecoR"].append([])
-        L_temp=max(np.floor(1/2*n**(1/2)).astype(int),1)
+        res["ols"].append([])
+        L_temp=max(np.floor(1/4*n**(1/2)).astype(int),1)
         basis_tmp = [np.cos(np.pi * test_points * k ) for k in range(L_temp)]
         basis = np.vstack(basis_tmp).T
         print("number of coefficients: ", L_temp)
@@ -74,14 +75,16 @@ for i in range(len(noise_vars)):
             data_values = get_data(n, **data_args, noise_var=noise_vars[i])
             estimates_decor = get_results(**data_values, **method_args, L=L_temp)
             y_est=basis @ estimates_decor
+            y_est=np.ndarray((n_x, 1), buffer=y_est)
 
-            res["DecoR"][-1].append(1/n_x*np.linalg.norm(y_true-y_est, ord=1))
-            """"
-            estimates_ols = get_results(**data_values, method="ols", a=method_args["a"])
-            res["ols"][-1].append(np.linalg.norm(estimates_ols - data_args["beta"].T, ord=1))
-            """
+            estimates_fourrier= get_results(**data_values, method="ols", L=L_temp, a=0).T
+            y_fourrier= basis @ estimates_fourrier
+            y_fourrier=np.ndarray((n_x, 1), buffer=y_fourrier)
 
-    res["DecoR"] = np.array(res["DecoR"])
+            res["DecoR"][-1].append(1/np.sqrt(n_x)*np.linalg.norm(y_true-y_est, ord=2))
+            res["ols"][-1].append(1/np.sqrt(n_x)*np.linalg.norm(y_true-y_fourrier, ord=2))
+            
+    res["DecoR"], res["ols"] = np.array(res["DecoR"]), np.array(res["ols"])
     plot_results(res, num_data, m, colors=colors[i])
 
 # ----------------------------------
@@ -94,10 +97,8 @@ titles_dim = {1: "", 2: ", 2-dimensional"}
 
 
 def get_handles():
-    """
     point_1 = Line2D([0], [0], label='OLS', marker='o',
                      markeredgecolor='w', color=ibm_cb[5], linestyle='-')
-    """
     point_2 = Line2D([0], [0], label='DecoR', marker='X',
                      markeredgecolor='w', color=ibm_cb[5], linestyle='-')
     point_3 = Line2D([0], [0], label="$\sigma_{\eta}^2 = $" + str(noise_vars[0]), markersize=10,
@@ -106,11 +107,11 @@ def get_handles():
                      color=ibm_cb[4], linestyle='-')
     point_5 = Line2D([0], [0], label="$\sigma_{\eta}^2 = $" + str(noise_vars[2]), markersize=10,
                      color=ibm_cb[2], linestyle='-')
-    return [ point_2, point_3, point_4, point_5]
+    return [point_1, point_2, point_3, point_4, point_5]
 
 
 plt.xlabel("number of data points")
-plt.ylabel("mean absolute error")
+plt.ylabel("L^2 error")
 plt.title(titles[data_args["process_type"]]
           + titles_basis[data_args["basis_type"]]
           + titles_dim[len(data_args["beta"])])

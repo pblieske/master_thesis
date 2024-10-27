@@ -145,16 +145,17 @@ def plot_results(res: dict, num_data: list, m: int, colors) -> None:
         m (int): Number of repetitions for each data size.
         colors (list): A list of colors for plotting the methods.
     """
-    values = np.concatenate([np.expand_dims(res["DecoR"], 2)], axis=2).ravel()
+    values = np.concatenate([np.expand_dims(res["ols"], 2),
+                             np.expand_dims(res["DecoR"], 2)], axis=2).ravel()
 
-    time = np.repeat(num_data, m)
-    method = np.tile(["DecoR"], len(values))
+    time = np.repeat(num_data, m * 2)
+    method = np.tile(["OLS", "DecoR"], len(values) // 2)
 
     df = pd.DataFrame({"value": values.astype(float),
                        "n": time.astype(float),
                        "method": method})
 
     sns.lineplot(data=df, x="n", y="value", hue="method", style="method",
-                 markers=["X"], dashes=False, errorbar=("ci", 95), err_style="band",
-                 palette=[colors[0]], legend=True)
+                 markers=["o", "X"], dashes=False, errorbar=("ci", 95), err_style="band",
+                 palette=[colors[0], colors[1]], legend=True)
 
