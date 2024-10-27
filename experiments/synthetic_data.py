@@ -33,7 +33,7 @@ class BaseDataGenerator:
         Returns:
             tuple[NDArray, NDArray, NDArray]: Noise arrays for x, y, u.
         """
-        noises = [np.random.uniform(-(6*self.noise_var if i == 2 else 0.2), (6*self.noise_var if i == 2 else 0.2), size=(n, size))
+        noises = [np.random.uniform(-(6*self.noise_var if i == 2 else 1/6), (6*self.noise_var if i == 2 else 1/6), size=(n, size))
                   for i, size in enumerate(sizes)]
 
         """
@@ -303,7 +303,7 @@ class BLPNonlinearDataGenerator(BaseDataGenerator):
         band_x=np.array([1 if i in bandx else 0 for i in range(n)]).reshape(-1, 1)
         weights = np.random.uniform(-1, 1, size=(n, 1))
         x_band = basis @ (weights * band_x)
-        x = x_band + 1/2*u + ex
+        x = x_band + 1*u + ex
 
         "Rescalling of the variables"
         max=np.max(x)
@@ -316,6 +316,8 @@ class BLPNonlinearDataGenerator(BaseDataGenerator):
 
         if self.beta[0]==1:
             y = 4*(x -np.full((n, 1), 0.5, dtype=float))**2 + ey + 10 * u
+        elif self.beta[0]==2:
+            y = 4*np.sin(6*x) + ey + 20* u
         else:
             raise ValueError("Function not implemented.")
 

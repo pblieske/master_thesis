@@ -39,7 +39,7 @@ data_args = {
     "basis_type": "cosine",     # "cosine" | "haar"
     "fraction": 0.25,
     "beta": np.array([1]),
-    "band": list(range(0, 5))  # list(range(0, 50)) | None
+    "band": list(range(0, 10))  # list(range(0, 50)) | None
 }
 
 method_args = {

@@ -13,6 +13,15 @@ from robust_deconfounding.decor import DecoR
 from robust_deconfounding.utils import cosine_basis, haarMatrix
 from experiments.synthetic_data import BLPDataGenerator, OUDataGenerator, BLPNonlinearDataGenerator
 
+def functions_nonlinear(x:NDArray, beta:int ):
+    n=np.length(x)
+    if beta==1:
+        y = 4*(x -np.full((n, 1), 0.5, dtype=float))**2 
+    elif beta==2:
+        y = 4*np.sin(6*x)
+    else:
+        raise ValueError("Function not implemented.")
+    return y
 
 def plot_settings():
     """
