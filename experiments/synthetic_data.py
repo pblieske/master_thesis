@@ -311,14 +311,17 @@ class BLPNonlinearDataGenerator(BaseDataGenerator):
         diff=max-min
         x=np.divide(x-np.full((n, 1), min, dtype=float), diff)
         u=u/diff
-
-        k = self.basis_transform(u, outlier_points, basis, n)
-
-        if self.beta[0]==1:
-            y = 4*(x -np.full((n, 1), 0.5, dtype=float))**2 + ey + 10 * u
-        elif self.beta[0]==2:
-            y = 4*np.sin(6*x) + ey + 20* u
-        else:
-            raise ValueError("Function not implemented.")
+        y=functions_nonlinear(x, self.beta[0])+ ey + 10 * u
 
         return x, y
+    
+
+def functions_nonlinear(x:NDArray, beta:int):
+    n=np.size(x)
+    if beta==1:
+        y = 4*(x -np.full((n, 1), 0.5, dtype=float))**2 
+    elif beta==2:
+        y = 4*np.sin(6*x)
+    else:
+        raise ValueError("Function not implemented.")
+    return y

@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
 from utils_nonlinear import get_results, plot_results, get_data, plot_settings
+from synthetic_data import functions_nonlinear
 
 """
 We provide a visualization of a fitted curve using the cosine approximation.
@@ -38,8 +39,7 @@ print("number of observations:", n)
 # ----------------------------------
 n_x=200
 test_points = np.array([i / n_x for i in range(0, n_x)])
-y_true=4*(test_points - np.full(n_x, 0.5, dtype=float))**2
-y_true=4*np.sin(6*test_points)
+y_true=functions_nonlinear(test_points, data_args["beta"][0])
 L_temp=max(np.floor(1/4*n**(1/2)).astype(int),1)
 print("number of coefficients:", L_temp)
 basis_tmp = [np.cos(np.pi * test_points * k ) for k in range(L_temp)]
