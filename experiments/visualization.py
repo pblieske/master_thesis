@@ -21,8 +21,8 @@ data_args = {
     "process_type": "blpnl",       # "ou" | "blp" | "blpnl"
     "basis_type": "cosine",     # "cosine" | "haar"
     "fraction": 0.25,
-    "beta": np.array([2]),
-    "band": list(range(0, 10))  # list(range(0, 50)) | None
+    "beta": np.array([1]),
+    "band": list(range(0, 15))  # list(range(0, 50)) | None
 }
 
 method_args = {
@@ -31,18 +31,18 @@ method_args = {
 }
 
 noise_vars =  0
-n = 2 ** 10 # number of observations
+n = 2 ** 8 # number of observations
 print("number of observations:", n)
 
 # ----------------------------------
 # run experiments
 # ----------------------------------
 n_x=200
-test_points = np.array([i / n_x for i in range(0, n_x)])
-y_true=functions_nonlinear(test_points, data_args["beta"][0])
-L_temp=max(np.floor(1/4*n**(1/2)).astype(int),1)
+test_points=np.array([i / n_x for i in range(0, n_x)])
+y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["beta"][0])
+L_temp=max(np.floor(1/4*n**(1/2)).astype(int),1)                        #Number of coefficients used
 print("number of coefficients:", L_temp)
-basis_tmp = [np.cos(np.pi * test_points * k ) for k in range(L_temp)]
+basis_tmp = [np.cos(np.pi * test_points * k ) for k in range( L_temp)] 
 basis = np.vstack(basis_tmp).T
 data_values = get_data(n, **data_args, noise_var=noise_vars)
 estimates_decor = get_results(**data_values, **method_args, L=L_temp)
@@ -52,7 +52,7 @@ y_est=basis @ estimates_decor
 # plotting
 # ----------------------------------
 
-sub=np.linspace(0, n-1, 2**8).astype(int)
+sub=np.linspace(0, n-1, 2**9).astype(int)
 plt.plot(data_values['x'][sub],data_values['y'][sub], 'o:w', mec = 'black')
 plt.plot(test_points, y_true, '-', color=colors[0][0])
 plt.plot(test_points, y_est, '-', color=colors[1][1])

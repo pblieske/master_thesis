@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
 from utils_nonlinear import get_results, plot_results, get_data, plot_settings
+from synthetic_data import functions_nonlinear
 
 """
 Short explanation of the variables and what they do:
@@ -30,7 +31,7 @@ The "num_data" variable is a list of increasing natural numbers that indicate th
 
 colors, ibm_cb = plot_settings()
 
-SEED = 2
+SEED = 1
 np.random.seed(SEED)
 random.seed(SEED)
 
@@ -56,7 +57,7 @@ num_data = [4 * 2 ** k for k in range(1, 11)]      # [4, 8, 10]
 # ----------------------------------
 n_x=100
 test_points = np.array([i / n_x for i in range(1, n_x)])
-y_true=4*(test_points -np.full((n_x, 1), 0.5, dtype=float))**2
+y_true=functions_nonlinear(test_points, data_args["beta"][0])
 
 for i in range(len(noise_vars)):
     print("Noise Variance: ", noise_vars[i])

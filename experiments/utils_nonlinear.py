@@ -13,16 +13,6 @@ from robust_deconfounding.decor import DecoR
 from robust_deconfounding.utils import cosine_basis, haarMatrix
 from experiments.synthetic_data import BLPDataGenerator, OUDataGenerator, BLPNonlinearDataGenerator
 
-def functions_nonlinear(x:NDArray, beta:int):
-    n=np.size(x)
-    if beta==1:
-        y = 4*(x -np.full((n, 1), 0.5, dtype=float))**2 
-    elif beta==2:
-        y = 4*np.sin(6*x)
-    else:
-        raise ValueError("Function not implemented.")
-    return y
-
 def plot_settings():
     """
     Sets plot configuration parameters for a consistent look across plots.
@@ -116,7 +106,7 @@ def get_data(n: int, process_type: str, basis_type: str, fraction: float, beta: 
     elif process_type == "blp":
         generator = BLPDataGenerator(basis_type=basis_type, beta=beta, noise_var=noise_var, band=band)
     elif process_type=="blpnl":
-        generator = BLPNonlinearDataGenerator(basis_type=basis_type, beta=beta, noise_var=noise_var, band=band)
+        generator = BLPNonlinearDataGenerator(basis_type=basis_type, beta=beta, noise_var=noise_var, band=band, fraction=fraction)
     else:
         raise ValueError("process_type not implemented")
 

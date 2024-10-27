@@ -263,14 +263,14 @@ class BLPDataGenerator(BaseDataGenerator):
 class BLPNonlinearDataGenerator(BaseDataGenerator):
     """
     Generates data with confounding concentrated in a specific frequency band.
-    The relation between x and y is assumued to be nonlinear and specified by the integer f.
-    f=1: Quadratic function
+    The relation between x and y is assumued to be nonlinear and specified by the integer beta
     Attributes:
         band (list[int]): Frequency band for concentrated confounding (inclusive).
     """
-    def __init__(self, basis_type: str, beta: NDArray, noise_var: float, band: list[int]):
+    def __init__(self, basis_type: str, beta: NDArray, noise_var: float, band: list[int], fraction: int):
         super().__init__(basis_type, beta, noise_var)
         self.band = band
+        self.fraction = fraction
 
     def get_band_idx(self, n: int) -> NDArray:
         """
@@ -295,14 +295,15 @@ class BLPNonlinearDataGenerator(BaseDataGenerator):
         basis = self.get_basis(n)
 
         weights = np.random.uniform(-1, 1, size=(n, 1))
-        u_band = basis @ (weights * band_idx)
+        n_sub=int(round(self.fraction*len(self.band), ndigits=0))
+        idx_sub=np.concatenate((np.ones((n_sub,1),  dtype=int), np.zeros((n-n_sub,1),  dtype=int)))
+        band_idx_u=band_idx*idx_sub
+        u_band = basis @ (weights * band_idx_u)
         basis = self.get_basis(n) 
         u = u_band 
-        #k = self.basis_transform(u, outlier_points, basis, n)
-        bandx=list(range(0, 20))
-        band_x=np.array([1 if i in bandx else 0 for i in range(n)]).reshape(-1, 1)
+
         weights = np.random.uniform(-1, 1, size=(n, 1))
-        x_band = basis @ (weights * band_x)
+        x_band = basis @ (weights * band_idx)
         x = x_band + 1*u + ex
 
         "Rescalling of the variables"
@@ -319,7 +320,7 @@ class BLPNonlinearDataGenerator(BaseDataGenerator):
 def functions_nonlinear(x:NDArray, beta:int):
     n=np.size(x)
     if beta==1:
-        y = 4*(x -np.full((n, 1), 0.5, dtype=float))**2 
+        y = 4*(x - np.full((n, 1), 0.5, dtype=float))**2 
     elif beta==2:
         y = 4*np.sin(6*x)
     else:
