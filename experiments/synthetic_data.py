@@ -299,20 +299,19 @@ class BLPNonlinearDataGenerator(BaseDataGenerator):
         idx_sub=np.concatenate((np.ones((n_sub,1),  dtype=int), np.zeros((n-n_sub,1),  dtype=int)))
         band_idx_u=band_idx*idx_sub
         u_band = basis @ (weights * band_idx_u)
-        basis = self.get_basis(n) 
         u = u_band 
 
         weights = np.random.uniform(-1, 1, size=(n, 1))
         x_band = basis @ (weights * band_idx)
-        x = x_band + 1*u + ex
+        x = x_band + u + ex
 
         "Rescalling of the variables"
         max=np.max(x)
         min=np.min(x)
         diff=max-min
         x=np.divide(x-np.full((n, 1), min, dtype=float), diff)
-        u=u/diff
-        y=functions_nonlinear(x, self.beta[0])+ ey + 10 * u
+        #u=u/diff
+        y=functions_nonlinear(x, self.beta[0]) + ey + 2 * u
 
         return x, y
     

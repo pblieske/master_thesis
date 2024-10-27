@@ -68,14 +68,20 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method
         elif method == "bfs":
             algo = BFS(a=a, fit_intercept=False)
 
-        algon = DecoR(algo, basis)
-        algon.fit_coef(x, y, L)
+        algo = DecoR(algo, basis)
+        algo.fit_coef(x, y, L)
 
-        return algon.estimate
+        return algo.estimate
 
     elif method == "ols":
-        model_l = sm.OLS(y, x).fit()
+        n=len(x)
+        P_temp = [np.cos(np.pi * x.T * k) for k in range(L)]
+        P =  np.vstack(P_temp).T
+        xn = basis.T @ P / n
+        yn = basis.T @ y / n
+        model_l = sm.OLS(yn, xn).fit()
         return model_l.params
+
 
     else:
         raise ValueError("Invalid method")

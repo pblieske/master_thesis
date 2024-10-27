@@ -21,8 +21,8 @@ data_args = {
     "process_type": "blpnl",       # "ou" | "blp" | "blpnl"
     "basis_type": "cosine",     # "cosine" | "haar"
     "fraction": 0.25,
-    "beta": np.array([1]),
-    "band": list(range(0, 15))  # list(range(0, 50)) | None
+    "beta": np.array([2]),
+    "band": list(range(0, 50))  # list(range(0, 50)) | None
 }
 
 method_args = {
@@ -30,8 +30,9 @@ method_args = {
     "method": "torrent",        # "torrent" | "bfs"
 }
 
-noise_vars =  0
-n = 2 ** 8 # number of observations
+
+noise_vars =  0.1
+n = 2 ** 10 # number of observations
 print("number of observations:", n)
 
 # ----------------------------------
@@ -46,16 +47,19 @@ basis_tmp = [np.cos(np.pi * test_points * k ) for k in range( L_temp)]
 basis = np.vstack(basis_tmp).T
 data_values = get_data(n, **data_args, noise_var=noise_vars)
 estimates_decor = get_results(**data_values, **method_args, L=L_temp)
+estimates_fourrier= get_results(**data_values, method="ols", L=L_temp, a=0)
 y_est=basis @ estimates_decor
+y_fourrier= basis @ estimates_fourrier.T
 
 # ----------------------------------
 # plotting
 # ----------------------------------
 
-sub=np.linspace(0, n-1, 2**9).astype(int)
+sub=np.linspace(0, n-1, 2**8).astype(int)
 plt.plot(data_values['x'][sub],data_values['y'][sub], 'o:w', mec = 'black')
-plt.plot(test_points, y_true, '-', color=colors[0][0])
-plt.plot(test_points, y_est, '-', color=colors[1][1])
+plt.plot(test_points, y_true, '-', color='black')
+plt.plot(test_points, y_est, '-', color=ibm_cb[1])
+plt.plot(test_points, y_fourrier, color=ibm_cb[4])
 
 titles = {"blp": "Band-Limited", "ou": "Ornstein-Uhlenbeck", "blpnl" : "Nonlinear: Band-Limited"}
 titles_basis = {"cosine": "", "haar": ", Haar basis"}
@@ -65,11 +69,11 @@ titles_dim = {1: "", 2: ", 2-dimensional"}
 def get_handles():
 
     point_1 = Line2D([0], [0], label='Observations', marker='o', mec='black', color='w')
+    point_2 = Line2D([0], [0], label='Truth', markeredgecolor='w', color='black', linestyle='-')
+    point_3 = Line2D([0], [0], label="DecoR" , color=ibm_cb[1], linestyle='-')
+    point_4= Line2D([0], [0], label="OLS" , color=ibm_cb[4], linestyle='-')
 
-    point_2 = Line2D([0], [0], label='Truth', markeredgecolor='w', color=colors[0][0], linestyle='-')
-    point_3 = Line2D([0], [0], label="Estimate" , color=colors[1][1], linestyle='-')
-
-    return [point_1, point_2, point_3]
+    return [point_1, point_2, point_3, point_4]
 
 
 plt.xlabel("x")
