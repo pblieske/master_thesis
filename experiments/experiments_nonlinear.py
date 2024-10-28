@@ -119,7 +119,7 @@ plt.xscale('log')
 plt.xlim(left=num_data[0] - 2)
 plt.hlines(0, num_data[0], num_data[-1], colors='black', linestyles='dashed')
 
-plt.legend(handles=get_handles(), loc="upper right")
+plt.legend(handles=get_handles(), loc="lower left")
 
 plt.tight_layout()
 plt.show()

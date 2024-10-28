@@ -84,7 +84,7 @@ plt.title(titles[data_args["process_type"]]
           + titles_basis[data_args["basis_type"]]
           + titles_dim[len(data_args["beta"])])
 
-plt.legend(handles=get_handles(), loc="upper left")
+plt.legend(handles=get_handles(), loc="lower left")
 
 plt.tight_layout()
 plt.show()
