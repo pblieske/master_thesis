@@ -13,25 +13,25 @@ For this we simulated only one draw for a fixed number of observations n, for Mo
 
 colors, ibm_cb = plot_settings()
 
-SEED = 1
+SEED = 4
 np.random.seed(SEED)
 random.seed(SEED)
 
 data_args = {
     "process_type": "blpnl",       # "ou" | "blp" | "blpnl"
     "basis_type": "cosine",     # "cosine" | "haar"
-    "fraction": 0.3,
+    "fraction": 0.1,
     "beta": np.array([2]),
-    "band": list(range(0, 50))  # list(range(0, 50)) | None
+    "band": list(range(0, 10))  # list(range(0, 50)) | None
 }
 
 method_args = {
-    "a": 0.6,
+    "a": 0.2,
     "method": "torrent",        # "torrent" | "bfs"
 }
 
 
-noise_vars =  0.2
+noise_vars =  0
 n = 2 ** 10 # number of observations
 print("number of observations:", n)
 
@@ -53,7 +53,7 @@ data_values.pop('u')
 #Estimate the function f
 estimates_decor = get_results(**data_values, **method_args, L=L_temp)
 estimates_fourrier= get_results(**data_values, method="ols", L=L_temp, a=0).T
-y_est=basis @ estimates_decor
+y_est=basis @ estimates_decor["estimate"]
 y_fourrier= basis @ estimates_fourrier
 y_est=np.ndarray((n_x, 1), buffer=y_est)
 #Compute the L^2-error
@@ -91,7 +91,6 @@ plt.title(titles[data_args["process_type"]]
           + titles_dim[len(data_args["beta"])])
 
 plt.legend(handles=get_handles(), loc="lower left")
-
 plt.tight_layout()
 plt.show()
 
@@ -107,7 +106,6 @@ def get_handles():
 plt.xlabel("x")
 plt.ylabel("y")
 plt.title("Confounder")
-
 plt.legend(handles=get_handles(), loc="upper right")
 plt.hlines(0, 0, 1, colors='black', linestyles='dashed')
 plt.tight_layout()

@@ -70,3 +70,9 @@ class DecoR:
     def estimate(self) -> NDArray:
         """Get the estimated coefficients from the regression model."""
         return self.algo.coef_
+    
+    @property
+    def inliniers(self) -> NDArray:
+        """Get the estimated inliniers from the regression model."""
+        return self.algo.inliers_
+    

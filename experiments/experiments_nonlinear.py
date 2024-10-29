@@ -73,6 +73,7 @@ for i in range(len(noise_vars)):
 
         for _ in range(m):
             data_values = get_data(n, **data_args, noise_var=noise_vars[i])
+            data_values.pop('u')
             estimates_decor = get_results(**data_values, **method_args, L=L_temp)
             y_est=basis @ estimates_decor
             y_est=np.ndarray((n_x, 1), buffer=y_est)

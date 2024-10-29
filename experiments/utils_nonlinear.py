@@ -71,7 +71,7 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method
         algo = DecoR(algo, basis)
         algo.fit_coef(x, y, L)
 
-        return algo.estimate
+        return {"estimate": algo.estimate, "inliniers": algo.inliniers}
 
     elif method == "ols":
         n=len(x)
