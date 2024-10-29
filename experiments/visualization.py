@@ -43,14 +43,20 @@ test_points=np.array([i / n_x for i in range(0, n_x)])
 y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["beta"][0])
 L_temp=max(np.floor(1/4*n**(1/2)).astype(int),1)                        #Number of coefficients used
 print("number of coefficients:", L_temp)
+#Compute the basis
 basis_tmp = [np.cos(np.pi * test_points * k ) for k in range( L_temp)] 
 basis = np.vstack(basis_tmp).T
+#Get data
 data_values = get_data(n, **data_args, noise_var=noise_vars)
+u=data_values["u"]
+data_values.pop('u')
+#Estimate the function f
 estimates_decor = get_results(**data_values, **method_args, L=L_temp)
 estimates_fourrier= get_results(**data_values, method="ols", L=L_temp, a=0).T
 y_est=basis @ estimates_decor
 y_fourrier= basis @ estimates_fourrier
 y_est=np.ndarray((n_x, 1), buffer=y_est)
+#Compute the L^2-error
 print("$L^2$-error: ", 1/np.sqrt(n_x)*np.linalg.norm(y_true-y_est, ord=2))
 
 # ----------------------------------
@@ -86,5 +92,23 @@ plt.title(titles[data_args["process_type"]]
 
 plt.legend(handles=get_handles(), loc="lower left")
 
+plt.tight_layout()
+plt.show()
+
+
+#Plotting the confounder
+plt.plot(data_values['x'][sub], u[sub], 'o:w', mec=ibm_cb[4] )
+
+def get_handles():
+
+    point_1 = Line2D([0], [0], label='Confounder', marker='o',color=ibm_cb[4])
+    return [point_1]
+
+plt.xlabel("x")
+plt.ylabel("y")
+plt.title("Confounder")
+
+plt.legend(handles=get_handles(), loc="upper right")
+plt.hlines(0, 0, 1, colors='black', linestyles='dashed')
 plt.tight_layout()
 plt.show()

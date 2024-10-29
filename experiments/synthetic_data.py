@@ -296,7 +296,7 @@ class BLPNonlinearDataGenerator(BaseDataGenerator):
 
         weights = np.random.uniform(-1, 1, size=(n, 1))
         n_sub=int(round(self.fraction*len(self.band), ndigits=0))
-        idx_sub=np.concatenate((np.ones((np.min([n_sub ,1]),1),  dtype=int), np.zeros((np.max([n-n_sub,n-1]),1),  dtype=int)))
+        idx_sub=np.concatenate((np.ones((np.max([n_sub ,1]),1),  dtype=int), np.zeros((np.min([n-n_sub,n-1]),1),  dtype=int)))
         band_idx_u=band_idx*idx_sub
         u_band = basis @ (weights * band_idx_u)
         u = u_band 
@@ -311,9 +311,10 @@ class BLPNonlinearDataGenerator(BaseDataGenerator):
         diff=max-min
         x=np.divide(x-np.full((n, 1), min, dtype=float), diff)
         #u=u/diff
-        y=functions_nonlinear(x, self.beta[0]) + ey + 10 * u
+        factor_u=5
+        y=functions_nonlinear(x, self.beta[0]) + ey + factor_u* u
 
-        return x, y
+        return x, y, factor_u*u
     
 
 def functions_nonlinear(x:NDArray, beta:int):

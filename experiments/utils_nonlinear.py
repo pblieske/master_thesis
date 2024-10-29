@@ -130,9 +130,9 @@ def get_data(n: int, process_type: str, basis_type: str, fraction: float, beta: 
     if beta.shape[0] == 2:
         x, y = generator.generate_data_2_dim(n=n, outlier_points=outlier_points)
     else:
-        x, y = generator.generate_data(n=n, outlier_points=outlier_points)
+        x, y, u = generator.generate_data(n=n, outlier_points=outlier_points)
 
-    return {"x": x, "y": y, "basis": basis}
+    return {"x": x, "y": y, "u": u, "basis": basis}
 
 
 def plot_results(res: dict, num_data: list, m: int, colors) -> None:
