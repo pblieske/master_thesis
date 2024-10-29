@@ -76,3 +76,8 @@ class DecoR:
         """Get the estimated inliniers from the regression model."""
         return self.algo.inliers_
     
+    @property
+    def get_transformed(self) -> NDArray:
+        """Get the estimated inliniers from the regression model."""
+        return {"xn": self.xn, "yn": self.yn}
+    
