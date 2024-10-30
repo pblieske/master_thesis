@@ -44,7 +44,7 @@ data_args = {
 }
 
 method_args = {
-    "a": 0.6,
+    "a": 0.65,
     "method": "torrent",        # "torrent" | "bfs"
 }
 
@@ -73,9 +73,9 @@ for i in range(len(noise_vars)):
 
         for _ in range(m):
             data_values = get_data(n, **data_args, noise_var=noise_vars[i])
-            data_values.pop('u')
+            data_values.pop('u', 'basis')
             estimates_decor = get_results(**data_values, **method_args, L=L_temp)
-            y_est=basis @ estimates_decor
+            y_est=basis @ estimates_decor["estimate"]
             y_est=np.ndarray((n_x, 1), buffer=y_est)
 
             estimates_fourrier= get_results(**data_values, method="ols", L=L_temp, a=0).T
@@ -119,8 +119,7 @@ plt.title(titles[data_args["process_type"]]
 plt.xscale('log')
 plt.xlim(left=num_data[0] - 2)
 plt.hlines(0, num_data[0], num_data[-1], colors='black', linestyles='dashed')
-
 plt.legend(handles=get_handles(), loc="lower left")
-
 plt.tight_layout()
+
 plt.show()

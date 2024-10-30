@@ -295,8 +295,8 @@ class BLPNonlinearDataGenerator(BaseDataGenerator):
         basis = self.get_basis(n)
 
         weights = np.random.uniform(-1, 1, size=(n, 1))
-        n_sub=int(round(self.fraction*len(self.band), ndigits=0))
-        idx_sub=np.concatenate((np.ones((np.max([n_sub ,1]),1),  dtype=int), np.zeros((np.min([n-n_sub,n-1]),1),  dtype=int)))
+        n_sub=np.max([np.min([int(round(self.fraction*len(self.band), ndigits=0)), n-1]), 1])
+        idx_sub=np.concatenate((np.ones((n_sub ,1),  dtype=int), np.zeros((n-n_sub,1),  dtype=int)))
         band_idx_u=band_idx*idx_sub
         u_band = basis @ (weights * band_idx_u)
         u = u_band 

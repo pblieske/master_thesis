@@ -144,7 +144,6 @@ for l in range(0, L_temp):
     axs[i, j].set_xlabel('$P(' + str(l) + ', : )$')
     axs[i, j].set_ylabel('y')
 
-
 def get_handles():
 
     point_1 = Line2D([0], [0], label='outliers found', marker='o', color=ibm_cb[1], ls='')
@@ -157,6 +156,5 @@ plt.suptitle("Detected Outliers")
 plt.tight_layout()
 fig.subplots_adjust(top=0.8)
 fig.legend(handles=get_handles(), loc="upper center", bbox_to_anchor=(0.55, 0.9), ncol=3)
-
 
 plt.show()
