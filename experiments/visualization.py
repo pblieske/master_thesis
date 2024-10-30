@@ -128,11 +128,6 @@ true_outliers=set(range(0, n_true_outliers-1))
 detected_outliers=true_outliers.difference(inliniers)
 not_detected_outliers=true_outliers.difference(detected_outliers)
 true_intliniers=inliniers.difference(true_outliers)
-print(inliniers)
-print(true_outliers)
-print(detected_outliers)
-print(not_detected_outliers)
-print(true_intliniers)
 
 m_plots=np.ceil(L_temp/2).astype(int)
 fig, axs = plt.subplots(m_plots, 2)
@@ -145,7 +140,7 @@ for l in range(0, L_temp):
     axs[i, j].plot(P_n[list(not_detected_outliers), l], y_n[list(not_detected_outliers)], 'o', color=ibm_cb[4])
     axs[i, j].plot(P_n[list(true_intliniers), l], y_n[list(true_intliniers)], 'o:w', mec=ibm_cb[0])
     axs[i,j].axline((0,0), slope=estimates_decor["estimate"][l],color = 'black', linestyle = '--')
-
+    #Labels
     axs[i, j].set_xlabel('$P(' + str(l) + ', : )$')
     axs[i, j].set_ylabel('y')
 

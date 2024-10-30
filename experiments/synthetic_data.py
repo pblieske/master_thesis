@@ -311,7 +311,7 @@ class BLPNonlinearDataGenerator(BaseDataGenerator):
         diff=max-min
         x=np.divide(x-np.full((n, 1), min, dtype=float), diff)
         #u=u/diff
-        factor_u=5
+        factor_u=2
         y=functions_nonlinear(x, self.beta[0]) + ey + factor_u* u
 
         return x, y, factor_u*u
