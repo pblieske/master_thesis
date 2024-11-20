@@ -1,6 +1,7 @@
 from typing import Set, Optional, Self
 from numpy.typing import NDArray
 import numpy as np
+import scipy as sp
 import statsmodels.api as sm
 import itertools
 
@@ -211,7 +212,9 @@ class Torrent_reg(BaseRobustRegression):
             Y_temp=y[self.inliers]
             B=X_temp.T @ Y_temp
             A=X_temp.T @ X_temp + lmbd_temp*K
-            self.model = sm.OLS(y[self.inliers], x[self.inliers]).fit()
+            
+            self.model = sm.OLS(Y_temp, X_temp)
+            self.model.params=sp.linalg.solve(A, B)
 
             err = np.linalg.norm(y - self.model.predict(x).reshape(n, -1), axis=1)
 
