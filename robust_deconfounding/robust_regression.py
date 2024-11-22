@@ -19,6 +19,7 @@ class BaseRobustRegression:
         self.fit_intercept = fit_intercept
         self.model = None
         self.inliers = []
+        self.coef=[]
 
     def fit(self, x: NDArray, y: NDArray) -> Self:
         """Fits the regression model to the data.
@@ -49,7 +50,7 @@ class BaseRobustRegression:
     @property
     def coef_(self) -> NDArray:
         """Returns the coefficients of the regression model, excluding the intercept."""
-        return self.model.params
+        return self.coef
 
     @property
     def intercept_(self) -> Optional[float]:
@@ -112,6 +113,8 @@ class Torrent(BaseRobustRegression):
 
             if set(self.inliers) == set(old_inliers):
                 break
+
+        self.coef=self.model.params    
         return self
 
 
@@ -155,6 +158,7 @@ class BFS(BaseRobustRegression):
                 self.model = model
                 err_min = err
 
+        self.coef=self.model.params  
         return self
 
 class Torrent_reg(BaseRobustRegression):
@@ -180,7 +184,7 @@ class Torrent_reg(BaseRobustRegression):
         self.max_iter = max_iter
         self.predicted_inliers = []
 
-    def fit(self, x: NDArray, y: NDArray, K:NDArray, lmbd:NDArray) -> Self:
+    def fit(self, x: NDArray, y: NDArray, K:NDArray, lmbd:float) -> Self:
         """Fit model using an iterative process to determine inliers and refit the model.
             lambda: set of regularization parameters over which the cross-valdiation is performed
                     provid only a one-dimensional vector to keep it fixed
@@ -200,23 +204,16 @@ class Torrent_reg(BaseRobustRegression):
 
         self.inliers = list(range(n))
         self.predicted_inliers.append(self.inliers)
-        cv=lmbd.size!=1
-        if cv:
-            lmbd_temp=lmbd[np.floor(lmbd.size/2)]
-        else:
-            lmbd_temp=lmbd[0]
-
 
         for __ in range(self.max_iter):
             X_temp=x[self.inliers]
             Y_temp=y[self.inliers]
             B=X_temp.T @ Y_temp
-            A=X_temp.T @ X_temp + lmbd_temp*K
+            A=X_temp.T @ X_temp + lmbd*K
             
-            self.model = sm.OLS(Y_temp, X_temp)
-            self.model.params=sp.linalg.solve(A, B)
+            self.coef=sp.linalg.solve(A, B)
 
-            err = np.linalg.norm(y - self.model.predict(x).reshape(n, -1), axis=1)
+            err = np.linalg.norm(y - x @ self.coef, axis=1)
 
             old_inliers = self.inliers
             self.inliers = np.argpartition(err, an)[:an]
@@ -224,6 +221,7 @@ class Torrent_reg(BaseRobustRegression):
 
             if set(self.inliers) == set(old_inliers):
                 break
+            
         return self
 
 
