@@ -57,14 +57,12 @@ data_values.pop('u')
 
 for l in L:
     #Compute the basis
-    basis_tmp = [np.cos(np.pi * test_points * k ) for k in range( L_temp)] 
+    basis_tmp = [np.cos(np.pi * test_points * k ) for k in range(0, l-1)] 
     basis = np.vstack(basis_tmp).T
     for j in range(0, Lmbd.size-1):
          #Estimate the function f
         estimates_decor = get_results(**data_values, **method_args, L=l)
-        estimates_fourrier= get_results(**data_values, method="ols", L=l, a=0).T
         y_est=basis @ estimates_decor["estimate"]
-        y_fourrier= basis @ estimates_fourrier
         y_est=np.ndarray((n_x, 1), buffer=y_est)
         #Compute the L^2-error
         err[l, j]=1/np.sqrt(n_x)*np.linalg.norm(y_true-y_est, ord=2)
@@ -73,6 +71,7 @@ for l in L:
 # plotting
 # ----------------------------------
 
+"""
 sub=np.linspace(0, n-1, 2**8).astype(int)
 plt.plot(data_values['x'][sub],data_values['y'][sub], 'o:w', mec = 'black')
 plt.plot(test_points, y_true, '-', color='black')
@@ -103,3 +102,4 @@ plt.title(titles[data_args["process_type"]]
 plt.legend(handles=get_handles(), loc="lower left")
 plt.tight_layout()
 plt.show()
+"""

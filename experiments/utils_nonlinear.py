@@ -45,7 +45,7 @@ def r_squared(x: NDArray, y_true: NDArray, beta: NDArray) -> float:
     return 1-u/v
 
 
-def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method: str) -> NDArray:
+def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method: str, lmbd=0) -> NDArray:
     """
     Estimates the causal coefficient(s) using DecorR with 'method' as robust regression algorithm.
 
@@ -70,6 +70,13 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method
 
         algo = DecoR(algo, basis)
         algo.fit_coef(x, y, L)
+
+        return {"estimate": algo.estimate, "inliniers": algo.inliniers, "tranformed": algo.get_transformed}
+
+    elif method== "torrent_reg":
+        algo = Torrent_reg(a=a, fit_intercept=False)
+        algo = DecoR(algo, basis)
+        algo.fit_coef(x, y, L, lmbd)
 
         return {"estimate": algo.estimate, "inliniers": algo.inliniers, "tranformed": algo.get_transformed}
 
