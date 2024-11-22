@@ -32,8 +32,8 @@ method_args = {
 }
 
 
-noise_vars =  0
-n = 2 ** 8 # number of observations
+noise_vars =  1
+n = 2 ** 10 # number of observations
 print("number of observations:", n)
 
 # ----------------------------------
@@ -42,43 +42,45 @@ print("number of observations:", n)
 n_x=200
 test_points=np.array([i / n_x for i in range(0, n_x)])
 y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["beta"][0])
+m=100
 
 #Choose the grid
-L=np.array(range(1, 50))                              #Number of coefficients used
-Lmbd=np.array([2**(i/2) for i in range(-20, 20)])     #Regularization parameters
+Lmbd_min=-2
+Lmbd_max=1
+L_max=50
+L=np.array(range(1, L_max))                              #Number of coefficients used
+Lmbd=np.array([2**i for i in range(Lmbd_min*10, Lmbd_max*10)])     #Regularization parameters
 
 #Initialize matrix to save results
-err =np.empty(shape = [L.size, Lmbd.size]) 
+err =np.zeros(shape = [L.size, Lmbd.size]) 
 
-#Get data
-data_values = get_data(n, **data_args, noise_var=noise_vars)
-u=data_values["u"]
-data_values.pop('u')
-
-for l in L:
-    #Compute the basis
-    basis_tmp = [np.cos(np.pi * test_points * k ) for k in range(0, l)] 
-    basis = np.vstack(basis_tmp).T
-    diag=np.array([i**4 for i in range(0,l)])
-    K=np.diag(diag)
-    for j in range(0, Lmbd.size-1):
-         #Estimate the function f
-        estimates_decor = get_results(**data_values, **method_args, L=l, K=K, lmbd=Lmbd[j])
-        y_est=basis @ estimates_decor["estimate"]
-        y_est=np.ndarray((n_x, 1), buffer=y_est)
-        #Compute the L^2-error
-        err[l-1, j]=1/np.sqrt(n_x)*np.linalg.norm(y_true-y_est, ord=2)
-
-print(err)
+for __ in range(0,m):#Get data
+    data_values = get_data(n, **data_args, noise_var=noise_vars)
+    data_values.pop('u')
+    for l in L:
+        #Compute the basis
+        basis_tmp = [np.cos(np.pi * test_points * k ) for k in range(0, l)] 
+        basis = np.vstack(basis_tmp).T
+        diag=np.array([i**4 for i in range(0,l)])
+        K=np.diag(diag)
+        for j in range(0, Lmbd.size):
+            #Estimate the function f
+            estimates_decor = get_results(**data_values, **method_args, L=l, K=K, lmbd=Lmbd[j])
+            y_est=basis @ estimates_decor["estimate"]
+            y_est=np.ndarray((n_x, 1), buffer=y_est)
+            #Compute the L^2-error
+            err[l-1, j]=err[l-1, j]+ 1/(m*np.sqrt(n_x))*np.linalg.norm(y_true-y_est, ord=2)
+    print(__)
 
 # ----------------------------------
 # plotting
 # ----------------------------------
 
-plt.imshow(err) 
+plt.imshow(err, aspect='0.75')
 # Add colorbar 
 plt.colorbar() 
-plt.title( "L^2-error" ) 
-plt.xlabel("log(\lambda)")
-plt.ylabel("L")
-plt.show() 
+plt.title(r'$L^2$-error' ) 
+plt.xlabel(r'$\log(\lambda)$')
+plt.xticks(np.arange(0, Lmbd_max*10-Lmbd_min*10, step=10), labels=[str(10*i+Lmbd_min*10) for i in range(0, Lmbd_max-Lmbd_min)])
+plt.ylabel(r'L', rotation=0)
+plt.show()

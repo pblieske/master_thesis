@@ -211,7 +211,7 @@ class Torrent_reg(BaseRobustRegression):
             X_temp=x[self.inliers]
             Y_temp=y[self.inliers]
             B=X_temp.T @ Y_temp
-            A=X_temp.T @ X_temp + self.lmbd*self.K
+            A=X_temp.T @ X_temp + self.lmbd*self.K 
             
             self.coef=sp.linalg.solve(A, B)
 
