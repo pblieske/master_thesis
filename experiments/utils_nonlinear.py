@@ -8,7 +8,7 @@ import pylab
 import sys
 sys.path.insert(0, '/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_thesis/code/master_thesis')
 
-from robust_deconfounding.robust_regression import Torrent, BFS
+from robust_deconfounding.robust_regression import Torrent, BFS, Torrent_reg
 from robust_deconfounding.decor import DecoR
 from robust_deconfounding.utils import cosine_basis, haarMatrix
 from experiments.synthetic_data import BLPDataGenerator, OUDataGenerator, BLPNonlinearDataGenerator
@@ -45,7 +45,7 @@ def r_squared(x: NDArray, y_true: NDArray, beta: NDArray) -> float:
     return 1-u/v
 
 
-def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method: str, lmbd=0) -> NDArray:
+def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method: str, lmbd=0, K=np.array([0])) -> NDArray:
     """
     Estimates the causal coefficient(s) using DecorR with 'method' as robust regression algorithm.
 
@@ -74,9 +74,9 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method
         return {"estimate": algo.estimate, "inliniers": algo.inliniers, "tranformed": algo.get_transformed}
 
     elif method== "torrent_reg":
-        algo = Torrent_reg(a=a, fit_intercept=False)
+        algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=lmbd)
         algo = DecoR(algo, basis)
-        algo.fit_coef(x, y, L, lmbd)
+        algo.fit_coef(x, y, L)
 
         return {"estimate": algo.estimate, "inliniers": algo.inliniers, "tranformed": algo.get_transformed}
 

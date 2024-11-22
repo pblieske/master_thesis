@@ -176,15 +176,17 @@ class Torrent_reg(BaseRobustRegression):
     https://arxiv.org/abs/1506.02428
     """
 
-    def __init__(self, a: float, fit_intercept: bool = True, max_iter: int = 100):
+    def __init__(self, a: float, fit_intercept: bool = True, max_iter: int = 100, K=np.array([0]), lmbd=0):
         super().__init__(fit_intercept)
         if not 0 < a < 1:
             raise ValueError("'a' must be in the range (0, 1).")
         self.a = a
         self.max_iter = max_iter
         self.predicted_inliers = []
+        self.K=K
+        self.lmbd=lmbd
 
-    def fit(self, x: NDArray, y: NDArray, K:NDArray, lmbd:float) -> Self:
+    def fit(self, x: NDArray, y: NDArray) -> Self:
         """Fit model using an iterative process to determine inliers and refit the model.
             lambda: set of regularization parameters over which the cross-valdiation is performed
                     provid only a one-dimensional vector to keep it fixed
@@ -209,7 +211,7 @@ class Torrent_reg(BaseRobustRegression):
             X_temp=x[self.inliers]
             Y_temp=y[self.inliers]
             B=X_temp.T @ Y_temp
-            A=X_temp.T @ X_temp + lmbd*K
+            A=X_temp.T @ X_temp + self.lmbd*self.K
             
             self.coef=sp.linalg.solve(A, B)
 
