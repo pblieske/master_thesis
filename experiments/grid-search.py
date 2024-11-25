@@ -2,6 +2,8 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
+from matplotlib.colors import ListedColormap
+from matplotlib import cm
 
 from utils_nonlinear import get_results, plot_results, get_data, plot_settings
 from synthetic_data import functions_nonlinear
@@ -32,8 +34,8 @@ method_args = {
 }
 
 
-noise_vars =  1
-n = 2 ** 10 # number of observations
+noise_vars =  0.5
+n = 2 ** 8 # number of observations
 print("number of observations:", n)
 
 # ----------------------------------
@@ -42,11 +44,11 @@ print("number of observations:", n)
 n_x=200
 test_points=np.array([i / n_x for i in range(0, n_x)])
 y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["beta"][0])
-m=100
+m=10        #Number of Monte Carlo samples drwan
 
 #Choose the grid
-Lmbd_min=-2
-Lmbd_max=1
+Lmbd_min=-3
+Lmbd_max=0
 L_max=50
 L=np.array(range(1, L_max))                              #Number of coefficients used
 Lmbd=np.array([2**i for i in range(Lmbd_min*10, Lmbd_max*10)])     #Regularization parameters
@@ -70,13 +72,16 @@ for __ in range(0,m):#Get data
             y_est=np.ndarray((n_x, 1), buffer=y_est)
             #Compute the L^2-error
             err[l-1, j]=err[l-1, j]+ 1/(m*np.sqrt(n_x))*np.linalg.norm(y_true-y_est, ord=2)
-    print(__)
+    if __ % 10 ==0:
+     print("Number of samples darwn: " + str(__))
 
 # ----------------------------------
 # plotting
 # ----------------------------------
 
-plt.imshow(err, aspect='0.75')
+magmaBig = cm.get_cmap('magma', 512)
+newcmp =ListedColormap(magmaBig(np.linspace(0, 0.75, 384)))
+plt.imshow(err, aspect='0.6', cmap=newcmp)
 # Add colorbar 
 plt.colorbar() 
 plt.title(r'$L^2$-error' ) 

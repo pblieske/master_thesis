@@ -78,7 +78,7 @@ class Torrent(BaseRobustRegression):
     https://arxiv.org/abs/1506.02428
     """
 
-    def __init__(self, a: float, fit_intercept: bool = True, max_iter: int = 100):
+    def __init__(self, a: float, fit_intercept: bool = False, max_iter: int = 100):
         super().__init__(fit_intercept)
         if not 0 < a < 1:
             raise ValueError("'a' must be in the range (0, 1).")
@@ -176,7 +176,7 @@ class Torrent_reg(BaseRobustRegression):
     https://arxiv.org/abs/1506.02428
     """
 
-    def __init__(self, a: float, fit_intercept: bool = True, max_iter: int = 100, K=np.array([0]), lmbd=0):
+    def __init__(self, a: float, fit_intercept: bool = False, max_iter: int = 100, K=np.array([0]), lmbd=0):
         super().__init__(fit_intercept)
         if not 0 < a < 1:
             raise ValueError("'a' must be in the range (0, 1).")
@@ -188,8 +188,7 @@ class Torrent_reg(BaseRobustRegression):
 
     def fit(self, x: NDArray, y: NDArray) -> Self:
         """Fit model using an iterative process to determine inliers and refit the model.
-            lambda: set of regularization parameters over which the cross-valdiation is performed
-                    provid only a one-dimensional vector to keep it fixed
+            lambda: the regularization parameter
             K:      positive semi-definite matrix for the penalty
             """
 
@@ -227,3 +226,68 @@ class Torrent_reg(BaseRobustRegression):
         return self
 
 
+class Torrent_cv(BaseRobustRegression):
+    """Torrent algorithm for regression with robustness to outliers.
+
+    Extends the base regression to implement an iterative process of fitting and refining inliers.
+
+    Attributes:
+        a (float): Proportion of data considered as inliers.
+        max_iter (int): Maximum number of iterations.
+        predicted_inliers (list): List to track inliers over iterations.
+
+    Reference:
+    Robust Regression via Hard Thresholding, Kush Bhatia, Prateek Jain, Purushottam Kar,
+    https://arxiv.org/abs/1506.02428
+    """
+
+    def __init__(self, a: float, fit_intercept: bool = False, max_iter: int = 100, K=np.array([0]), lmbd=np.array(0)):
+        super().__init__(fit_intercept)
+        if not 0 < a < 1:
+            raise ValueError("'a' must be in the range (0, 1).")
+        self.a = a
+        self.max_iter = max_iter
+        self.predicted_inliers = []
+        self.K=K
+        self.lmbd=lmbd
+
+    def fit(self, x: NDArray, y: NDArray) -> Self:
+        """Fit model using an iterative process to determine inliers and refit the model.
+            lambda: set of regularization parameters over which the cross-valdiation is performed
+                    provid only a one-dimensional vector to keep it fixed
+            K:      positive semi-definite matrix for the penalty
+            """
+
+        n = len(y)
+        y = y.reshape(n, -1)
+
+        self._validate_inputs(x, y)
+        if self.fit_intercept:
+            x = self._add_intercept(x)
+
+        an = int(self.a * n)
+        if an == 0:
+            raise ValueError("'a' is too small. Increase 'a' or the number of data points .")
+
+        self.inliers = list(range(n))
+        self.predicted_inliers.append(self.inliers)
+        lammbda_cv=self.lmbd[0]
+
+        for __ in range(self.max_iter):
+            X_temp=x[self.inliers]
+            Y_temp=y[self.inliers]
+            B=X_temp.T @ Y_temp
+            A=X_temp.T @ X_temp + self.lmbd*self.K 
+            
+            self.coef=sp.linalg.solve(A, B)
+
+            err = np.linalg.norm(y - x @ self.coef, axis=1)
+
+            old_inliers = self.inliers
+            self.inliers = np.argpartition(err, an)[:an]
+            self.predicted_inliers.append(self.inliers)
+
+            if set(self.inliers) == set(old_inliers):
+                break
+            
+        return self
