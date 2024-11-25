@@ -106,7 +106,7 @@ def get_handles():
     return [point_1]
 
 plt.xlabel("x")
-plt.ylabel("y")
+plt.ylabel("u")
 plt.title("Confounder")
 plt.legend(handles=get_handles(), loc="upper right")
 plt.hlines(0, 0, 1, colors='black', linestyles='dashed')

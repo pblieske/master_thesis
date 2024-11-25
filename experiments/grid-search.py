@@ -44,7 +44,7 @@ print("number of observations:", n)
 n_x=200
 test_points=np.array([i / n_x for i in range(0, n_x)])
 y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["beta"][0])
-m=10        #Number of Monte Carlo samples drwan
+m=200        #Number of Monte Carlo samples drwan
 
 #Choose the grid
 Lmbd_min=-3

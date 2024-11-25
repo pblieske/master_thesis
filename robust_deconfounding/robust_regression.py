@@ -271,13 +271,14 @@ class Torrent_cv(BaseRobustRegression):
 
         self.inliers = list(range(n))
         self.predicted_inliers.append(self.inliers)
-        lammbda_cv=self.lmbd[0]
+        lambda_cv=self.lmbd[0]
+        err=np.inf
 
         for __ in range(self.max_iter):
             X_temp=x[self.inliers]
             Y_temp=y[self.inliers]
             B=X_temp.T @ Y_temp
-            A=X_temp.T @ X_temp + self.lmbd*self.K 
+            A=X_temp.T @ X_temp + lambda_cv*self.K 
             
             self.coef=sp.linalg.solve(A, B)
 
@@ -291,3 +292,10 @@ class Torrent_cv(BaseRobustRegression):
                 break
             
         return self
+    
+def cross_validation(x, y, Lmbd, K) -> float:
+    n=len(Lmbd)
+    partition=np.split(np.random.shuffle(range(0, n)), 10)
+    print(partition)
+    for lmbd in Lmbd:
+        t=1
