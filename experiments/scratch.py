@@ -28,7 +28,7 @@ data_args = {
 
 method_args = {
     "a": 0.65,
-    "method": "torrent_cv",        # "torrent" | "bfs"
+    "method": "torrent_cv2",        # "torrent" | "bfs"
 }
 
 
@@ -51,11 +51,9 @@ basis = np.vstack(basis_tmp).T
 data_values = get_data(n, **data_args, noise_var=noise_vars)
 data_values.pop('u')
 #Estimate the function f
-diag=np.concatenate((np.array([0]), np.array([i for i in range(1,L_temp)])))
+diag=np.concatenate((np.array([0]), np.array([i**4 for i in range(1,L_temp)])))
 K=np.diag(diag)
-print(K)
-lmbd=np.array([2**(i/2) for i in range(-40, 0)])
-print(lmbd)
+lmbd=np.array([2**(i) for i in range(-30, 0)])
 estimates_decor = get_results(**data_values, **method_args, K=K, L=L_temp, lmbd=lmbd)
 y_est=basis @ estimates_decor["estimate"]
 y_est=np.ndarray((n_x, 1), buffer=y_est)

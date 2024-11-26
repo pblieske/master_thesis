@@ -243,6 +243,7 @@ class Torrent_cv(BaseRobustRegression):
         self.K=K
         self.lmbd=lmbd
 
+
     def fit(self, x: NDArray, y: NDArray) -> Self:
         """Fit model using an iterative process to determine inliers and refit the model.
             lambda: set of regularization parameters over which the cross-valdiation is performed
@@ -277,8 +278,6 @@ class Torrent_cv(BaseRobustRegression):
             inliers_new = np.argpartition(err, an)[:an]
             err_new=np.linalg.norm(err[inliers_new], ord=2)
 
-            print("Error: " + str(err_new))
-
             if err_new <= err_old:
                 err_old=err_new
                 self.coef=coef_new
@@ -289,6 +288,71 @@ class Torrent_cv(BaseRobustRegression):
             else:
                break
 
+        return self
+    
+class Torrent_cv2(BaseRobustRegression):
+    """Torrent algorithm for regression with robustness to outliers.
+
+    Extends the base regression to implement an iterative process of fitting and refining inliers.
+
+    Attributes:
+        a (float): Proportion of data considered as inliers.
+        max_iter (int): Maximum number of iterations.
+        predicted_inliers (list): List to track inliers over iterations.
+    """
+    
+    
+    def __init__(self, a: float, fit_intercept: bool = False, max_iter: int = 100, K=np.array([0]), lmbd=np.array(0)):
+        super().__init__(fit_intercept)
+        if not 0 < a < 1:
+            raise ValueError("'a' must be in the range (0, 1).")
+        self.a = a
+        self.max_iter = max_iter
+        self.predicted_inliers = []
+        self.K=K
+        self.lmbd=lmbd
+
+    def fit(self, x: NDArray, y: NDArray) -> Self:
+        """Fit model using an iterative process to determine inliers and refit the model.
+            lambda: set of regularization parameters over which the cross-valdiation is performed
+                    provid only a one-dimensional vector to keep it fixed
+            K:      positive semi-definite matrix for the penalty
+            """
+        k=10        #Number of folds
+        n_lambda=len(self.lmbd)
+        err_cv=np.zeros(n_lambda)
+
+        for i in range(0,n_lambda):
+            algo = Torrent_reg(a=self.a, fit_intercept=False, K=self.K, lmbd=self.lmbd[i])
+            algo.fit(x,y)
+            x_temp=x[algo.inliers]
+            y_temp=y[algo.inliers]
+            n=len(y_temp)
+            fold_size=n//k
+            partition=np.random.permutation(n)
+
+            for j in range(0,k):
+                test_indx=partition[j*fold_size:(j+1)*fold_size]
+                X_train=np.delete(x_temp, test_indx, axis=0)
+                Y_train=np.delete(x_temp, test_indx, axis=0)
+                B=X_train.T @ Y_train
+                A=X_train.T @ X_train + self.lmbd[i]*self.K 
+                coef=sp.linalg.solve(A, B)
+                err =np.linalg.norm(y[test_indx] - x[test_indx] @ coef, axis=1)
+                err=np.linalg.norm(err, ord=2)**2
+                err_cv[i]=err_cv[i]+1/fold_size*err
+
+        lambda_cv=self.lmbd[np.argmin(err_cv)]
+        print(lambda_cv)
+        self.lmbd=lambda_cv
+        algo = Torrent_reg(a=self.a, fit_intercept=False, K=self.K, lmbd=self.lmbd)
+        algo.fit(x, y)
+
+        self.fit_intercept = algo.fit_intercept
+        self.model = None
+        self.inliers = algo.inliers
+        self.coef= algo.coef
+    
         return self
     
 def cross_validation(x, y, Lmbd, K, a) -> float:
@@ -309,9 +373,9 @@ def cross_validation(x, y, Lmbd, K, a) -> float:
             A=X_train.T @ X_train + Lmbd[i]*K 
             coef=sp.linalg.solve(A, B)
             err = np.linalg.norm(y[test_indx] - x[test_indx] @ coef, axis=1)
-            inliers_test = np.argpartition(err, an_fold)[:an_fold]
-            err=np.linalg.norm(err[inliers_test], ord=2)
-            err_cv[i]=err_cv[i]+1/k*err
+            #inliers_test = np.argpartition(err, an_fold)[:an_fold]
+            err=np.linalg.norm(err, ord=2)**2
+            err_cv[i]=err_cv[i]+1/fold_size*err
 
     indx_cv=np.argmin(err_cv)
     return Lmbd[indx_cv]
