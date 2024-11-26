@@ -227,6 +227,8 @@ class Torrent_cv(BaseRobustRegression):
 
     Extends the base regression to implement an iterative process of fitting and refining inliers.
 
+    Torrent_cv performes a cross-validation step after each estimation of the inlinier set the find the best regularization parameter lambda for the next iteration.
+
     Attributes:
         a (float): Proportion of data considered as inliers.
         max_iter (int): Maximum number of iterations.
@@ -284,16 +286,19 @@ class Torrent_cv(BaseRobustRegression):
                 self.inliers = inliers_new
                 self.predicted_inliers.append(self.inliers)
                 lambda_cv=cross_validation(x[self.inliers], y[self.inliers], Lmbd=self.lmbd, K=self.K, a=self.a)
-                print(lambda_cv)
+                
             else:
                break
 
+        print(lambda_cv)     
         return self
     
 class Torrent_cv2(BaseRobustRegression):
     """Torrent algorithm for regression with robustness to outliers.
 
     Extends the base regression to implement an iterative process of fitting and refining inliers.
+
+    Torrent_cv version 2 excecutes the regularized Torrent algroithm and performs at the end a cross-validation to obtain the best regularization parameter lambda.
 
     Attributes:
         a (float): Proportion of data considered as inliers.
@@ -318,7 +323,7 @@ class Torrent_cv2(BaseRobustRegression):
                     provid only a one-dimensional vector to keep it fixed
             K:      positive semi-definite matrix for the penalty
             """
-        k=10        #Number of folds
+        k=5        #Number of folds
         n_lambda=len(self.lmbd)
         err_cv=np.zeros(n_lambda)
 
@@ -354,9 +359,13 @@ class Torrent_cv2(BaseRobustRegression):
         self.coef= algo.coef
     
         return self
-    
+
+"""
+    simple help function to perform the cross-validation step
+"""    
+
 def cross_validation(x, y, Lmbd, K, a) -> float:
-    k=10        #Number of folds
+    k=5        #Number of folds
     n=len(y)
     fold_size=n//k
     n_lmbd=len(Lmbd)

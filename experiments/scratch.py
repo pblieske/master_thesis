@@ -14,26 +14,26 @@ For this we simulated only one draw for a fixed number of observations n, for Mo
 
 colors, ibm_cb = plot_settings()
 
-SEED = 5
+SEED = 4
 np.random.seed(SEED)
 random.seed(SEED)
 
 data_args = {
     "process_type": "blpnl",       # "ou" | "blp" | "blpnl"
     "basis_type": "cosine",     # "cosine" | "haar"
-    "fraction": 0.3,
+    "fraction": 0.2,
     "beta": np.array([2]),
     "band": list(range(0, 50))  # list(range(0, 50)) | None
 }
 
 method_args = {
-    "a": 0.65,
-    "method": "torrent_cv2",        # "torrent" | "bfs"
+    "a": 0.3,
+    "method": "torrent_cv",        # "torrent" | "bfs"
 }
 
 
 noise_vars =  0
-n = 2 ** 8 # number of observations
+n = 2 ** 10 # number of observations
 print("number of observations:", n)
 
 # ----------------------------------
@@ -42,7 +42,7 @@ print("number of observations:", n)
 n_x=200
 test_points=np.array([i / n_x for i in range(0, n_x)])
 y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["beta"][0])
-L_temp=10
+L_temp=50
 print("number of coefficients:", L_temp)
 #Compute the basis
 basis_tmp = [np.cos(np.pi * test_points * k ) for k in range( L_temp)] 
@@ -53,7 +53,7 @@ data_values.pop('u')
 #Estimate the function f
 diag=np.concatenate((np.array([0]), np.array([i**4 for i in range(1,L_temp)])))
 K=np.diag(diag)
-lmbd=np.array([2**(i) for i in range(-30, 0)])
+lmbd=np.concatenate((np.array([0]), np.array([2**(i/2) for i in range(-60, 0)])))
 estimates_decor = get_results(**data_values, **method_args, K=K, L=L_temp, lmbd=lmbd)
 y_est=basis @ estimates_decor["estimate"]
 y_est=np.ndarray((n_x, 1), buffer=y_est)
@@ -79,9 +79,8 @@ def get_handles():
     point_1 = Line2D([0], [0], label='Observations', marker='o', mec='black', color='w')
     point_2 = Line2D([0], [0], label='Truth', markeredgecolor='w', color='black', linestyle='-')
     point_3 = Line2D([0], [0], label="DecoR" , color=ibm_cb[1], linestyle='-')
-    point_4= Line2D([0], [0], label="OLS" , color=ibm_cb[4], linestyle='-')
 
-    return [point_1, point_2, point_3, point_4]
+    return [point_1, point_2, point_3]
 
 
 plt.xlabel("x")

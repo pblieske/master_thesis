@@ -323,7 +323,7 @@ def functions_nonlinear(x:NDArray, beta:int):
     """
     n=np.size(x)
     if beta==1:
-        y = 4*(x - np.full((n, 1), 0.5, dtype=float))**2 
+        y = 20*(x - np.full((n, 1), 0.5, dtype=float))**2 
     elif beta==2:
         y = 4*np.sin(6*x)
     else:
