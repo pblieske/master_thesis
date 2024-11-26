@@ -1,4 +1,3 @@
-[![Build Status](https://app.travis-ci.com/fschur/robust_deconfounding.svg?token=pYfyy5csz8JR86HGpneh&branch=main)](https://travis-ci.com/fschur/robust_deconfounding)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 # Spectral Deconfounding of Time Series
