@@ -8,7 +8,7 @@ import pylab
 import sys
 sys.path.insert(0, '/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_thesis/code/master_thesis')
 
-from robust_deconfounding.robust_regression import Torrent, BFS, Torrent_reg
+from robust_deconfounding.robust_regression import Torrent, BFS, Torrent_reg, Torrent_cv
 from robust_deconfounding.decor import DecoR
 from robust_deconfounding.utils import cosine_basis, haarMatrix
 from experiments.synthetic_data import BLPDataGenerator, OUDataGenerator, BLPNonlinearDataGenerator
@@ -62,19 +62,17 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method
     Raises:
         ValueError: If an invalid method is specified.
     """
-    if method == "torrent" or method == "bfs":
+    if method != "ols":
         if method == "torrent":
             algo = Torrent(a=a, fit_intercept=False)
         elif method == "bfs":
             algo = BFS(a=a, fit_intercept=False)
-
-        algo = DecoR(algo, basis)
-        algo.fit_coef(x, y, L)
-
-        return {"estimate": algo.estimate, "inliniers": algo.inliniers, "tranformed": algo.get_transformed}
-
-    elif method== "torrent_reg":
-        algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=lmbd)
+        elif method == "torrent_reg":
+            algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=lmbd)
+        elif algo=="torrent_cv":
+            algo = Torrent_cv(a=a, fit_intercept=False, K=K, lmbd=lmbd)
+        else:
+            raise ValueError("Invalid method")
         algo = DecoR(algo, basis)
         algo.fit_coef(x, y, L)
 
@@ -88,7 +86,6 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method
         yn = basis.T @ y / n
         model_l = sm.OLS(yn, xn).fit()
         return model_l.params
-
 
     else:
         raise ValueError("Invalid method")

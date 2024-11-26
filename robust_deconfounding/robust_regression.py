@@ -170,10 +170,6 @@ class Torrent_reg(BaseRobustRegression):
         a (float): Proportion of data considered as inliers.
         max_iter (int): Maximum number of iterations.
         predicted_inliers (list): List to track inliers over iterations.
-
-    Reference:
-    Robust Regression via Hard Thresholding, Kush Bhatia, Prateek Jain, Purushottam Kar,
-    https://arxiv.org/abs/1506.02428
     """
 
     def __init__(self, a: float, fit_intercept: bool = False, max_iter: int = 100, K=np.array([0]), lmbd=0):
@@ -235,10 +231,6 @@ class Torrent_cv(BaseRobustRegression):
         a (float): Proportion of data considered as inliers.
         max_iter (int): Maximum number of iterations.
         predicted_inliers (list): List to track inliers over iterations.
-
-    Reference:
-    Robust Regression via Hard Thresholding, Kush Bhatia, Prateek Jain, Purushottam Kar,
-    https://arxiv.org/abs/1506.02428
     """
 
     def __init__(self, a: float, fit_intercept: bool = False, max_iter: int = 100, K=np.array([0]), lmbd=np.array(0)):
@@ -272,7 +264,7 @@ class Torrent_cv(BaseRobustRegression):
         self.inliers = list(range(n))
         self.predicted_inliers.append(self.inliers)
         lambda_cv=self.lmbd[0]
-        err=np.inf
+        err_old=np.inf
 
         for __ in range(self.max_iter):
             X_temp=x[self.inliers]
@@ -284,12 +276,16 @@ class Torrent_cv(BaseRobustRegression):
 
             err = np.linalg.norm(y - x @ self.coef, axis=1)
 
-            old_inliers = self.inliers
             self.inliers = np.argpartition(err, an)[:an]
             self.predicted_inliers.append(self.inliers)
+            err_new=err[self.inliers]
 
-            if set(self.inliers) == set(old_inliers):
+            if err_new <= err_old:
                 break
+            else:
+                err_old=err_new
+            
+            lambda_cv=cross_validation(x[self.inliers, ], y[self.inliers], Lmbd=self.lmbd, K=self.K)
             
         return self
     
@@ -297,5 +293,4 @@ def cross_validation(x, y, Lmbd, K) -> float:
     n=len(Lmbd)
     partition=np.split(np.random.shuffle(range(0, n)), 10)
     print(partition)
-    for lmbd in Lmbd:
-        t=1
+    return Lmbd[0]
