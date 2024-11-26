@@ -203,13 +203,14 @@ class Torrent_reg(BaseRobustRegression):
         self.predicted_inliers.append(self.inliers)
 
         for __ in range(self.max_iter):
+            #Set up the normal equation
             X_temp=x[self.inliers]
             Y_temp=y[self.inliers]
             B=X_temp.T @ Y_temp
             A=X_temp.T @ X_temp + self.lmbd*self.K 
-            
-            self.coef=sp.linalg.solve(A, B)
 
+            #Solve the linear system
+            self.coef=sp.linalg.solve(A, B)
             err = np.linalg.norm(y - x @ self.coef, axis=1)
 
             old_inliers = self.inliers
@@ -323,10 +324,11 @@ class Torrent_cv2(BaseRobustRegression):
                     provid only a one-dimensional vector to keep it fixed
             K:      positive semi-definite matrix for the penalty
             """
-        k=5        #Number of folds
+        k=10        #Number of folds
         n_lambda=len(self.lmbd)
         err_cv=np.zeros(n_lambda)
 
+        #Perform cross-validation
         for i in range(0,n_lambda):
             algo = Torrent_reg(a=self.a, fit_intercept=False, K=self.K, lmbd=self.lmbd[i])
             algo.fit(x,y)
@@ -347,14 +349,16 @@ class Torrent_cv2(BaseRobustRegression):
                 err=np.linalg.norm(err, ord=2)**2
                 err_cv[i]=err_cv[i]+1/fold_size*err
 
+        print(err_cv)
+        #Select the lambda with the smallest cv-error
         lambda_cv=self.lmbd[np.argmin(err_cv)]
         print(lambda_cv)
         self.lmbd=lambda_cv
         algo = Torrent_reg(a=self.a, fit_intercept=False, K=self.K, lmbd=self.lmbd)
         algo.fit(x, y)
 
+        #Copy the final results to the object
         self.fit_intercept = algo.fit_intercept
-        self.model = None
         self.inliers = algo.inliers
         self.coef= algo.coef
     

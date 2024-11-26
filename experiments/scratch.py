@@ -28,7 +28,7 @@ data_args = {
 
 method_args = {
     "a": 0.3,
-    "method": "torrent_cv",        # "torrent" | "bfs"
+    "method": "torrent_cv2",        # "torrent" | "bfs"
 }
 
 
@@ -53,7 +53,7 @@ data_values.pop('u')
 #Estimate the function f
 diag=np.concatenate((np.array([0]), np.array([i**4 for i in range(1,L_temp)])))
 K=np.diag(diag)
-lmbd=np.concatenate((np.array([0]), np.array([2**(i/2) for i in range(-60, 0)])))
+lmbd=np.concatenate((np.array([0]), np.array([2**(i/4) for i in range(-100,  20)])))
 estimates_decor = get_results(**data_values, **method_args, K=K, L=L_temp, lmbd=lmbd)
 y_est=basis @ estimates_decor["estimate"]
 y_est=np.ndarray((n_x, 1), buffer=y_est)
