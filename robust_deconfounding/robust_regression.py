@@ -272,25 +272,46 @@ class Torrent_cv(BaseRobustRegression):
             B=X_temp.T @ Y_temp
             A=X_temp.T @ X_temp + lambda_cv*self.K 
             
-            self.coef=sp.linalg.solve(A, B)
+            coef_new=sp.linalg.solve(A, B)
+            err = np.linalg.norm(y - x @ coef_new, axis=1)
+            inliers_new = np.argpartition(err, an)[:an]
+            err_new=np.linalg.norm(err[inliers_new], ord=2)
 
-            err = np.linalg.norm(y - x @ self.coef, axis=1)
-
-            self.inliers = np.argpartition(err, an)[:an]
-            self.predicted_inliers.append(self.inliers)
-            err_new=err[self.inliers]
+            print("Error: " + str(err_new))
 
             if err_new <= err_old:
-                break
-            else:
                 err_old=err_new
-            
-            lambda_cv=cross_validation(x[self.inliers, ], y[self.inliers], Lmbd=self.lmbd, K=self.K)
-            
+                self.coef=coef_new
+                self.inliers = inliers_new
+                self.predicted_inliers.append(self.inliers)
+                lambda_cv=cross_validation(x[self.inliers], y[self.inliers], Lmbd=self.lmbd, K=self.K, a=self.a)
+                print(lambda_cv)
+            else:
+               break
+
         return self
     
-def cross_validation(x, y, Lmbd, K) -> float:
-    n=len(Lmbd)
-    partition=np.split(np.random.shuffle(range(0, n)), 10)
-    print(partition)
-    return Lmbd[0]
+def cross_validation(x, y, Lmbd, K, a) -> float:
+    k=10        #Number of folds
+    n=len(y)
+    fold_size=n//k
+    n_lmbd=len(Lmbd)
+    partition=np.random.permutation(n)
+    err_cv=np.zeros(n_lmbd)
+    an_fold = int(a * fold_size)
+
+    for i in range(0, n_lmbd):
+        for j in range(0,k):
+            test_indx=partition[j*fold_size:(j+1)*fold_size]
+            X_train=np.delete(x, test_indx, axis=0)
+            Y_train=np.delete(x, test_indx, axis=0)
+            B=X_train.T @ Y_train
+            A=X_train.T @ X_train + Lmbd[i]*K 
+            coef=sp.linalg.solve(A, B)
+            err = np.linalg.norm(y[test_indx] - x[test_indx] @ coef, axis=1)
+            inliers_test = np.argpartition(err, an_fold)[:an_fold]
+            err=np.linalg.norm(err[inliers_test], ord=2)
+            err_cv[i]=err_cv[i]+1/k*err
+
+    indx_cv=np.argmin(err_cv)
+    return Lmbd[indx_cv]

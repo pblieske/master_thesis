@@ -69,7 +69,7 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method
             algo = BFS(a=a, fit_intercept=False)
         elif method == "torrent_reg":
             algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=lmbd)
-        elif algo=="torrent_cv":
+        elif method =="torrent_cv":
             algo = Torrent_cv(a=a, fit_intercept=False, K=K, lmbd=lmbd)
         else:
             raise ValueError("Invalid method")

@@ -32,7 +32,7 @@ method_args = {
 }
 
 
-noise_vars =  0.5
+noise_vars =  0
 n = 2 ** 8 # number of observations
 print("number of observations:", n)
 
@@ -42,7 +42,7 @@ print("number of observations:", n)
 n_x=200
 test_points=np.array([i / n_x for i in range(0, n_x)])
 y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["beta"][0])
-L_temp=6
+L_temp=10
 print("number of coefficients:", L_temp)
 #Compute the basis
 basis_tmp = [np.cos(np.pi * test_points * k ) for k in range( L_temp)] 
@@ -51,10 +51,13 @@ basis = np.vstack(basis_tmp).T
 data_values = get_data(n, **data_args, noise_var=noise_vars)
 data_values.pop('u')
 #Estimate the function f
-estimates_decor = get_results(**data_values, **method_args, L=L_temp)
-estimates_fourrier= get_results(**data_values, method="ols", L=L_temp, a=0).T
+diag=np.concatenate((np.array([0]), np.array([i for i in range(1,L_temp)])))
+K=np.diag(diag)
+print(K)
+lmbd=np.array([2**(i/2) for i in range(-40, 0)])
+print(lmbd)
+estimates_decor = get_results(**data_values, **method_args, K=K, L=L_temp, lmbd=lmbd)
 y_est=basis @ estimates_decor["estimate"]
-y_fourrier= basis @ estimates_fourrier
 y_est=np.ndarray((n_x, 1), buffer=y_est)
 #Compute the L^2-error
 print("$L^2$-error: ", 1/np.sqrt(n_x)*np.linalg.norm(y_true-y_est, ord=2))
@@ -67,7 +70,6 @@ sub=np.linspace(0, n-1, 2**8).astype(int)
 plt.plot(data_values['x'][sub],data_values['y'][sub], 'o:w', mec = 'black')
 plt.plot(test_points, y_true, '-', color='black')
 plt.plot(test_points, y_est, '-', color=ibm_cb[1])
-plt.plot(test_points, y_fourrier, color=ibm_cb[4])
 
 titles = {"blp": "Band-Limited", "ou": "Ornstein-Uhlenbeck", "blpnl" : "Nonlinear: Band-Limited"}
 titles_basis = {"cosine": "", "haar": ", Haar basis"}
