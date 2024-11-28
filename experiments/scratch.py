@@ -28,7 +28,7 @@ data_args = {
 
 method_args = {
     "a": 0.3,
-    "method": "torrent_cv2",        # "torrent" | "bfs"
+    "method": "torrent_cv",        # "torrent" | "bfs"
 }
 
 
@@ -42,7 +42,7 @@ print("number of observations:", n)
 n_x=200
 test_points=np.array([i / n_x for i in range(0, n_x)])
 y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["beta"][0])
-L_temp=50
+L_temp=20
 print("number of coefficients:", L_temp)
 #Compute the basis
 basis_tmp = [np.cos(np.pi * test_points * k ) for k in range( L_temp)] 

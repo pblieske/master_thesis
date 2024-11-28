@@ -286,12 +286,10 @@ class Torrent_cv(BaseRobustRegression):
                 self.coef=coef_new
                 self.inliers = inliers_new
                 self.predicted_inliers.append(self.inliers)
-                lambda_cv=cross_validation(x[self.inliers], y[self.inliers], Lmbd=self.lmbd, K=self.K, a=self.a)
-                
+                lambda_cv=cross_validation(x[self.inliers], y[self.inliers], Lmbd=self.lmbd, K=self.K, a=self.a)    
             else:
                break
-
-        print(lambda_cv)     
+   
         return self
     
 class Torrent_cv2(BaseRobustRegression):
@@ -349,10 +347,8 @@ class Torrent_cv2(BaseRobustRegression):
                 err=np.linalg.norm(err, ord=2)**2
                 err_cv[i]=err_cv[i]+1/fold_size*err
 
-        print(err_cv)
         #Select the lambda with the smallest cv-error
         lambda_cv=self.lmbd[np.argmin(err_cv)]
-        print(lambda_cv)
         self.lmbd=lambda_cv
         algo = Torrent_reg(a=self.a, fit_intercept=False, K=self.K, lmbd=self.lmbd)
         algo.fit(x, y)
