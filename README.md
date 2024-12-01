@@ -3,7 +3,7 @@
 # Spectral Deconfounding of Time Series 
 
 
-$${\color{red} (Under construction!)}$$ Master's Thesis write by Pio Blieske at the Seminar of Statistics at ETH under the supervision of Jonas Peters and Felix Schur. The repository was originally forked from (https://github.com/fschur/robust_deconfounding).
+<code style="color : red"> (Under construction!) </code>Master's Thesis write by Pio Blieske at the Seminar of Statistics at ETH under the supervision of Jonas Peters and Felix Schur. The repository was originally forked from (https://github.com/fschur/robust_deconfounding).
 
 ## Abstract
 
