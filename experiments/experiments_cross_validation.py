@@ -33,10 +33,10 @@ method_args = {
 }
 
 m = 100   #Number of repetitions for the Monte Carlo
-noise_vars = 0
+noise_vars = 0.5
 methods=["torrent", "torrent_cv", "torrent_cv2"]
-num_data = [4 * 2 ** k for k in range(2, 11)]      # [4, 8, 10]
-Lmbd=np.array([2**i for i in range(-20, 0)])
+num_data = [4 * 2 ** k for k in range(2, 9)]      # [4, 8, 10]
+Lmbd=np.array([2**(i/2) for i in range(-60, 0)])
 
 # ----------------------------------
 # run experiments
@@ -51,7 +51,7 @@ for i in range(len(methods)):
     for n in num_data:
         print("number of data points: ", n)
         res["DecoR"].append([])
-        L_temp=max(np.floor(n**(1/4)).astype(int),1)      
+        L_temp=max(np.floor(n**(1/2)).astype(int),1)      
         basis_tmp = [np.cos(np.pi * test_points * k ) for k in range(L_temp)]
         basis = np.vstack(basis_tmp).T
         print("number of coefficients: ", L_temp)
@@ -68,7 +68,7 @@ for i in range(len(methods)):
             res["DecoR"][-1].append(1/np.sqrt(n_x)*np.linalg.norm(y_true-y_est, ord=2))
             
     res["DecoR"] = np.array(res["DecoR"])
-    
+
     #Plotting using seaborn
     values =  np.expand_dims(res["DecoR"], 2).ravel()
     time = np.repeat(num_data, m )

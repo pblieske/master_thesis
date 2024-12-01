@@ -1,6 +1,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-# Spectral Deconfounding of Time Series
+# Spectral Deconfounding of Time Series <font color="red">(Under construction!)</font>
+
 
 Master's Thesis write by Pio Blieske at the Seminar of Statistics at ETH under the supervision of Jonas Peters and Felix Schur. The repository was originally forked from (https://github.com/fschur/robust_deconfounding).
 
