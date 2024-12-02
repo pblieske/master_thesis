@@ -1,9 +1,11 @@
 import numpy as np
+import scipy as sp
 from numpy.typing import NDArray
 import statsmodels.api as sm
 import pandas as pd
 import seaborn as sns
 import pylab
+
 
 import sys
 sys.path.insert(0, '/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_thesis/code/master_thesis')
@@ -165,3 +167,25 @@ def plot_results(res: dict, num_data: list, m: int, colors) -> None:
                  markers=["o", "X"], dashes=False, errorbar=("ci", 95), err_style="band",
                  palette=[colors[0], colors[1]], legend=True)
 
+def estimated_pred_err(x, y, lmbd=0, K=np.array([0]), k=10) -> float:
+     
+    """
+        Performs a k-fold cross-validation to estimate the prediction error.
+    """
+    n=len(y)
+    fold_size=n//k
+    partition=np.random.permutation(n)
+    err=0
+
+    for j in range(0,k):
+        test_indx=partition[j*fold_size:(j+1)*fold_size]
+        X_train=np.delete(x, test_indx, axis=0)
+        Y_train=np.delete(x, test_indx, axis=0)
+        B=X_train.T @ Y_train
+        A=X_train.T @ X_train + lmbd*K 
+        coef=sp.linalg.solve(A, B)
+        err = np.linalg.norm(y[test_indx] - x[test_indx] @ coef, axis=1)
+        err=np.linalg.norm(err, ord=2)**2
+        err=err+1/fold_size*err
+
+    return np.sqrt(err)

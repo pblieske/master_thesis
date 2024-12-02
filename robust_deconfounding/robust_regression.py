@@ -343,14 +343,13 @@ class Torrent_cv2(BaseRobustRegression):
                 B=X_train.T @ Y_train
                 A=X_train.T @ X_train + self.lmbd[i]*self.K 
                 coef=sp.linalg.solve(A, B)
-                err =np.linalg.norm(y[test_indx] - x[test_indx] @ coef, axis=1)
-                err=np.linalg.norm(err, ord=2)**2
+                err =np.linalg.norm(y[test_indx] - x[test_indx] @ coef, ord=2)**2
                 err_cv[i]=err_cv[i]+1/fold_size*err
 
         #Select the lambda with the smallest cv-error
         lambda_cv=self.lmbd[np.argmin(err_cv)]
         self.lmbd=lambda_cv
-        algo = Torrent_reg(a=self.a, fit_intercept=False, K=self.K, lmbd=self.lmbd)
+        algo = Torrent_reg(a=self.a, fit_intercept=False, K=self.K, lmbd=lambda_cv)
         algo.fit(x, y)
 
         #Copy the final results to the object
