@@ -365,7 +365,7 @@ class Torrent_cv2(BaseRobustRegression):
 """    
 
 def cross_validation(x, y, Lmbd, K, a) -> float:
-    k=5        #Number of folds
+    k=10        #Number of folds
     n=len(y)
     fold_size=n//k
     n_lmbd=len(Lmbd)

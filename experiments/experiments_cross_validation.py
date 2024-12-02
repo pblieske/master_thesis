@@ -32,8 +32,8 @@ method_args = {
     "method": "torrent",        # "torrent" | "bfs"
 }
 
-m = 100   #Number of repetitions for the Monte Carlo
-noise_vars = 0.5
+m = 10   #Number of repetitions for the Monte Carlo
+noise_vars = 1
 methods=["torrent", "torrent_cv", "torrent_cv2"]
 num_data = [4 * 2 ** k for k in range(2, 9)]      # [4, 8, 10]
 Lmbd=np.array([2**(i/2) for i in range(-60, 0)])
@@ -92,11 +92,11 @@ titles_dim = {1: "", 2: ", 2-dimensional"}
 def get_handles():
     point_2 = Line2D([0], [0], label='DecoR', marker='X',
                      markeredgecolor='w', color=ibm_cb[5], linestyle='-')
-    point_3 = Line2D([0], [0], label="$Method: $" + str(methods[0]), markersize=10,
+    point_3 = Line2D([0], [0], label="Method: " + str(methods[0]), markersize=10,
                      color=ibm_cb[1], linestyle='-')
-    point_4 = Line2D([0], [0], label="$Method: $" + str(methods[1]), markersize=10,
+    point_4 = Line2D([0], [0], label="Method: " + str(methods[1]), markersize=10,
                      color=ibm_cb[4], linestyle='-')
-    point_5 = Line2D([0], [0], label="$Method: $" + str(methods[2]), markersize=10,
+    point_5 = Line2D([0], [0], label="Method: " + str(methods[2]), markersize=10,
                      color=ibm_cb[2], linestyle='-')
     return [ point_2, point_3, point_4, point_5]
 
