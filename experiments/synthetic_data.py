@@ -326,6 +326,8 @@ def functions_nonlinear(x:NDArray, beta:int):
         y = 20*(x - np.full((n, 1), 0.5, dtype=float))**2 
     elif beta==2:
         y = 4*np.sin(6*x)
+    elif beta==3:
+        y=10/(1+np.exp(-12*x+6))
     else:
         raise ValueError("Function not implemented.")
     return y

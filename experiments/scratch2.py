@@ -31,10 +31,10 @@ method_args = {
     "method": "torrent_reg",        # "torrent" | "bfs"
 }
 
-lmbd=np.concatenate((np.array([0]), np.array([10**(i/10) for i in range(-150,  0)])))
+lmbd=np.concatenate((np.array([0]), np.array([10**(i/10) for i in range(-100,  0)])))
 n_lmbd=len(lmbd)
 noise_vars =  0.5
-n = 2 ** 8 # number of observations
+n = 2 ** 10 # number of observations
 print("number of observations:", n)
 
 # ----------------------------------

@@ -22,7 +22,7 @@ data_args = {
     "process_type": "blpnl",       # "ou" | "blp" | "blpnl"
     "basis_type": "cosine",     # "cosine" | "haar"
     "fraction": 0.3,
-    "beta": np.array([2]),
+    "beta": np.array([3]),
     "band": list(range(0, 50))  # list(range(0, 50)) | None
 }
 
@@ -91,7 +91,7 @@ plt.title(titles[data_args["process_type"]]
           + titles_basis[data_args["basis_type"]]
           + titles_dim[len(data_args["beta"])])
 
-plt.legend(handles=get_handles(), loc="lower left")
+plt.legend(handles=get_handles(), loc="lower right")
 plt.tight_layout()
 plt.show()
 
@@ -117,7 +117,7 @@ plt.show()
 # plotting the outliers
 # ----------------------------------
 
-trans=estimates_decor["tranformed"]
+trans=estimates_decor["transformed"]
 P_n=trans["xn"]
 y_n=trans["yn"]
 

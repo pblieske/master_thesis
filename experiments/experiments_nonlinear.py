@@ -39,7 +39,7 @@ data_args = {
     "process_type": "blpnl",       # "ou" | "blp" | "blpnl"
     "basis_type": "cosine",     # "cosine" | "haar"
     "fraction": 0.3,
-    "beta": np.array([2]),
+    "beta": np.array([3]),
     "band": list(range(0, 50))  # list(range(0, 50)) | None
 }
 
@@ -48,7 +48,7 @@ method_args = {
     "method": "torrent",        # "torrent" | "bfs"
 }
 
-m = 200   #Number of repetitions for the Monte Carlo
+m = 5   #Number of repetitions for the Monte Carlo
 noise_vars = [0, 0.5, 1]
 num_data = [4 * 2 ** k for k in range(1, 12)]      # [4, 8, 10]
 
