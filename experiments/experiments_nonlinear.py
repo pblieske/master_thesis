@@ -48,7 +48,7 @@ method_args = {
     "method": "torrent",        # "torrent" | "bfs"
 }
 
-m = 5   #Number of repetitions for the Monte Carlo
+m = 200   #Number of repetitions for the Monte Carlo
 noise_vars = [0, 0.5, 1]
 num_data = [4 * 2 ** k for k in range(1, 12)]      # [4, 8, 10]
 
