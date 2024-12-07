@@ -184,8 +184,7 @@ def estimated_pred_err(x, y, lmbd=0, K=np.array([0]), k=10) -> float:
         B=X_train.T @ Y_train
         A=X_train.T @ X_train + lmbd*K 
         coef=sp.linalg.solve(A, B)
-        err = np.linalg.norm(y[test_indx] - x[test_indx] @ coef, axis=1)
-        err=np.linalg.norm(err, ord=2)**2
-        err=err+1/fold_size*err
+        err_add=np.linalg.norm(y[test_indx] - x[test_indx] @ coef, ord=2)**2
+        err=err+1/n*err_add
 
     return np.sqrt(err)
