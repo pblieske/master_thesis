@@ -276,6 +276,7 @@ class Torrent_reg(BaseRobustRegression):
     
         return  {"pred_err": err_cv, "S": S}
 
+
 class Torrent_cv(BaseRobustRegression):
     """Torrent algorithm for regression with robustness to outliers.
 

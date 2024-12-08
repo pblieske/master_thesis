@@ -4,17 +4,23 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 import scipy as sp
 
+import sys
+sys.path.insert(0, '/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_thesis/code/master_thesis')
 
-from utils_nonlinear import get_results, plot_results, get_data, plot_settings, estimated_pred_err
+from robust_deconfounding.utils import cosine_basis, haarMatrix
+from utils_nonlinear import get_data, plot_settings
 from synthetic_data import functions_nonlinear
+from robust_deconfounding.robust_regression import Torrent_reg
+from robust_deconfounding.decor import DecoR
+
 
 """
-    Trying out different versions of cross-validation to find a good regularization parameter lambda.
+    A visual example of cross-validation on the transformed data
 """
 
 colors, ibm_cb = plot_settings()
 
-SEED = 2
+SEED = 1
 np.random.seed(SEED)
 random.seed(SEED)
 
@@ -31,29 +37,62 @@ method_args = {
     "method": "torrent_reg",        # "torrent" | "bfs"
 }
 
-lmbd=np.concatenate((np.array([0]), np.array([10**(i/20) for i in range(-250,  0)])))
-n_lmbd=len(lmbd)
-noise_vars =  1
-n = 2 ** 9# number of observations
+L=100              #Number of basis functions
+noise_vars = 1      #Variance of noise
+n = 2 ** 9         # number of observations
 print("number of observations:", n)
+print("number of coefficients:", L)
+
+#Regularization parameter to be considered
+lmbd=np.concatenate((np.array([0]), np.array([10**(i/20) for i in range(-250,  100)])))
+n_lmbd=len(lmbd)
+
 
 # ----------------------------------
 # run experiments
 # ----------------------------------
+
 n_x=200
 test_points=np.array([i / n_x for i in range(0, n_x)])
 y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["beta"][0])
-L_temp=50
-print("number of coefficients:", L_temp)
+
 #Compute the basis
-basis_tmp = [np.cos(np.pi * test_points * k ) for k in range( L_temp)] 
+basis_tmp = [np.cos(np.pi * test_points * k ) for k in range( L)] 
 basis = np.vstack(basis_tmp).T
+
 #Get data
 data_values = get_data(n, **data_args, noise_var=noise_vars)
 data_values.pop('u')
+
 #Set up the smothness penalty
-diag=np.concatenate((np.array([0]), np.array([i**4 for i in range(1,L_temp)])))
+diag=np.concatenate((np.array([0]), np.array([i**4 for i in range(1,L)])))
 K=np.diag(diag)
+
+robust_algo = Torrent_reg(a=method_args["a"], fit_intercept=False, K=K, lmbd=0)
+algo = DecoR(algo=robust_algo, basis=cosine_basis(n))
+algo.fit_coef(x=data_values["x"], y=data_values["y"], L=L)
+trans=algo.get_transformed
+P_n=trans["xn"]
+y_n=trans["yn"]
+
+#Get CV values
+cv=robust_algo.cv(x=P_n, y=y_n, Lmbd=lmbd, k=10)
+
+
+# ----------------------------------
+# plotting
+# ----------------------------------
+
+plt.plot(lmbd, cv["pred_err"])
+plt.xscale("log")
+plt.xlabel("$\lambda$")
+plt.ylabel("estimated prediction error")
+plt.title("Cross-Validation")
+plt.tight_layout()
+plt.show()
+
+
+"""
 #Allocate memory
 estimates_decor=[]
 S=set(np.arange(0,n))
@@ -63,7 +102,7 @@ err_stable=np.full(n_lmbd, np.nan)
 
 #Compute the estimates for different lambda's
 for i in range(0,n_lmbd):
-    estimates_decor.append(get_results(**data_values, **method_args, K=K, L=L_temp, lmbd=lmbd[i]))
+    estimates_decor.append(get_results(**data_values, **method_args, K=K, L=L, lmbd=lmbd[i]))
     S_i=estimates_decor[i]["inliniers"]
     S=S.intersection(S_i)
 
@@ -103,6 +142,8 @@ for i in range(0, n_lmbd):
         err=err+1/n_S*err_add
     err_stable[i]=err
 
+
+
 # ----------------------------------
 # plotting
 # ----------------------------------
@@ -123,3 +164,5 @@ ax2.tick_params(axis='y',  labelcolor=ibm_cb[4])
 fig.suptitle("Estimated Prediction Error")
 fig.tight_layout()  # otherwise the right y-label is slightly clipped
 plt.show()
+
+"""
