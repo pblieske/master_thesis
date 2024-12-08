@@ -14,7 +14,6 @@ import pandas as pd
 from sklearn.linear_model import Ridge
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
-import seaborn as sns
 
 """
     We apply our methods to the ozon dataset.
@@ -60,7 +59,7 @@ plt.show()
 # Normalize the data
 # ----------------------------------
 
-#Delay from x to y
+#Delay from x to y in days
 delay=1
 x=x[0:(n-(1+delay))]
 y=y[delay:(n-1)]
@@ -74,7 +73,7 @@ x=(x-x_min)/(x_max-x_min)
 # ----------------------------------
 
 n=len(y)
-L=5
+L=8
 diag=np.concatenate((np.array([0]), np.array([i**4 for i in range(1,L)])))
 K=np.diag(diag)
 result=get_results(x=x, y=y, method="torrent_reg", basis=cosine_basis(n), a=0.95, L=L, K=K, lmbd=0)
@@ -86,22 +85,21 @@ print(result["estimate"])
 # plotting
 # ----------------------------------
 
-
 test_points=np.linspace(0, 1, num=200)
 #Compute the basis
 basis_tmp = [np.cos(np.pi * test_points * k ) for k in range(L)] 
 basis = np.vstack(basis_tmp).T
 y_est=basis @ result["estimate"]
 y_ols=basis @ estimates_fourrier
-test_points=(test_points+x_min)*(x_max-x_min)
+test_points=(test_points)*(x_max-x_min)+x_min
 
-plt.plot(((x+x_min)*(x_max-x_min)), y, '.:w', mec = 'gray')
+plt.plot((x*(x_max-x_min)+x_min), y, 'o:w', mec="gray", markersize=3)
 plt.plot(test_points, y_est, '-', color=ibm_cb[1])
 plt.plot(test_points, y_ols, '-', color=ibm_cb[4])
 
 def get_handles():
 
-    point_1 = Line2D([0], [0], label='Observations', marker='o', mec='black', color='w')
+    point_1 = Line2D([0], [0], label='Observations', marker='o', mec="gray", markersize=3, linestyle='')
     point_3 = Line2D([0], [0], label="DecoR" , color=ibm_cb[1], linestyle='-')
     point_4= Line2D([0], [0], label="OLS" , color=ibm_cb[4], linestyle='-')
 
