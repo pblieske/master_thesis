@@ -15,28 +15,28 @@ from synthetic_data import functions_nonlinear
 
 colors, ibm_cb = plot_settings()
 
-SEED = 1
+SEED = 5
 np.random.seed(SEED)
 random.seed(SEED)
 
 data_args = {
     "process_type": "blpnl",       # "ou" | "blp" | "blpnl"
     "basis_type": "cosine",     # "cosine" | "haar"
-    "fraction": 0.3,
-    "beta": np.array([2]),
+    "fraction": 0.2,
+    "beta": np.array([3]),
     "band": list(range(0, 50))  # list(range(0, 50)) | None
 }
 
 method_args = {
-    "a": 0.65,
+    "a": 0.75,
     "method": "torrent",        # "torrent" | "bfs"
 }
 
-m = 10   #Number of repetitions for the Monte Carlo
+m = 100  #Number of repetitions for the Monte Carlo
 noise_vars = 1
-methods=["torrent", "torrent_cv", "torrent_cv2"]
-num_data = [4 * 2 ** k for k in range(2, 9)]      # [4, 8, 10]
-Lmbd=np.array([2**(i/2) for i in range(-60, 0)])
+methods=["torrent", "torrent_cv3"]
+num_data = [2 ** k for k in range(6, 13)]      # [4, 8, 10]
+Lmbd=np.array([10**(i/10) for i in range(-70, 10)])
 
 # ----------------------------------
 # run experiments
@@ -96,9 +96,7 @@ def get_handles():
                      color=ibm_cb[1], linestyle='-')
     point_4 = Line2D([0], [0], label="Method: " + str(methods[1]), markersize=10,
                      color=ibm_cb[4], linestyle='-')
-    point_5 = Line2D([0], [0], label="Method: " + str(methods[2]), markersize=10,
-                     color=ibm_cb[2], linestyle='-')
-    return [ point_2, point_3, point_4, point_5]
+    return [ point_2, point_3, point_4]
 
 
 plt.xlabel("number of data points")

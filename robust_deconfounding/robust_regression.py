@@ -359,6 +359,89 @@ class Torrent_cv2(BaseRobustRegression):
     
         return self
 
+class Torrent_cv3(BaseRobustRegression):
+    """Torrent algorithm for regression with robustness to outliers.
+
+    Extends the base regression to implement an iterative process of fitting and refining inliers.
+
+    Torrent_cv version 3 excecutes the regularized Torrent algroithm and performs at the end a cross-validation to obtain the best regularization parameter lambda.
+
+    Attributes:
+        a (float): Proportion of data considered as inliers.
+        max_iter (int): Maximum number of iterations.
+        predicted_inliers (list): List to track inliers over iterations.
+    """
+    
+    def __init__(self, a: float, fit_intercept: bool = False, max_iter: int = 100, K=np.array([0]), lmbd=np.array(0)):
+        super().__init__(fit_intercept)
+        if not 0 < a < 1:
+            raise ValueError("'a' must be in the range (0, 1).")
+        self.a = a
+        self.max_iter = max_iter
+        self.predicted_inliers = []
+        self.K=K
+        self.lmbd=lmbd
+
+    def fit(self, x: NDArray, y: NDArray) -> Self:
+        """Fit model using an iterative process to determine inliers and refit the model.
+            lambda: set of regularization parameters over which the cross-valdiation is performed
+                    provid only a one-dimensional vector to keep it fixed
+            K:      positive semi-definite matrix for the penalty
+            """
+        k=10        #Number of folds
+        n=len(y)
+        n_lmbd=len(self.lmbd)
+        err_cv=np.zeros(n_lmbd)
+        #Allocate memory
+        estimates=[]   
+        S=set(np.arange(0,n))   
+
+        #Run Torrent for all values of lambda to get a stable estimation of an inlinier set
+        for i in range(0,n_lmbd):
+            algo=Torrent_reg(a=self.a, fit_intercept=False, K=self.K, lmbd=self.lmbd[i])
+            algo.fit(x,y)
+            estimates.append(algo)
+            S_i=algo.inliers
+            S=S.intersection(S_i)
+
+        #Perform cross-validation
+        n_S=len(S)
+        partition_S=np.random.permutation(n_S)
+        test_fold_size=n_S//k
+        for i in range(0, n_lmbd):
+            S_i={inlinier for inlinier in estimates[i].inliers}
+            S_i_C=S_i.difference(S)
+            n_train=len(S_i_C)
+            train_fold_size=n_train//k
+            partition_S_C=np.random.permutation(n_train)
+            err=0
+            for j in range(0,k):
+                test_indx=[list(S)[i] for i in partition_S[j*test_fold_size:(j+1)*test_fold_size]]
+                train_indx=np.concatenate((np.delete(list(S), partition_S[j*test_fold_size:(j+1)*test_fold_size]), np.delete(list(S_i_C), partition_S_C[j*train_fold_size:(j+1)*train_fold_size])))
+                X_train=x[train_indx]
+                Y_train=y[train_indx]
+                B=X_train.T @ Y_train
+                A=X_train.T @ X_train + self.lmbd[i]*self.K 
+                coef=sp.linalg.solve(A, B)
+                err_add = np.linalg.norm(y[test_indx] - x[test_indx] @ coef, ord=2)**2
+                err=err+1/n_S*err_add
+            err_cv[i]=err
+    
+        #Select the lambda with the smallest cv-error
+        lambda_cv=self.lmbd[np.argmin(err_cv)]
+        self.lmbd=lambda_cv
+        algo = Torrent_reg(a=self.a, fit_intercept=False, K=self.K, lmbd=lambda_cv)
+        algo.fit(x, y)
+
+        #Copy the final results to the object
+        self.fit_intercept = algo.fit_intercept
+        self.inliers = algo.inliers
+        self.coef= algo.coef
+    
+        return self
+
+
+
 """
     simple help function to perform the cross-validation step
 """    

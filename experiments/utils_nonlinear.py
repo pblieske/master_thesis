@@ -10,7 +10,7 @@ import pylab
 import sys
 sys.path.insert(0, '/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_thesis/code/master_thesis')
 
-from robust_deconfounding.robust_regression import Torrent, BFS, Torrent_reg, Torrent_cv, Torrent_cv2
+from robust_deconfounding.robust_regression import Torrent, BFS, Torrent_reg, Torrent_cv, Torrent_cv2, Torrent_cv3
 from robust_deconfounding.decor import DecoR
 from robust_deconfounding.utils import cosine_basis, haarMatrix
 from experiments.synthetic_data import BLPDataGenerator, OUDataGenerator, BLPNonlinearDataGenerator
@@ -75,6 +75,8 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method
             algo = Torrent_cv(a=a, fit_intercept=False, K=K, lmbd=lmbd)
         elif method =="torrent_cv2":
             algo = Torrent_cv2(a=a, fit_intercept=False, K=K, lmbd=lmbd)
+        elif method =="torrent_cv3":
+            algo = Torrent_cv3(a=a, fit_intercept=False, K=K, lmbd=lmbd)
         else:
             raise ValueError("Invalid method")
         algo = DecoR(algo, basis)

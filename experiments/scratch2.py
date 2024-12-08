@@ -9,13 +9,12 @@ from utils_nonlinear import get_results, plot_results, get_data, plot_settings, 
 from synthetic_data import functions_nonlinear
 
 """
-We provide a visualization of a fitted curve using the cosine approximation.
-For this we simulated only one draw for a fixed number of observations n, for Monte Carlo simulation look at experiments_nonlinear.py.
+    Trying out different versions of cross-validation to find a good regularization parameter lambda.
 """
 
 colors, ibm_cb = plot_settings()
 
-SEED = 5
+SEED = 2
 np.random.seed(SEED)
 random.seed(SEED)
 
