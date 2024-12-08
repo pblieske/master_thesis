@@ -221,7 +221,59 @@ class Torrent_reg(BaseRobustRegression):
                 break
             
         return self
+    
+    def cv(self, x: NDArray, y: NDArray, Lmbd: NDArray, k=10) -> dict:
+        """
+            Estimates the prediction error using a cross-validtion like method.
+            Lmbd:   regularization parameters to test
+            k:      number of folds
+            """
+        n=len(y)
+        n_lmbd=len(Lmbd)
+        err_cv=np.zeros(n_lmbd)
 
+        #Allocate memory
+        estimates=[]   
+        S=set(np.arange(0,n))   
+
+        #Run Torrent for all values of lambda to get a stable estimation of an inlinier set
+        for i in range(0,n_lmbd):
+            algo=Torrent_reg(a=self.a, fit_intercept=False, K=self.K, lmbd=Lmbd[i])
+            algo.fit(x,y)
+            estimates.append(algo)
+            S_i=algo.inliers
+            S=S.intersection(S_i)
+
+        #Check that Torrent is stable enought, i.e. S is large enough
+        if len(S)==0:
+            raise Exception("There is no stable set S.") 
+        elif len(S)<n/10:
+            print("Warning: S is very small compared to the sample size, |S|=" + str(len(S)))    
+
+        #Perform cross-validation
+        n_S=len(S)
+        partition_S=np.random.permutation(n_S)
+        test_fold_size=n_S//k
+        for i in range(0, n_lmbd):
+            S_i={inlinier for inlinier in estimates[i].inliers}
+            S_i_C=S_i.difference(S)
+            n_train=len(S_i_C)
+            train_fold_size=n_train//k
+            partition_S_C=np.random.permutation(n_train)
+            err=0
+            for j in range(0,k):
+                test_indx=[list(S)[i] for i in partition_S[j*test_fold_size:(j+1)*test_fold_size]]
+                train_indx=np.concatenate((np.delete(list(S), partition_S[j*test_fold_size:(j+1)*test_fold_size]), np.delete(list(S_i_C), partition_S_C[j*train_fold_size:(j+1)*train_fold_size])))
+                X_train=x[train_indx]
+                Y_train=y[train_indx]
+                B=X_train.T @ Y_train
+                A=X_train.T @ X_train + Lmbd[i]*self.K 
+                coef=sp.linalg.solve(A, B)
+                err_add = np.linalg.norm(y[test_indx] - x[test_indx] @ coef, ord=2)**2
+                err=err+1/n_S*err_add
+            err_cv[i]=err
+    
+        return  {"pred_err": err_cv, "S": S}
 
 class Torrent_cv(BaseRobustRegression):
     """Torrent algorithm for regression with robustness to outliers.
