@@ -227,6 +227,7 @@ class Torrent_reg(BaseRobustRegression):
             Estimates the prediction error using a cross-validtion like method.
             Lmbd:   regularization parameters to test
             k:      number of folds
+            Returns a dictionary with the estimated prediction error and the set S of stable inliers.
             """
         n=len(y)
         n_lmbd=len(Lmbd)
@@ -271,7 +272,7 @@ class Torrent_reg(BaseRobustRegression):
                 coef=sp.linalg.solve(A, B)
                 err_add = np.linalg.norm(y[test_indx] - x[test_indx] @ coef, ord=2)**2
                 err=err+1/n_S*err_add
-            err_cv[i]=err
+            err_cv[i]=np.sqrt(err)
     
         return  {"pred_err": err_cv, "S": S}
 
