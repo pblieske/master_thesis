@@ -72,17 +72,36 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method
         elif method == "torrent_reg":
             algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=lmbd)
         elif method =="torrent_cv":
-            algo = Torrent_cv(a=a, fit_intercept=False, K=K, lmbd=lmbd)
+            robust_algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=0)
+            algo = DecoR(algo=robust_algo, basis=basis)
+            algo.fit_coef(x=x, y=y, L=L)
+            trans=algo.get_transformed
+            P_n=trans["xn"]
+            y_n=trans["yn"]
+            #Get CV values
+            k=10    #Number of folds
+            cv=robust_algo.cv(x=P_n, y=y_n, Lmbd=lmbd, k=k)
+            err_cv=cv["pred_err"]
+            S=cv["S"]
+            lmbd_cv=lmbd[np.argmin(err_cv)]
+            #Set the algorithm to Torrent with the selected lmbd_cv
+            algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=lmbd_cv)
+        else:
+            raise ValueError("Invalid method")
+        """
         elif method =="torrent_cv2":
             algo = Torrent_cv2(a=a, fit_intercept=False, K=K, lmbd=lmbd)
         elif method =="torrent_cv3":
             algo = Torrent_cv3(a=a, fit_intercept=False, K=K, lmbd=lmbd)
-        else:
-            raise ValueError("Invalid method")
+        """
+
         algo = DecoR(algo, basis)
         algo.fit_coef(x, y, L)
 
-        return {"estimate": algo.estimate, "inliniers": algo.inliniers, "transformed": algo.get_transformed}
+        if method =="torrent_cv":
+            return {"estimate": algo.estimate, "inliniers": algo.inliniers, "transformed": algo.get_transformed, "S":S}
+        else:
+            return {"estimate": algo.estimate, "inliniers": algo.inliniers, "transformed": algo.get_transformed}
 
     elif method == "ols":
         n=len(x)
