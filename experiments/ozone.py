@@ -29,7 +29,10 @@ df = pd.read_stata('/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semes
 n=df.shape[0]
 x=np.array(df.loc[ : , "ozone"])
 y=np.array(df.loc[: , "numdeaths"])
+u=np.array(df.loc[:, "temperature"])
 date=np.array(df.loc[:, "date"])
+print("Corelation temperature and ozone: " + str(np.corrcoef(x,u)))
+print("Corelation temperature and numdeaths: " + str(np.corrcoef(y,u)))
 
 
 # ----------------------------------
@@ -76,7 +79,7 @@ n=len(y)
 L=8
 diag=np.concatenate((np.array([0]), np.array([i**4 for i in range(1,L)])))
 K=np.diag(diag)
-result=get_results(x=x, y=y, method="torrent_reg", basis=cosine_basis(n), a=0.95, L=L, K=K, lmbd=0)
+result=get_results(x=x, y=y, method="torrent_reg", basis=cosine_basis(n), a=0.95, L=L, K=K, lmbd=0.01)
 estimates_fourrier= get_results(x=x, y=y, basis=cosine_basis(n), method="ols", L=L, a=0).T
 print(result["estimate"])
 
@@ -109,7 +112,6 @@ def get_handles():
 plt.xlabel("Ozone ($\mu g/m^3$)")
 plt.ylabel("# Deaths")
 plt.title("Influence of Ozone on Health")
-
 plt.legend(handles=get_handles(), loc="upper left")
 plt.grid(linestyle='dotted')
 plt.tight_layout()
@@ -125,4 +127,31 @@ plt.hist(out,  color=ibm_cb[0], edgecolor='k', alpha=0.6)
 plt.xlabel("Frequency")
 plt.ylabel("Count")
 plt.title("Histogramm of Excluded Frequencies")
+plt.show()
+
+
+#Plot the derivative
+test_points=np.linspace(0, 1, num=200)
+basis_derivative = [k* -np.sin(np.pi * test_points * k ) for k in range(L)] 
+basis_derivative = np.vstack(basis_derivative).T
+y_derivative=basis_derivative @ result["estimate"]
+y_ols=basis_derivative @ estimates_fourrier
+test_points=(test_points)*(x_max-x_min)+x_min
+
+plt.plot(test_points, y_derivative, '-', color=ibm_cb[1])
+plt.plot(test_points, y_ols, '-', color=ibm_cb[4])
+plt.axhline(y = 0, color = 'black', linestyle = '--')
+
+def get_handles():
+    point_1 = Line2D([0], [0], label="Derivative" , color=ibm_cb[1], linestyle='-')
+    point_4= Line2D([0], [0], label="OLS" , color=ibm_cb[4], linestyle='-')
+    return [point_1, point_4]
+
+
+plt.xlabel("Ozone ($\mu g/m^3$)")
+plt.ylabel("Derivative")
+plt.title("Derivative")
+
+plt.legend(handles=get_handles(), loc="upper left")
+plt.tight_layout()
 plt.show()

@@ -310,7 +310,6 @@ class BLPNonlinearDataGenerator(BaseDataGenerator):
         min=np.min(x)
         diff=max-min
         x=np.divide(x-np.full((n, 1), min, dtype=float), diff)
-        #u=u/diff
         factor_u=2
         y=functions_nonlinear(x, self.beta[0]) + ey + factor_u* u
 
@@ -319,7 +318,7 @@ class BLPNonlinearDataGenerator(BaseDataGenerator):
 
 def functions_nonlinear(x:NDArray, beta:int):
     """"
-    returns the value of different nonlinear functions where the type can be choosen over the integer beta
+    Returns the value of different nonlinear functions evaluated at x where the type can be choosen over the integer beta.
     """
     n=np.size(x)
     if beta==1:

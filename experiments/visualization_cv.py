@@ -27,24 +27,24 @@ random.seed(SEED)
 data_args = {
     "process_type": "blpnl",       # "ou" | "blp" | "blpnl"
     "basis_type": "cosine",     # "cosine" | "haar"
-    "fraction": 0.1,
+    "fraction": 0.3,
     "beta": np.array([2]),
     "band": list(range(0, 50))  # list(range(0, 50)) | None
 }
 
 method_args = {
-    "a": 0.85,
+    "a": 0.65,
     "method": "torrent_reg",        # "torrent" | "bfs"
 }
 
-L=100              #Number of basis functions
-noise_vars = 1      #Variance of noise
-n = 2 ** 9         # number of observations
+L=50             #Number of basis functions
+noise_vars = 0.5      #Variance of noise
+n = 2**10         # number of observations
 print("number of observations:", n)
 print("number of coefficients:", L)
 
 #Regularization parameter to be considered
-lmbd=np.concatenate((np.array([0]), np.array([10**(i/20) for i in range(-250,  100)])))
+lmbd=np.concatenate((np.array([0]), np.array([10**(i/20) for i in range(-250,  20)])))
 n_lmbd=len(lmbd)
 
 
@@ -76,18 +76,19 @@ P_n=trans["xn"]
 y_n=trans["yn"]
 
 #Get CV values
-cv=robust_algo.cv(x=P_n, y=y_n, Lmbd=lmbd, k=10)
+k=10    #Number of folds
+cv=robust_algo.cv(x=P_n, y=y_n, Lmbd=lmbd, k=k)
 
 
 # ----------------------------------
 # plotting
 # ----------------------------------
 
-plt.plot(lmbd, cv["pred_err"])
+plt.plot(lmbd, cv["pred_err"], color="black")
 plt.xscale("log")
 plt.xlabel("$\lambda$")
-plt.ylabel("estimated prediction error")
-plt.title("Cross-Validation")
+plt.ylabel("Estimated Prediction Error")
+plt.title("Noise Variance " + str(noise_vars))
 plt.tight_layout()
 plt.show()
 
