@@ -64,7 +64,7 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method
     Raises:
         ValueError: If an invalid method is specified.
     """
-    if method != "ols":
+    if method[0:3] == "tor":
         if method == "torrent":
             algo = Torrent(a=a, fit_intercept=False)
         elif method == "bfs":
@@ -111,7 +111,16 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method
         yn = basis.T @ y / n
         model_l = sm.OLS(yn, xn).fit()
         return model_l.params
-
+    elif method == "ridge":
+        n=len(x)
+        P_temp = [np.cos(np.pi * x.T * k) for k in range(L)]
+        P =  np.vstack(P_temp).T
+        xn = basis.T @ P / n
+        yn = basis.T @ y / n
+        A=xn.T @ xn + lmbd * K
+        B=xn.T @ yn
+        estimate=sp.linalg.solve(A, B)
+        return{"estimate": estimate, "transformed": {"xn": xn, "yn":yn} }
     else:
         raise ValueError("Invalid method")
 

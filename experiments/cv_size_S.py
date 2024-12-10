@@ -31,7 +31,7 @@ method_args = {
     "method": "torrent",        # "torrent" | "bfs"
 }
 
-m = 10  #Number of repetitions for the Monte Carlo
+m = 200  #Number of repetitions for the Monte Carlo
 noise_vars = 0.5
 num_data = [4 ** k for k in range(3, 7)]      # (6,13)
 Lmbd=np.array([10**(i/10) for i in range(-100, 10)])
@@ -44,7 +44,8 @@ test_points = np.array([i / n_x for i in range(0, n_x)])
 y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["beta"][0])
 size=np.zeros(shape = [len(num_data), m ]) 
 
-for n in num_data:
+for i in range(0, len(num_data)):
+    n=num_data[i]
     print("number of data points: ", n)
     #Get number of coefficients L
     L_temp=max(np.floor(n**(1/2)).astype(int),1)      
@@ -56,13 +57,13 @@ for n in num_data:
     K=np.diag(diag)
     #Run Monte Carlo simulation
     for k in range(m):
-        data_values = get_data(n, **data_args, noise_var=noise_vars[i])
+        data_values = get_data(n, **data_args, noise_var=noise_vars)
         data_values.pop('u', 'basis')
         S=set(np.arange(0,n))  
         for j in range(0, len(Lmbd)):
             estimates_tor = get_results(**data_values, a=method_args["a"], method="torrent_reg", L=L_temp, lmbd=Lmbd[j], K=K)
-            S=S.intersection(estimates_tor["S"])            
-        size[n, k]=len(S)
+            S=S.intersection(estimates_tor["inliniers"])            
+        size[i, k]=len(S)
 
 # ----------------------------------
 # plotting
@@ -70,14 +71,14 @@ for n in num_data:
 
 fig, axs = plt.subplots(2, 2)
 
-axs[1, 1].hist(size[1,:],  color=ibm_cb[0], edgecolor='k', alpha=0.6)
-axs[1, 1].title(str(n[1])+ " Observations")
-axs[1, 2].hist(size[2,:],  color=ibm_cb[0], edgecolor='k', alpha=0.6)
-axs[1, 2].title(str(n[2])+ " Observations")
-axs[2, 1].hist(size[3,:],  color=ibm_cb[0], edgecolor='k', alpha=0.6)
-axs[2, 1].title(str(n[3])+ " Observations")
-axs[2, 2].hist(size[4,:],  color=ibm_cb[0], edgecolor='k', alpha=0.6)
-axs[2, 2].title(str(n[4])+ " Observations")
+axs[0, 0].hist(size[0,:],  color=ibm_cb[0], edgecolor='k', alpha=0.6)
+axs[0, 0].set_title(str(num_data[0])+ " Observations")
+axs[0, 1].hist(size[1,:],  color=ibm_cb[0], edgecolor='k', alpha=0.6)
+axs[0, 1].set_title(str(num_data[1])+ " Observations")
+axs[1, 0].hist(size[2,:],  color=ibm_cb[0], edgecolor='k', alpha=0.6)
+axs[1, 0].set_title(str(num_data[2])+ " Observations")
+axs[1, 1].hist(size[3,:],  color=ibm_cb[0], edgecolor='k', alpha=0.6)
+axs[1, 1].set_title(str(num_data[3])+ " Observations")
 #Labels
 for i in range(0,2):
     for j in range(0,2):

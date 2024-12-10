@@ -31,8 +31,8 @@ x=np.array(df.loc[ : , "ozone"])
 y=np.array(df.loc[: , "numdeaths"])
 u=np.array(df.loc[:, "temperature"])
 date=np.array(df.loc[:, "date"])
-print("Corelation temperature and ozone: " + str(np.corrcoef(x,u)))
-print("Corelation temperature and numdeaths: " + str(np.corrcoef(y,u)))
+#print("Corelation temperature and ozone: " + str(np.corrcoef(x,u)))
+#print("Corelation temperature and numdeaths: " + str(np.corrcoef(y,u)))
 
 
 # ----------------------------------
@@ -77,12 +77,11 @@ x=(x-x_min)/(x_max-x_min)
 
 n=len(y)
 L=8
+Lmbd=np.array([10**(i/40) for i in range(-300, 40)])
 diag=np.concatenate((np.array([0]), np.array([i**4 for i in range(1,L)])))
 K=np.diag(diag)
-result=get_results(x=x, y=y, method="torrent_reg", basis=cosine_basis(n), a=0.95, L=L, K=K, lmbd=0.01)
-estimates_fourrier= get_results(x=x, y=y, basis=cosine_basis(n), method="ols", L=L, a=0).T
-print(result["estimate"])
-
+result=get_results(x=x, y=y, method="torrent_reg", basis=cosine_basis(n), a=0.95, L=L, K=K, lmbd=0)
+estimates_fourrier= get_results(x=x, y=y, basis=cosine_basis(n), method="ridge", L=L, a=0, K=K, lmbd=0)
 
 # ----------------------------------
 # plotting
@@ -93,7 +92,7 @@ test_points=np.linspace(0, 1, num=200)
 basis_tmp = [np.cos(np.pi * test_points * k ) for k in range(L)] 
 basis = np.vstack(basis_tmp).T
 y_est=basis @ result["estimate"]
-y_ols=basis @ estimates_fourrier
+y_ols=basis @ estimates_fourrier["estimate"]
 test_points=(test_points)*(x_max-x_min)+x_min
 
 plt.plot((x*(x_max-x_min)+x_min), y, 'o:w', mec="gray", markersize=3)
@@ -101,13 +100,10 @@ plt.plot(test_points, y_est, '-', color=ibm_cb[1])
 plt.plot(test_points, y_ols, '-', color=ibm_cb[4])
 
 def get_handles():
-
     point_1 = Line2D([0], [0], label='Observations', marker='o', mec="gray", markersize=3, linestyle='')
     point_3 = Line2D([0], [0], label="DecoR" , color=ibm_cb[1], linestyle='-')
     point_4= Line2D([0], [0], label="OLS" , color=ibm_cb[4], linestyle='-')
-
     return [point_1,  point_3, point_4]
-
 
 plt.xlabel("Ozone ($\mu g/m^3$)")
 plt.ylabel("# Deaths")
@@ -117,9 +113,7 @@ plt.grid(linestyle='dotted')
 plt.tight_layout()
 plt.show()
 
-
 #Plot the selected outliers
-
 inl=result["inliniers"]
 out=np.delete(np.arange(0,n), list(inl))
 #sns.histplot(data=pd.DataFrame(data=out))
@@ -129,13 +123,12 @@ plt.ylabel("Count")
 plt.title("Histogramm of Excluded Frequencies")
 plt.show()
 
-
 #Plot the derivative
 test_points=np.linspace(0, 1, num=200)
 basis_derivative = [k* -np.sin(np.pi * test_points * k ) for k in range(L)] 
 basis_derivative = np.vstack(basis_derivative).T
 y_derivative=basis_derivative @ result["estimate"]
-y_ols=basis_derivative @ estimates_fourrier
+y_ols=basis_derivative @ estimates_fourrier["estimate"]
 test_points=(test_points)*(x_max-x_min)+x_min
 
 plt.plot(test_points, y_derivative, '-', color=ibm_cb[1])
@@ -143,15 +136,13 @@ plt.plot(test_points, y_ols, '-', color=ibm_cb[4])
 plt.axhline(y = 0, color = 'black', linestyle = '--')
 
 def get_handles():
-    point_1 = Line2D([0], [0], label="Derivative" , color=ibm_cb[1], linestyle='-')
+    point_1 = Line2D([0], [0], label="DecoRe" , color=ibm_cb[1], linestyle='-')
     point_4= Line2D([0], [0], label="OLS" , color=ibm_cb[4], linestyle='-')
     return [point_1, point_4]
-
 
 plt.xlabel("Ozone ($\mu g/m^3$)")
 plt.ylabel("Derivative")
 plt.title("Derivative")
-
 plt.legend(handles=get_handles(), loc="upper left")
 plt.tight_layout()
 plt.show()
