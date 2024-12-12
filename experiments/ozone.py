@@ -96,8 +96,8 @@ y_ols=basis @ estimates_fourrier["estimate"]
 test_points=(test_points)*(x_max-x_min)+x_min
 
 plt.plot((x*(x_max-x_min)+x_min), y, 'o:w', mec="gray", markersize=3)
-plt.plot(test_points, y_est, '-', color=ibm_cb[1])
-plt.plot(test_points, y_ols, '-', color=ibm_cb[4])
+plt.plot(test_points, y_est, '-', color=ibm_cb[1], linewidth=2)
+plt.plot(test_points, y_ols, '-', color=ibm_cb[4], linewidth=2)
 
 def get_handles():
     point_1 = Line2D([0], [0], label='Observations', marker='o', mec="gray", markersize=3, linestyle='')

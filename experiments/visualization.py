@@ -22,7 +22,7 @@ data_args = {
     "process_type": "blpnl",       # "ou" | "blp" | "blpnl"
     "basis_type": "cosine",     # "cosine" | "haar"
     "fraction": 0.3,
-    "beta": np.array([3]),
+    "beta": np.array([2]),
     "band": list(range(0, 50))  # list(range(0, 50)) | None
 }
 
@@ -142,7 +142,7 @@ for l in range(0, L_temp):
     axs[i,j].axline((0,0), slope=estimates_decor["estimate"][l],color = 'black', linestyle = '--')
     #Labels
     axs[i, j].set_xlabel('$P(' + str(l) + ', : )$')
-    axs[i, j].set_ylabel('y')
+    axs[i, j].set_ylabel('T(Y)')
 
 def get_handles():
 
