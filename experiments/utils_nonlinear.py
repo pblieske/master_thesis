@@ -99,9 +99,9 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method
         algo.fit_coef(x, y, L)
 
         if method =="torrent_cv":
-            return {"estimate": algo.estimate, "inliniers": algo.inliniers, "transformed": algo.get_transformed, "S":S}
+            return {"estimate": algo.estimate, "inliers": algo.inliniers, "transformed": algo.get_transformed, "S":S}
         else:
-            return {"estimate": algo.estimate, "inliniers": algo.inliniers, "transformed": algo.get_transformed}
+            return {"estimate": algo.estimate, "inliers": algo.inliniers, "transformed": algo.get_transformed}
 
     elif method == "ols":
         n=len(x)
@@ -110,7 +110,7 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method
         xn = basis.T @ P / n
         yn = basis.T @ y / n
         model_l = sm.OLS(yn, xn).fit()
-        return model_l.params
+        return {"estimate": model_l.params, "transformed": {"xn":xn, "yn": yn}, "inliers": np.array(range(0, n))}
     elif method == "ridge":
         n=len(x)
         P_temp = [np.cos(np.pi * x.T * k) for k in range(L)]
@@ -198,31 +198,31 @@ def plot_results(res: dict, num_data: list, m: int, colors) -> None:
                  palette=[colors[0], colors[1]], legend=True)
 
 
-def get_conf(x:NDArray, estimate:NDArray, inliniers: list, transformed: NDArray, alpha=0.95, lmbd=0, K=np.diag(np.array([0]))) -> NDArray:
+def get_conf(x:NDArray, estimate:NDArray, inliers: list, transformed: NDArray, alpha=0.95, lmbd=0, K=np.diag(np.array([0]))) -> NDArray:
     """
         Returns a confidence interval for the estimated f evaluated at x, assuming that S contains only inliers.
+        Problem: In our sample there is a bias present introduced by cutting the series of at L.
     """
 
-    xn=transformed["xn"][list(inliniers)]
-    yn=transformed["yn"][list(inliniers)]
+    xn=transformed["xn"][list(inliers)]
+    yn=transformed["yn"][list(inliers)]
 
     #Estimate the variance
     r=yn[:, 0]- xn@estimate.T
-    L=xn.shape[1]
     n=xn.shape[0]
+    L=xn.shape[1]
     df=n-L
-    sigma_2=np.sum(np.square(r), axis=0)/(df)
-    print(sigma_2)
+    sigma_2=np.sum(np.square(r), axis=0)/df 
     #Compute the linear estimator
     basis = [np.cos(np.pi * x * k ) for k in range(L)] 
     basis = np.vstack(basis).T  
     H=basis @ np.linalg.inv(xn.T@xn + lmbd*K) @ xn.T
-    sigma=np.sqrt(sigma_2*np.diag(H@H.T))
+    sigma=np.sqrt(sigma_2*np.diag(H @ H.T))
 
     #Compute the confidence interval
     qt=sp.stats.t.ppf((1-alpha)/2, df)
     ci_u=basis@estimate.T -qt*sigma 
     ci_l=basis@estimate.T +qt*sigma 
     ci=np.stack((ci_l, ci_u), axis=-1)
-    print(ci.shape)
+
     return ci

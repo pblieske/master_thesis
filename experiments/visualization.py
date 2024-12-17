@@ -14,7 +14,7 @@ For this we simulated only one draw for a fixed number of observations n, for Mo
 
 colors, ibm_cb = plot_settings()
 
-SEED = 5
+SEED = 1
 np.random.seed(SEED)
 random.seed(SEED)
 
@@ -22,7 +22,7 @@ data_args = {
     "process_type": "blpnl",       # "ou" | "blp" | "blpnl"
     "basis_type": "cosine",     # "cosine" | "haar"
     "fraction": 0.3,
-    "beta": np.array([2]),
+    "beta": np.array([3]),
     "band": list(range(0, 50))  # list(range(0, 50)) | None
 }
 
@@ -32,8 +32,8 @@ method_args = {
 }
 
 
-noise_vars =  0.5
-n = 2 ** 8 # number of observations
+noise_vars =  1
+n = 2 ** 10 # number of observations
 print("number of observations:", n)
 
 # ----------------------------------
@@ -53,24 +53,27 @@ u=data_values["u"]
 data_values.pop('u')
 #Estimate the function f
 estimates_decor = get_results(**data_values, **method_args, L=L_temp)
-estimates_fourrier= get_results(**data_values, method="ols", L=L_temp, a=0).T
+ci=get_conf(x=test_points, **estimates_decor, alpha=0.95)
+estimates_fourrier= get_results(**data_values, method="ols", L=L_temp, a=0)
+ci_fourier=get_conf(x=test_points, **estimates_fourrier, alpha=0.95)
 y_est=basis @ estimates_decor["estimate"]
-y_fourrier= basis @ estimates_fourrier
+y_fourrier= basis @ estimates_fourrier["estimate"]
 y_est=np.ndarray((n_x, 1), buffer=y_est)
 #Compute the L^2-error
-print(estimates_decor["inliniers"])
 print("$L^2$-error: ", 1/np.sqrt(n_x)*np.linalg.norm(y_true-y_est, ord=2))
-print("$sigma^2$ :" + str(get_conf(x=test_points, **estimates_decor)))
 
 # ----------------------------------
 # plotting
 # ----------------------------------
 
 sub=np.linspace(0, n-1, 2**8).astype(int)
-plt.plot(data_values['x'][sub],data_values['y'][sub], 'o:w', mec = 'black')
+plt.plot(data_values['x'][sub],data_values['y'][sub], 'o:w', mec = 'black', ls="")
 plt.plot(test_points, y_true, '-', color='black')
 plt.plot(test_points, y_est, '-', color=ibm_cb[1])
 plt.plot(test_points, y_fourrier, color=ibm_cb[4])
+
+plt.fill_between(test_points, y1=ci[:, 0], y2=ci[:, 1], color=ibm_cb[1], alpha=0.1)
+plt.fill_between(test_points, y1=ci_fourier[:, 0], y2=ci_fourier[:, 1], color=ibm_cb[4], alpha=0.1)
 
 titles = {"blp": "Band-Limited", "ou": "Ornstein-Uhlenbeck", "blpnl" : "Nonlinear: Band-Limited"}
 titles_basis = {"cosine": "", "haar": ", Haar basis"}
@@ -124,7 +127,7 @@ P_n=trans["xn"]
 y_n=trans["yn"]
 
 #Get the sets of outliers
-inliniers=set(estimates_decor["inliniers"])
+inliniers=set(estimates_decor["inliers"])
 n_true_outliers=max([int(round(data_args["fraction"]*len(data_args["band"]), ndigits=0)),1])
 true_outliers=set(range(0, n_true_outliers-1))
 detected_outliers=true_outliers.difference(inliniers)
