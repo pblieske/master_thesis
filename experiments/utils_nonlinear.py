@@ -197,24 +197,32 @@ def plot_results(res: dict, num_data: list, m: int, colors) -> None:
                  markers=["o", "X"], dashes=False, errorbar=("ci", 95), err_style="band",
                  palette=[colors[0], colors[1]], legend=True)
 
-def estimated_pred_err(x, y, lmbd=0, K=np.array([0]), k=10) -> float:
-     
-    """
-        Performs a k-fold cross-validation to estimate the prediction error.
-    """
-    n=len(y)
-    fold_size=n//k
-    partition=np.random.permutation(n)
-    err=0
 
-    for j in range(0,k):
-        test_indx=partition[j*fold_size:(j+1)*fold_size]
-        X_train=np.delete(x, test_indx, axis=0)
-        Y_train=np.delete(x, test_indx, axis=0)
-        B=X_train.T @ Y_train
-        A=X_train.T @ X_train + lmbd*K 
-        coef=sp.linalg.solve(A, B)
-        err_add=np.linalg.norm(y[test_indx] - x[test_indx] @ coef, ord=2)**2
-        err=err+1/n*err_add
+def get_conf(x:NDArray, estimate:NDArray, inliniers: list, transformed: NDArray, alpha=0.95, lmbd=0, K=np.diag(np.array([0]))) -> NDArray:
+    """
+        Returns a confidence interval for the estimated f evaluated at x, assuming that S contains only inliers.
+    """
 
-    return np.sqrt(err)
+    xn=transformed["xn"][list(inliniers)]
+    yn=transformed["yn"][list(inliniers)]
+
+    #Estimate the variance
+    r=yn[:, 0]- xn@estimate.T
+    L=xn.shape[1]
+    n=xn.shape[0]
+    df=n-L
+    sigma_2=np.sum(np.square(r), axis=0)/(df)
+    print(sigma_2)
+    #Compute the linear estimator
+    basis = [np.cos(np.pi * x * k ) for k in range(L)] 
+    basis = np.vstack(basis).T  
+    H=basis @ np.linalg.inv(xn.T@xn + lmbd*K) @ xn.T
+    sigma=np.sqrt(sigma_2*np.diag(H@H.T))
+
+    #Compute the confidence interval
+    qt=sp.stats.t.ppf((1-alpha)/2, df)
+    ci_u=basis@estimate.T -qt*sigma 
+    ci_l=basis@estimate.T +qt*sigma 
+    ci=np.stack((ci_l, ci_u), axis=-1)
+    print(ci.shape)
+    return ci

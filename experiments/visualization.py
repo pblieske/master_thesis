@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
 
-from utils_nonlinear import get_results, plot_results, get_data, plot_settings
+from utils_nonlinear import get_results, plot_results, get_data, plot_settings, get_conf
 from synthetic_data import functions_nonlinear
 
 """
@@ -58,7 +58,9 @@ y_est=basis @ estimates_decor["estimate"]
 y_fourrier= basis @ estimates_fourrier
 y_est=np.ndarray((n_x, 1), buffer=y_est)
 #Compute the L^2-error
+print(estimates_decor["inliniers"])
 print("$L^2$-error: ", 1/np.sqrt(n_x)*np.linalg.norm(y_true-y_est, ord=2))
+print("$sigma^2$ :" + str(get_conf(x=test_points, **estimates_decor)))
 
 # ----------------------------------
 # plotting
