@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import random
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
@@ -31,26 +32,26 @@ The "num_data" variable is a list of increasing natural numbers that indicate th
 
 colors, ibm_cb = plot_settings()
 
-SEED = 1
+SEED = 2
 np.random.seed(SEED)
 random.seed(SEED)
 
 data_args = {
     "process_type": "blpnl",       # "ou" | "blp" | "blpnl"
     "basis_type": "cosine",     # "cosine" | "haar"
-    "fraction": 0.1,
+    "fraction": 0.25,
     "beta": np.array([2]),
     "band": list(range(0, 50))  # list(range(0, 50)) | None
 }
 
 method_args = {
-    "a": 0.85,
+    "a": 0.7,
     "method": "torrent",        # "torrent" | "bfs"
 }
 
-m = 200   #Number of repetitions for the Monte Carlo
-noise_vars = [0, 0.5, 1]
-num_data = [4 * 2 ** k for k in range(1, 12)]      # up to k=12 
+m = 100   #Number of repetitions for the Monte Carlo
+noise_vars = [0, 1, 4]
+num_data = [2 ** k for k in range(5, 14)]      # up to k=14 
 
 # ----------------------------------
 # run experiments
@@ -58,6 +59,7 @@ num_data = [4 * 2 ** k for k in range(1, 12)]      # up to k=12
 n_x=200     #Resolution of x-axis
 test_points = np.array([i / n_x for i in range(0, n_x)])
 y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["beta"][0])
+df=pd.DataFrame() #Data frame to save the results
 
 for i in range(len(noise_vars)):
     print("Noise Variance: ", noise_vars[i])
@@ -66,14 +68,15 @@ for i in range(len(noise_vars)):
         print("number of data points: ", n)
         res["DecoR"].append([])
         res["ols"].append([])
-        L_temp=max((1/4*np.floor(n**(1/2))).astype(int),1)
+        L_temp=max((np.floor(n**(1/2)/4)).astype(int),1)
         basis_tmp = [np.cos(np.pi * test_points * k ) for k in range(L_temp)]
         basis = np.vstack(basis_tmp).T
         print("number of coefficients: ", L_temp)
 
         for _ in range(m):
             data_values = get_data(n, **data_args, noise_var=noise_vars[i])
-            data_values.pop('u', 'basis')
+            data_values.pop('u') 
+            data_values.pop('outlier_points')
             estimates_decor = get_results(**data_values, **method_args, L=L_temp)
             y_est=basis @ estimates_decor["estimate"]
             y_est=np.ndarray((n_x, 1), buffer=y_est)
@@ -86,7 +89,13 @@ for i in range(len(noise_vars)):
             res["ols"][-1].append(1/np.sqrt(n_x)*np.linalg.norm(y_true-y_fourrier, ord=2))
             
     res["DecoR"], res["ols"] = np.array(res["DecoR"]), np.array(res["ols"])
+    df["DecoR"+str(noise_vars[i])]=res["DecoR"]
+    df["ols"+str(noise_vars[i])]=res["ols"]
     plot_results(res, num_data, m, colors=colors[i])
+
+#Write the results to a csv
+path="/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_thesis/code/results"
+df.to_csv(path+'file2.csv', header=True, index=True)
 
 # ----------------------------------
 # plotting

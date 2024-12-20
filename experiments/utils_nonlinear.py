@@ -170,7 +170,7 @@ def get_data(n: int, process_type: str, basis_type: str, fraction: float, beta: 
     else:
         x, y, u = generator.generate_data(n=n, outlier_points=outlier_points)
 
-    return {"x": x, "y": y, "u": u, "basis": basis}
+    return {"x": x, "y": y, "u": u, "basis": basis, "outlier_points": np.arange(0,n)*outlier_points.T}
 
 
 def plot_results(res: dict, num_data: list, m: int, colors) -> None:

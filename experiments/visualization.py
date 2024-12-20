@@ -14,26 +14,26 @@ For this we simulated only one draw for a fixed number of observations n, for Mo
 
 colors, ibm_cb = plot_settings()
 
-SEED = 5
+SEED = 10
 np.random.seed(SEED)
 random.seed(SEED)
 
 data_args = {
     "process_type": "blpnl",       # "ou" | "blp" | "blpnl"
     "basis_type": "cosine",     # "cosine" | "haar"
-    "fraction": 0.1,
-    "beta": np.array([4]),
+    "fraction": 0.25,
+    "beta": np.array([3]),
     "band": list(range(0, 50))  # list(range(0, 50)) | None
 }
 
 method_args = {
-    "a": 0.85,
+    "a": 0.7,
     "method": "torrent",        # "torrent" | "bfs"
 }
 
 
-noise_vars =  0.5
-n = 2 ** 8 # number of observations
+noise_vars =  4
+n = 2 ** 12 # number of observations
 print("number of observations:", n)
 
 # ----------------------------------
@@ -42,15 +42,16 @@ print("number of observations:", n)
 n_x=200
 test_points=np.array([i / n_x for i in range(0, n_x)])
 y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["beta"][0])
-L_temp=max(np.floor(1/4*n**(1/2)).astype(int),1)                        #Number of coefficients used
+L_temp=6 #max(np.floor(1/4*n**(1/2)).astype(int),1)                        #Number of coefficients used
 print("number of coefficients:", L_temp)
 #Compute the basis
 basis_tmp = [np.cos(np.pi * test_points * k ) for k in range( L_temp)] 
 basis = np.vstack(basis_tmp).T
-#Get data
-data_values = get_data(n, **data_args, noise_var=noise_vars)
-u=data_values["u"]
-data_values.pop('u')
+#Generate the data
+data_values = get_data(n, **data_args, noise_var=noise_vars, noise_type="normal")
+#Save the outlier u and its coresponding frequency
+u=data_values.pop("u")
+outlier_points=data_values.pop("outlier_points")
 #Estimate the function f
 estimates_decor = get_results(**data_values, **method_args, L=L_temp)
 ci=get_conf(x=test_points, **estimates_decor, alpha=0.95)
@@ -128,8 +129,7 @@ y_n=trans["yn"]
 
 #Get the sets of outliers
 inliniers=set(estimates_decor["inliers"])
-n_true_outliers=max([int(round(data_args["fraction"]*len(data_args["band"]), ndigits=0)),1])
-true_outliers=set(range(0, n_true_outliers-1))
+true_outliers=set(outlier_points.flatten())
 detected_outliers=true_outliers.difference(inliniers)
 not_detected_outliers=true_outliers.difference(detected_outliers)
 true_intliniers=inliniers.difference(true_outliers)

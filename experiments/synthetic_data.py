@@ -35,8 +35,8 @@ class BaseDataGenerator:
             tuple[NDArray, NDArray, NDArray]: Noise arrays for x, y, u.
         """
         if self.noise_type=="normal":
-            a=np.sqrt(self.noise_var/3)     #unifrom on the interval [-a,a]
-            b=np.sqrt(1/3)
+            a=np.sqrt(3*self.noise_var)     #unifrom on the interval [-a,a]
+            b=np.sqrt(3)
             noises = [np.random.uniform(-(a if i == 2 else b), (a if i == 2 else b), size=(n, size)) for i, size in enumerate(sizes)]
         elif self.noise_type=="uniform":
             noises = [np.random.normal(0, np.sqrt(self.noise_var if i == 2 else 1), size=(n, size)) for i, size in enumerate(sizes)]
@@ -306,39 +306,16 @@ class BLPNonlinearDataGenerator(BaseDataGenerator):
         x_band = basis @ (weights * band_idx)
         x = x_band + u + ex
 
-        k = 10*self.basis_transform(u, outlier_points, basis, n)
+        max=np.max(x)
+        min=np.min(x)
+        diff=max-min
+        x=(x-min)/diff
+
+        k = self.basis_transform(u, outlier_points, basis, n)
 
         y = functions_nonlinear(x, self.beta[0]) + ey + k
         
         return x, y, u
-        
-        """
-        eu, ex, ey = self.get_noise_vars(n, [1, 1, 1])
-        band_idx = self.get_band_idx(n)
-
-        basis = self.get_basis(n)
-
-        weights = np.random.uniform(-1, 1, size=(n, 1))
-        n_sub=np.max([np.min([int(round(self.fraction*len(self.band), ndigits=0)), n-1]), 1])
-        idx_sub=np.concatenate((np.ones((n_sub ,1),  dtype=int), np.zeros((n-n_sub,1),  dtype=int)))
-        band_idx_u=band_idx*idx_sub
-        u_band = basis @ (weights * band_idx_u)
-        u = u_band 
-
-        weights = np.random.uniform(-1, 1, size=(n, 1))
-        x_band = basis @ (weights * band_idx)
-        x = x_band + u + ex
-
-        "Rescalling of the variables"
-        max=np.max(x)
-        min=np.min(x)
-        diff=max-min
-        x=np.divide(x-np.full((n, 1), min, dtype=float), diff)
-        factor_u=2
-        y=functions_nonlinear(x, self.beta[0]) + ey + factor_u* u
-
-        return x, y, factor_u*u
-    """
     
 
 def functions_nonlinear(x:NDArray, beta:int):
@@ -347,9 +324,9 @@ def functions_nonlinear(x:NDArray, beta:int):
     """
     n=np.size(x)
     if beta==1:
-        y = 20*(x - np.full((n, 1), 0.5, dtype=float))**2 
+        y = 25*(x - np.full((n, 1), 0.5, dtype=float))**2 
     elif beta==2:
-        y = 4*np.sin(6*x)
+        y = 4*np.sin(2*np.pi*x)
     elif beta==3:
         y=10/(1+np.exp(-12*x+6))
     elif beta==4:
