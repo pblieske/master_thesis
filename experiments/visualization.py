@@ -14,26 +14,26 @@ For this we simulated only one draw for a fixed number of observations n, for Mo
 
 colors, ibm_cb = plot_settings()
 
-SEED = 1
+SEED = 5
 np.random.seed(SEED)
 random.seed(SEED)
 
 data_args = {
     "process_type": "blpnl",       # "ou" | "blp" | "blpnl"
     "basis_type": "cosine",     # "cosine" | "haar"
-    "fraction": 0.3,
-    "beta": np.array([3]),
+    "fraction": 0.1,
+    "beta": np.array([4]),
     "band": list(range(0, 50))  # list(range(0, 50)) | None
 }
 
 method_args = {
-    "a": 0.65,
+    "a": 0.85,
     "method": "torrent",        # "torrent" | "bfs"
 }
 
 
-noise_vars =  1
-n = 2 ** 10 # number of observations
+noise_vars =  0.5
+n = 2 ** 8 # number of observations
 print("number of observations:", n)
 
 # ----------------------------------

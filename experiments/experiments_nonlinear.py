@@ -38,19 +38,19 @@ random.seed(SEED)
 data_args = {
     "process_type": "blpnl",       # "ou" | "blp" | "blpnl"
     "basis_type": "cosine",     # "cosine" | "haar"
-    "fraction": 0.3,
-    "beta": np.array([3]),
+    "fraction": 0.1,
+    "beta": np.array([2]),
     "band": list(range(0, 50))  # list(range(0, 50)) | None
 }
 
 method_args = {
-    "a": 0.65,
+    "a": 0.85,
     "method": "torrent",        # "torrent" | "bfs"
 }
 
 m = 200   #Number of repetitions for the Monte Carlo
 noise_vars = [0, 0.5, 1]
-num_data = [4 * 2 ** k for k in range(1, 12)]      # [4, 8, 10]
+num_data = [4 * 2 ** k for k in range(1, 12)]      # up to k=12 
 
 # ----------------------------------
 # run experiments
@@ -66,7 +66,7 @@ for i in range(len(noise_vars)):
         print("number of data points: ", n)
         res["DecoR"].append([])
         res["ols"].append([])
-        L_temp=max(np.floor(np.log(n)).astype(int),1)
+        L_temp=max((1/4*np.floor(n**(1/2))).astype(int),1)
         basis_tmp = [np.cos(np.pi * test_points * k ) for k in range(L_temp)]
         basis = np.vstack(basis_tmp).T
         print("number of coefficients: ", L_temp)
@@ -78,8 +78,8 @@ for i in range(len(noise_vars)):
             y_est=basis @ estimates_decor["estimate"]
             y_est=np.ndarray((n_x, 1), buffer=y_est)
 
-            estimates_fourrier= get_results(**data_values, method="ols", L=L_temp, a=0).T
-            y_fourrier= basis @ estimates_fourrier
+            estimates_fourrier= get_results(**data_values, method="ols", L=L_temp, a=0)
+            y_fourrier= basis @ estimates_fourrier["estimate"]
             y_fourrier=np.ndarray((n_x, 1), buffer=y_fourrier)
 
             res["DecoR"][-1].append(1/np.sqrt(n_x)*np.linalg.norm(y_true-y_est, ord=2))

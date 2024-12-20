@@ -7,7 +7,7 @@ from robust_deconfounding.utils import cosine_basis, haarMatrix
 
 
 class BaseDataGenerator:
-    def __init__(self, basis_type: str, beta: NDArray, noise_var: float) -> None:
+    def __init__(self, basis_type: str, beta: NDArray, noise_var: float, noise_type="normal") -> None:
         """
         Base class for generating data for deconfounding experiments.
 
@@ -21,6 +21,7 @@ class BaseDataGenerator:
         self.basis_type = basis_type
         self.beta = beta
         self.noise_var = noise_var
+        self.noise_type= noise_type
 
     def get_noise_vars(self, n: int, sizes: list[int]) -> tuple[NDArray, NDArray, NDArray]:
         """
@@ -33,13 +34,15 @@ class BaseDataGenerator:
         Returns:
             tuple[NDArray, NDArray, NDArray]: Noise arrays for x, y, u.
         """
-        noises = [np.random.uniform(-(6*self.noise_var if i == 2 else 1), (6*self.noise_var if i == 2 else 1), size=(n, size))
-                  for i, size in enumerate(sizes)]
-
-        """
-        noises = [np.random.normal(0, np.sqrt(self.noise_var if i == 2 else 0), size=(n, size))
-                  for i, size in enumerate(sizes)]
-        """
+        if self.noise_type=="normal":
+            a=np.sqrt(self.noise_var/3)     #unifrom on the interval [-a,a]
+            b=np.sqrt(1/3)
+            noises = [np.random.uniform(-(a if i == 2 else b), (a if i == 2 else b), size=(n, size)) for i, size in enumerate(sizes)]
+        elif self.noise_type=="uniform":
+            noises = [np.random.normal(0, np.sqrt(self.noise_var if i == 2 else 1), size=(n, size)) for i, size in enumerate(sizes)]
+        else:
+            raise ValueError("Noise Type not implemented.")
+        
         return noises
 
     def get_basis(self, n: int):
@@ -267,8 +270,8 @@ class BLPNonlinearDataGenerator(BaseDataGenerator):
     Attributes:
         band (list[int]): Frequency band for concentrated confounding (inclusive).
     """
-    def __init__(self, basis_type: str, beta: NDArray, noise_var: float, band: list[int], fraction: int):
-        super().__init__(basis_type, beta, noise_var)
+    def __init__(self, basis_type: str, beta: NDArray, noise_var: float, band: list[int], fraction: int, noise_type="uniform"):
+        super().__init__(basis_type, beta, noise_var, noise_type)
         self.band = band
         self.fraction = fraction
 
@@ -278,6 +281,7 @@ class BLPNonlinearDataGenerator(BaseDataGenerator):
         """
         return np.array([1 if i in self.band else 0 for i in range(n)]).reshape(-1, 1)
 
+   
     def generate_data(self, n: int, outlier_points: NDArray) -> tuple[NDArray, NDArray]:
         """
         Generates data from discretized band-limited processes with confounding.
@@ -288,6 +292,26 @@ class BLPNonlinearDataGenerator(BaseDataGenerator):
 
         Returns:
             tuple[NDArray, NDArray]: The generated data (x, y).
+        """ 
+        eu, ex, ey = self.get_noise_vars(n, [1, 1, 1])
+        band_idx = self.get_band_idx(n)
+
+        basis = self.get_basis(n)
+
+        weights = np.random.normal(0, 1, size=(n, 1))
+        u_band = basis @ (weights * band_idx)
+        u = u_band + eu
+
+        weights = np.random.normal(0, 1, size=(n, 1))
+        x_band = basis @ (weights * band_idx)
+        x = x_band + u + ex
+
+        k = 10*self.basis_transform(u, outlier_points, basis, n)
+
+        y = functions_nonlinear(x, self.beta[0]) + ey + k
+        
+        return x, y, u
+        
         """
         eu, ex, ey = self.get_noise_vars(n, [1, 1, 1])
         band_idx = self.get_band_idx(n)
@@ -314,6 +338,7 @@ class BLPNonlinearDataGenerator(BaseDataGenerator):
         y=functions_nonlinear(x, self.beta[0]) + ey + factor_u* u
 
         return x, y, factor_u*u
+    """
     
 
 def functions_nonlinear(x:NDArray, beta:int):
@@ -327,6 +352,8 @@ def functions_nonlinear(x:NDArray, beta:int):
         y = 4*np.sin(6*x)
     elif beta==3:
         y=10/(1+np.exp(-12*x+6))
+    elif beta==4:
+        y=-1+np.cos(np.pi*x)-3*np.cos(2*np.pi*x)
     else:
         raise ValueError("Function not implemented.")
     return y
