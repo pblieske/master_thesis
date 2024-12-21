@@ -64,8 +64,6 @@ y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["b
 for i in range(len(noise_vars)):
     print("Noise Variance: ", noise_vars[i])
     res = {"DecoR": [], "ols": []}       
-    #df_decor=pd.DataFrame({"n" : num_data}) #Data frame to save the results 
-    #df_ols=pd.DataFrame({"n" : num_data}) 
 
     for n in num_data:
         print("number of data points: ", n)
@@ -91,52 +89,8 @@ for i in range(len(noise_vars)):
             res["DecoR"][-1].append(1/np.sqrt(n_x)*np.linalg.norm(y_true-y_est, ord=2))
             res["ols"][-1].append(1/np.sqrt(n_x)*np.linalg.norm(y_true-y_fourrier, ord=2))
 
+    #Save the results using pickle file
     res["DecoR"], res["ols"] = np.array(res["DecoR"]), np.array(res["ols"])
     with open(path+'noise='+str(noise_vars[i])+'.pkl', 'wb') as fp:
         pickle.dump(res, fp)
-        print('dictionary saved successfully to file')
-
-    print(type(res))
-    #df["DecoR_"+str(noise_vars[i])]=res["DecoR"].tolist()
-    #df["ols_"+str(noise_vars[i])]=res["ols"].tolist()
-    plot_results(res, num_data, m, colors=colors[i])
-
-#Write the results to a csv
-
-#df.to_csv(path+'m='+str(m)+'_noise_'+str(noise_vars)+'.csv', header=True, index=True)
-
-# ----------------------------------
-# plotting
-# ----------------------------------
-
-titles = {"blp": "Band-Limited", "ou": "Ornstein-Uhlenbeck", "blpnl" : "Nonlinear: Band-Limited"}
-titles_basis = {"cosine": "", "haar": ", Haar basis"}
-titles_dim = {1: "", 2: ", 2-dimensional"}
-
-
-def get_handles():
-    point_1 = Line2D([0], [0], label='OLS', marker='o',
-                     markeredgecolor='w', color=ibm_cb[5], linestyle='-')
-    point_2 = Line2D([0], [0], label='DecoR', marker='X',
-                     markeredgecolor='w', color=ibm_cb[5], linestyle='-')
-    point_3 = Line2D([0], [0], label="$\sigma_{\eta}^2 = $" + str(noise_vars[0]), markersize=10,
-                     color=ibm_cb[1], linestyle='-')
-    point_4 = Line2D([0], [0], label="$\sigma_{\eta}^2 = $" + str(noise_vars[1]), markersize=10,
-                     color=ibm_cb[4], linestyle='-')
-    point_5 = Line2D([0], [0], label="$\sigma_{\eta}^2 = $" + str(noise_vars[2]), markersize=10,
-                     color=ibm_cb[2], linestyle='-')
-    return [point_1, point_2, point_3, point_4, point_5]
-
-
-plt.xlabel("number of data points")
-plt.ylabel("L^2 error")
-plt.title(titles[data_args["process_type"]]
-          + titles_basis[data_args["basis_type"]]
-          + titles_dim[len(data_args["beta"])])
-plt.xscale('log')
-plt.xlim(left=num_data[0] - 2)
-plt.hlines(0, num_data[0], num_data[-1], colors='black', linestyles='dashed')
-plt.legend(handles=get_handles(), loc="lower left")
-plt.tight_layout()
-
-plt.show()
+        print('Results saved successfully to file,')
