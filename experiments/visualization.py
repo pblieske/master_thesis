@@ -14,7 +14,7 @@ For this we simulated only one draw for a fixed number of observations n, for Mo
 
 colors, ibm_cb = plot_settings()
 
-SEED = 10
+SEED = 5
 np.random.seed(SEED)
 random.seed(SEED)
 
@@ -32,8 +32,8 @@ method_args = {
 }
 
 
-noise_vars =  4
-n = 2 ** 12 # number of observations
+noise_vars =  1
+n = 2 ** 10 # number of observations
 print("number of observations:", n)
 
 # ----------------------------------
@@ -42,7 +42,7 @@ print("number of observations:", n)
 n_x=200
 test_points=np.array([i / n_x for i in range(0, n_x)])
 y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["beta"][0])
-L_temp=6 #max(np.floor(1/4*n**(1/2)).astype(int),1)                        #Number of coefficients used
+L_temp=max(np.floor(1/4*n**(1/2)).astype(int),1)                        #Number of coefficients used
 print("number of coefficients:", L_temp)
 #Compute the basis
 basis_tmp = [np.cos(np.pi * test_points * k ) for k in range( L_temp)] 

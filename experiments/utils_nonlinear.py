@@ -126,7 +126,7 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method
 
 
 def get_data(n: int, process_type: str, basis_type: str, fraction: float, beta: NDArray, noise_var: float,
-             band: list) -> dict:
+             band: list, noise_type="normal") -> dict:
     """
     Generates data for deconfounding experiments with different settings.
 
@@ -150,7 +150,7 @@ def get_data(n: int, process_type: str, basis_type: str, fraction: float, beta: 
     elif process_type == "blp":
         generator = BLPDataGenerator(basis_type=basis_type, beta=beta, noise_var=noise_var, band=band)
     elif process_type=="blpnl":
-        generator = BLPNonlinearDataGenerator(basis_type=basis_type, beta=beta, noise_var=noise_var, band=band, fraction=fraction)
+        generator = BLPNonlinearDataGenerator(basis_type=basis_type, beta=beta, noise_var=noise_var, band=band, fraction=fraction, noise_type=noise_type)
     else:
         raise ValueError("process_type not implemented")
 
