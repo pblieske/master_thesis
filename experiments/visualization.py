@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
 
-from utils_nonlinear import get_results, plot_results, get_data, plot_settings, get_conf
+from utils_nonlinear import get_results, get_data, plot_settings, get_conf
 from synthetic_data import functions_nonlinear
 
 """
@@ -22,7 +22,7 @@ data_args = {
     "process_type": "blpnl",       # "ou" | "blp" | "blpnl"
     "basis_type": "cosine",     # "cosine" | "haar"
     "fraction": 0.25,
-    "beta": np.array([3]),
+    "beta": np.array([2]),
     "band": list(range(0, 50))  # list(range(0, 50)) | None
 }
 
@@ -33,22 +33,23 @@ method_args = {
 
 
 noise_vars =  1
-n = 2 ** 10 # number of observations
+n = 2 ** 8 # number of observations
 print("number of observations:", n)
 
 # ----------------------------------
-# run experiments
+# run experiment
 # ----------------------------------
-n_x=200
+
+n_x=200     #Resolution of x-axis
 test_points=np.array([i / n_x for i in range(0, n_x)])
 y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["beta"][0])
-L_temp=max(np.floor(1/4*n**(1/2)).astype(int),1)                        #Number of coefficients used
+L_temp=max(np.floor(1/4*n**(1/2)).astype(int),1)    #Number of coefficients used
 print("number of coefficients:", L_temp)
 #Compute the basis
 basis_tmp = [np.cos(np.pi * test_points * k ) for k in range( L_temp)] 
 basis = np.vstack(basis_tmp).T
 #Generate the data
-data_values = get_data(n, **data_args, noise_var=noise_vars, noise_type="normal")
+data_values = get_data(n, **data_args, noise_var=noise_vars, noise_type="uniform")
 #Save the outlier u and its coresponding frequency
 u=data_values.pop("u")
 outlier_points=data_values.pop("outlier_points")
@@ -67,6 +68,8 @@ print("$L^2$-error: ", 1/np.sqrt(n_x)*np.linalg.norm(y_true-y_est, ord=2))
 # plotting
 # ----------------------------------
 
+#Plotting the estimated function
+
 sub=np.linspace(0, n-1, 2**8).astype(int)
 plt.plot(data_values['x'][sub],data_values['y'][sub], 'o:w', mec = 'black', ls="")
 plt.plot(test_points, y_true, '-', color='black')
@@ -76,13 +79,7 @@ plt.plot(test_points, y_fourrier, color=ibm_cb[4])
 plt.fill_between(test_points, y1=ci[:, 0], y2=ci[:, 1], color=ibm_cb[1], alpha=0.1)
 plt.fill_between(test_points, y1=ci_fourier[:, 0], y2=ci_fourier[:, 1], color=ibm_cb[4], alpha=0.1)
 
-titles = {"blp": "Band-Limited", "ou": "Ornstein-Uhlenbeck", "blpnl" : "Nonlinear: Band-Limited"}
-titles_basis = {"cosine": "", "haar": ", Haar basis"}
-titles_dim = {1: "", 2: ", 2-dimensional"}
-
-
 def get_handles():
-
     point_1 = Line2D([0], [0], label='Observations', marker='o', mec='black', color='w')
     point_2 = Line2D([0], [0], label='Truth', markeredgecolor='w', color='black', linestyle='-')
     point_3 = Line2D([0], [0], label="DecoR" , color=ibm_cb[1], linestyle='-')
@@ -90,12 +87,9 @@ def get_handles():
 
     return [point_1, point_2, point_3, point_4]
 
-
 plt.xlabel("x")
 plt.ylabel("y")
-plt.title(titles[data_args["process_type"]]
-          + titles_basis[data_args["basis_type"]]
-          + titles_dim[len(data_args["beta"])])
+plt.title("Example")
 
 plt.legend(handles=get_handles(), loc="lower right")
 plt.tight_layout()
@@ -107,7 +101,6 @@ plt.show()
 plt.plot(data_values['x'][sub], u[sub], 'o:w', mec=ibm_cb[4] )
 
 def get_handles():
-
     point_1 = Line2D([0], [0], label='Confounder', marker='o', color='w', mec=ibm_cb[4], ls='')
     return [point_1]
 

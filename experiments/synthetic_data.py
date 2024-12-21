@@ -312,7 +312,6 @@ class BLPNonlinearDataGenerator(BaseDataGenerator):
         x=(x-min)/diff
 
         k = self.basis_transform(u, outlier_points, basis, n)
-
         y = functions_nonlinear(x, self.beta[0]) + ey + k
         
         return x, y, u

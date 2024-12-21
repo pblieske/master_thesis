@@ -1,9 +1,7 @@
 import numpy as np
 import random, pickle
-import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
 
-from utils_nonlinear import get_results, plot_results, get_data, plot_settings
+from utils_nonlinear import get_results, get_data
 from synthetic_data import functions_nonlinear
 
 """
@@ -30,7 +28,6 @@ The "num_data" variable is a list of increasing natural numbers that indicate th
 """
 
 path="/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_thesis/results/"   #Path to save files
-colors, ibm_cb = plot_settings()
 
 SEED = 2
 np.random.seed(SEED)
@@ -49,9 +46,9 @@ method_args = {
     "method": "torrent",        # "torrent" | "bfs"
 }
 
-m = 2   #Number of repetitions for the Monte Carlo
+m = 200   #Number of repetitions for the Monte Carlo
 noise_vars = [0, 1, 4]
-num_data = [2 ** k for k in range(5, 10)]      # up to k=14 
+num_data = [2 ** k for k in range(5, 14)]      # up to k=14 
 
 # ----------------------------------
 # run experiments
@@ -75,7 +72,7 @@ for i in range(len(noise_vars)):
         print("number of coefficients: ", L_temp)
  
         for _ in range(m):
-            data_values = get_data(n, **data_args, noise_var=noise_vars[i])
+            data_values = get_data(n, **data_args, noise_var=noise_vars[i], noise_type="normal")
             data_values.pop('u') 
             data_values.pop('outlier_points')
             estimates_decor = get_results(**data_values, **method_args, L=L_temp)
@@ -89,7 +86,7 @@ for i in range(len(noise_vars)):
             res["DecoR"][-1].append(1/np.sqrt(n_x)*np.linalg.norm(y_true-y_est, ord=2))
             res["ols"][-1].append(1/np.sqrt(n_x)*np.linalg.norm(y_true-y_fourrier, ord=2))
 
-    #Save the results using pickle file
+    #Save the results using a pickle file
     res["DecoR"], res["ols"] = np.array(res["DecoR"]), np.array(res["ols"])
     with open(path+'noise='+str(noise_vars[i])+'.pkl', 'wb') as fp:
         pickle.dump(res, fp)

@@ -9,12 +9,12 @@ We plot the results, i.e. L^2-error, obtained from cosistency.py
 Attention: File has to be run with the same parameters as consistency.py to esnure the correct files are read and are consistent with the plot settings.
 """
 
-path="/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_thesis/results/"   #Path to save files
+path="/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_thesis/results/"   #Path to load files from
 colors, ibm_cb = plot_settings()
 
-m = 2   #Number of repetitions for the Monte Carlo
+m = 200   #Number of repetitions for the Monte Carlo
 noise_vars = [0, 1, 4]
-num_data = [2 ** k for k in range(5, 10)]      # up to k=14 
+num_data = [2 ** k for k in range(5, 14)]      # up to k=14 
 
 # ----------------------------------
 # Load data and plotting
@@ -44,7 +44,7 @@ def get_handles():
 
 
 plt.xlabel("number of data points")
-plt.ylabel("L^2 error")
+plt.ylabel("$L^2$-error")
 plt.title("$L^2$-consistency")
 plt.xscale('log')
 plt.xlim(left=num_data[0] - 2)
