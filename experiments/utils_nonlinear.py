@@ -207,8 +207,8 @@ def get_conf(x:NDArray, estimate:NDArray, inliers: list, transformed: NDArray, a
         Problem: In our sample there is a bias present introduced by cutting the series of at L.
     """
 
-    xn=transformed["xn"][list(inliers)]
-    yn=transformed["yn"][list(inliers)]
+    xn=transformed["xn"]#[list(inliers)]
+    yn=transformed["yn"]#[list(inliers)]
 
     #Estimate the variance
     r=yn[:, 0]- xn@estimate.T
