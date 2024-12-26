@@ -19,7 +19,7 @@ For this we simulated only one draw for a fixed number of observations n, for Mo
 
 colors, ibm_cb = plot_settings()
 
-SEED = 5
+SEED = 3
 np.random.seed(SEED)
 random.seed(SEED)
 
@@ -74,7 +74,7 @@ y_deco=y-basis[outliers, :].T@coef_conf
 
 #Fit GAM on the deconfounded data
 gam =LinearGAM(n_splines=n)
-gam.gridsearch(x,y_deco, lam=np.array([10**(i/5) for i in range(-50, 50)]))
+gam.gridsearch(x,y_deco, lam=np.array([10**(i/10) for i in range(-100, 100)]))
 gam.summary()
 y_gam=gam.predict(test_points)
 
@@ -92,7 +92,7 @@ print("GAM: ", 1/np.sqrt(n_x)*np.linalg.norm(y_true-y_gam, ord=2))
 # ----------------------------------
 
 sub=np.linspace(0, n-1, 2**8).astype(int)
-plt.plot(data_values['x'][sub],y_deco[sub], 'o:w', mec = 'black')
+plt.plot(data_values['x'][sub],y[sub], 'o:w', mec = 'black')
 plt.plot(test_points, y_true, '-', color='black')
 plt.plot(test_points, y_decor, '-', color=ibm_cb[1])
 plt.plot(test_points, y_gam, color=ibm_cb[4])
