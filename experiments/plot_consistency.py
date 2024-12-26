@@ -30,7 +30,7 @@ for i in range(len(noise_vars)):
 # ----------------------------------
 
 def get_handles():
-    point_1 = Line2D([0], [0], label='OLS', marker='o',
+    point_1 = Line2D([0], [0], label='Oracle', marker='o',
                      markeredgecolor='w', color=ibm_cb[5], linestyle='-')
     point_2 = Line2D([0], [0], label='DecoR', marker='X',
                      markeredgecolor='w', color=ibm_cb[5], linestyle='-')
@@ -45,7 +45,7 @@ def get_handles():
 
 plt.xlabel("number of data points")
 plt.ylabel("$L^2$-error")
-plt.title("$L^2$-consistency")
+plt.title("Oracle vs. DecoR")
 plt.xscale('log')
 plt.xlim(left=num_data[0] - 2)
 plt.hlines(0, num_data[0], num_data[-1], colors='black', linestyles='dashed')

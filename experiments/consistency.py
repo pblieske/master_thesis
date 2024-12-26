@@ -57,7 +57,6 @@ n_x=200     #Resolution of x-axis
 test_points = np.array([i / n_x for i in range(0, n_x)])
 y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["beta"][0])
 
-
 for i in range(len(noise_vars)):
     print("Noise Variance: ", noise_vars[i])
     res = {"DecoR": [], "ols": []}       
@@ -66,7 +65,7 @@ for i in range(len(noise_vars)):
         print("number of data points: ", n)
         res["DecoR"].append([])
         res["ols"].append([])
-        L_temp=max((np.floor(n**(1/2)/4)).astype(int),1)
+        L_temp=max((np.floor(np.log(n))).astype(int),1) #max((np.floor(n**(1/2)/4)).astype(int),1)
         basis_tmp = [np.cos(np.pi * test_points * k ) for k in range(L_temp)]
         basis = np.vstack(basis_tmp).T
         print("number of coefficients: ", L_temp)
@@ -74,12 +73,12 @@ for i in range(len(noise_vars)):
         for _ in range(m):
             data_values = get_data(n, **data_args, noise_var=noise_vars[i], noise_type="normal")
             data_values.pop('u') 
-            data_values.pop('outlier_points')
+            outlier_points=data_values.pop('outlier_points')
             estimates_decor = get_results(**data_values, **method_args, L=L_temp)
             y_est=basis @ estimates_decor["estimate"]
             y_est=np.ndarray((n_x, 1), buffer=y_est)
 
-            estimates_fourrier= get_results(**data_values, method="ols", L=L_temp, a=0)
+            estimates_fourrier= get_results(**data_values, method="oracle", L=L_temp, a=0, outlier_points=outlier_points)
             y_fourrier= basis @ estimates_fourrier["estimate"]
             y_fourrier=np.ndarray((n_x, 1), buffer=y_fourrier)
 

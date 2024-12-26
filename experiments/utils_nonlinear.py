@@ -47,7 +47,7 @@ def r_squared(x: NDArray, y_true: NDArray, beta: NDArray) -> float:
     return 1-u/v
 
 
-def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method: str, lmbd=0, K=np.array([0])) -> NDArray:
+def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method: str, lmbd=0, K=np.array([0]), outlier_points=np.array([])) -> NDArray:
     """
     Estimates the causal coefficient(s) using DecorR with 'method' as robust regression algorithm.
 
@@ -88,12 +88,6 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method
             algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=lmbd_cv)
         else:
             raise ValueError("Invalid method")
-        """
-        elif method =="torrent_cv2":
-            algo = Torrent_cv2(a=a, fit_intercept=False, K=K, lmbd=lmbd)
-        elif method =="torrent_cv3":
-            algo = Torrent_cv3(a=a, fit_intercept=False, K=K, lmbd=lmbd)
-        """
 
         algo = DecoR(algo, basis)
         algo.fit_coef(x, y, L)
@@ -121,6 +115,15 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method
         B=xn.T @ yn
         estimate=sp.linalg.solve(A, B)
         return{"estimate": estimate, "transformed": {"xn": xn, "yn":yn} }
+    elif method == "oracle":
+        n=len(x)
+        inliers=np.delete(np.arange(0,n), list(outlier_points))
+        P_temp = [np.cos(np.pi * x.T * k) for k in range(L)]
+        P =  np.vstack(P_temp).T
+        xn = basis.T @ P / n
+        yn = basis.T @ y / n
+        model_l = sm.OLS(yn[inliers], xn[inliers]).fit()
+        return {"estimate": model_l.params, "transformed": {"xn":xn, "yn": yn}, "inliers":inliers}
     else:
         raise ValueError("Invalid method")
 
@@ -216,7 +219,7 @@ def get_conf(x:NDArray, estimate:NDArray, inliers: list, transformed: NDArray, a
     #Compute the linear estimator
     basis = [np.cos(np.pi * x * k ) for k in range(L)] 
     basis = np.vstack(basis).T  
-    H=basis @ np.linalg.inv(xn.T@xn + lmbd*K) @ xn.T
+    H=basis @ np.linalg.inv(xn.T @ xn + lmbd*K) @ xn.T
     sigma=np.sqrt(sigma_2*np.diag(H @ H.T))
 
     #Compute the confidence interval

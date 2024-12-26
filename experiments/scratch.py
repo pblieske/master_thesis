@@ -2,7 +2,8 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
-
+import pygam as gam
+from pygam import LinearGAM, s, f
 
 from utils_nonlinear import get_results, plot_results, get_data, plot_settings
 from synthetic_data import functions_nonlinear
@@ -14,12 +15,12 @@ For this we simulated only one draw for a fixed number of observations n, for Mo
 
 colors, ibm_cb = plot_settings()
 
-SEED = 4
+SEED = 5
 np.random.seed(SEED)
 random.seed(SEED)
 
 data_args = {
-    "process_type": "blpnl",       # "ou" | "blp" | "blpnl"
+    "process_type": "blpnl",    # "ou" | "blp" | "blpnl"
     "basis_type": "cosine",     # "cosine" | "haar"
     "fraction": 0.3,
     "beta": np.array([2]),

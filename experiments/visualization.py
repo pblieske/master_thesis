@@ -19,10 +19,10 @@ np.random.seed(SEED)
 random.seed(SEED)
 
 data_args = {
-    "process_type": "blpnl",       # "ou" | "blp" | "blpnl"
+    "process_type": "blpnl",    # "ou" | "blp" | "blpnl"
     "basis_type": "cosine",     # "cosine" | "haar"
     "fraction": 0.25,
-    "beta": np.array([2]),
+    "beta": np.array([4]),
     "band": list(range(0, 50))  # list(range(0, 50)) | None
 }
 
@@ -31,8 +31,7 @@ method_args = {
     "method": "torrent",        # "torrent" | "bfs"
 }
 
-
-noise_vars =  1
+noise_vars =  4
 n = 2 ** 8 # number of observations
 print("number of observations:", n)
 
@@ -56,7 +55,7 @@ outlier_points=data_values.pop("outlier_points")
 #Estimate the function f
 estimates_decor = get_results(**data_values, **method_args, L=L_temp)
 ci=get_conf(x=test_points, **estimates_decor, alpha=0.95)
-estimates_fourrier= get_results(**data_values, method="ols", L=L_temp, a=0)
+estimates_fourrier= get_results(**data_values, method="ols", L=L_temp, a=0, outlier_points=outlier_points)
 ci_fourier=get_conf(x=test_points, **estimates_fourrier, alpha=0.95)
 y_est=basis @ estimates_decor["estimate"]
 y_fourrier= basis @ estimates_fourrier["estimate"]
@@ -89,9 +88,9 @@ def get_handles():
 
 plt.xlabel("x")
 plt.ylabel("y")
-plt.title("Example")
+plt.title("Finite underlying L")
 
-plt.legend(handles=get_handles(), loc="lower right")
+plt.legend(handles=get_handles(), loc="upper left")
 plt.tight_layout()
 plt.show()
 
@@ -154,5 +153,5 @@ plt.suptitle("Detected Outliers")
 plt.tight_layout()
 fig.subplots_adjust(top=0.8)
 fig.legend(handles=get_handles(), loc="upper center", bbox_to_anchor=(0.55, 0.9), ncol=3)
-
+plt.tight_layout()
 plt.show()
