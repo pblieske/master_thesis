@@ -56,8 +56,10 @@ class DecoR:
             self.xn = sp.fft.fft(x.T, norm="forward").T
             self.yn = sp.fft.fft(y, norm="forward")
         else:
-            P_temp = [np.cos(np.pi * x.T * k) for k in range(L)]
-            P =  np.vstack(P_temp).T
+            tmp = [np.cos(np.pi * x.T * (k + 1 / 2)) for k in range(L)]
+            P = np.sqrt(2) * np.vstack(tmp).T
+            #P_temp = [np.cos(np.pi * x.T * k) for k in range(L)]
+            #P =  np.vstack(P_temp).T
             self.xn = self.basis.T @ P / n
             self.yn = self.basis.T @ y / n
 

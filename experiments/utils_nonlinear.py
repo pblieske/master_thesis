@@ -10,7 +10,7 @@ import pylab
 import sys
 sys.path.insert(0, '/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_thesis/code/master_thesis')
 
-from robust_deconfounding.robust_regression import Torrent, BFS, Torrent_reg, Torrent_cv, Torrent_cv2, Torrent_cv3
+from robust_deconfounding.robust_regression import Torrent, BFS, Torrent_reg
 from robust_deconfounding.decor import DecoR
 from robust_deconfounding.utils import cosine_basis, haarMatrix
 from experiments.synthetic_data import BLPDataGenerator, OUDataGenerator, BLPNonlinearDataGenerator
@@ -47,7 +47,7 @@ def r_squared(x: NDArray, y_true: NDArray, beta: NDArray) -> float:
     return 1-u/v
 
 
-def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method: str, lmbd=0, K=np.array([0]), outlier_points=np.array([])) -> NDArray:
+def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method: str, basis_type:str, lmbd=0, K=np.array([0]), outlier_points=np.array([])) -> NDArray:
     """
     Estimates the causal coefficient(s) using DecorR with 'method' as robust regression algorithm.
 
@@ -99,8 +99,10 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method
 
     elif method == "ols":
         n=len(x)
-        P_temp = [np.cos(np.pi * x.T * k) for k in range(L)]
-        P =  np.vstack(P_temp).T
+        tmp = [np.cos(np.pi * x.T * (k + 1 / 2)) for k in range(L)]
+        P = np.sqrt(2) * np.vstack(tmp).T
+        #P_temp = [np.cos(np.pi * x.T * k) for k in range(L)]
+        #P =  np.vstack(P_temp).T
         xn = basis.T @ P / n
         yn = basis.T @ y / n
         model_l = sm.OLS(yn, xn).fit()
@@ -118,8 +120,10 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method
     elif method == "oracle":
         n=len(x)
         inliers=np.delete(np.arange(0,n), list(outlier_points))
-        P_temp = [np.cos(np.pi * x.T * k) for k in range(L)]
-        P =  np.vstack(P_temp).T
+        tmp = [np.cos(np.pi * x.T * (k + 1 / 2)) for k in range(L)]
+        P = np.sqrt(2) * np.vstack(tmp).T
+        #P_temp = [np.cos(np.pi * x.T * k) for k in range(L)]
+        #P =  np.vstack(P_temp).T
         xn = basis.T @ P / n
         yn = basis.T @ y / n
         model_l = sm.OLS(yn[inliers], xn[inliers]).fit()
@@ -173,7 +177,7 @@ def get_data(n: int, process_type: str, basis_type: str, fraction: float, beta: 
     else:
         x, y, u = generator.generate_data(n=n, outlier_points=outlier_points)
 
-    return {"x": x, "y": y, "u": u, "basis": basis, "outlier_points": np.arange(0,n)*outlier_points.T}
+    return {"x": x, "y": y, "u": u, "basis": basis, "outlier_points": {outlier_points[i,0]*i for i in np.arange(0,n)}}
 
 
 def plot_results(res: dict, num_data: list, m: int, colors) -> None:
@@ -217,6 +221,7 @@ def get_conf(x:NDArray, estimate:NDArray, inliers: list, transformed: NDArray, a
     df=n-L
     sigma_2=np.sum(np.square(r), axis=0)/df 
     #Compute the linear estimator
+
     basis = [np.cos(np.pi * x * k ) for k in range(L)] 
     basis = np.vstack(basis).T  
     H=basis @ np.linalg.inv(xn.T @ xn + lmbd*K) @ xn.T
@@ -229,3 +234,22 @@ def get_conf(x:NDArray, estimate:NDArray, inliers: list, transformed: NDArray, a
     ci=np.stack((ci_l, ci_u), axis=-1)
 
     return ci
+
+
+def check_eigen(x:NDArray, S: list, G:list, lmbd=0, K=np.array([0])) -> bool:
+    """
+    Checks if the eigenvalue condition from theorem 4.2 holds.
+    """
+    n=x.shape[0]
+    x_S=x[list(S), :]
+    G_C=set(np.arange(0,n))-G
+    V=S.symmetric_difference(set(G_C))
+    x_V=x[list(V), :]
+    #Compute eigenvalues
+    min=np.min(np.sqrt(np.linalg.eigvals(x_S.T @ x_S + lmbd*K)))
+    #min=np.min(sp.linalg.svdvals(x_S.T))
+    max=np.max(sp.linalg.svdvals(x_V.T))
+    print(min)
+    print(max)
+    #Check the eigenvalue condition
+    return max/min<1/np.sqrt(2)

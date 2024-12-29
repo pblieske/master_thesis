@@ -63,3 +63,24 @@ def cosine_basis(n: int) -> NDArray:
     tmp = [np.cos(np.pi * sample_points * (k + 1 / 2)) for k in range(n)]
     basis = np.hstack((np.ones((n, 1)), np.sqrt(2) * np.vstack(tmp))).T
     return basis
+
+def get_funcbasis(x:NDArray, L:int, type="cosine_cont")->NDArray:
+    """
+    Return the first L basis vectors evaluated at x. 
+    Arguments:
+        L: number of basis vectors
+        x: points where the basis vectors are evluated
+        type: type of basis spanning the L^2-space
+    """
+    if type=="cosine_cont":
+        tmp = [np.cos(np.pi * x * k ) for k in range(L)] 
+        basis = np.vstack(tmp).T
+    elif type=="cosine_disc":
+        n=len(x)
+        tmp = [np.cos(np.pi * x * (k + 1/2)) for k in range(L)]
+        basis = np.vstack(tmp).T
+        ind_0=np.arange(0,n)[x==0]
+        basis[list(ind_0), :]=1
+    else:
+        raise ValueError("Invalid basis type")
+    return basis

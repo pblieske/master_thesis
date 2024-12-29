@@ -12,8 +12,9 @@ Attention: File has to be run with the same parameters as consistency.py to esnu
 path="/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_thesis/results/"   #Path to load files from
 colors, ibm_cb = plot_settings()
 
-m = 200   #Number of repetitions for the Monte Carlo
-noise_vars = [0, 1, 4]
+#Parameters used to run the experiments
+m = 10                                        #Number of repetitions for the Monte Carlo
+noise_vars = [0, 1, 4]                      
 num_data = [2 ** k for k in range(5, 14)]      # up to k=14 
 
 # ----------------------------------

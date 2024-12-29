@@ -29,16 +29,17 @@ The "num_data" variable is a list of increasing natural numbers that indicate th
 
 path="/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_thesis/results/"   #Path to save files
 
-SEED = 2
+SEED = 1
 np.random.seed(SEED)
 random.seed(SEED)
 
 data_args = {
     "process_type": "blpnl",    # "ou" | "blp" | "blpnl"
     "basis_type": "cosine",     # "cosine" | "haar"
-    "fraction": 0.25,
-    "beta": np.array([2]),
-    "band": list(range(0, 50))  # list(range(0, 50)) | None
+    "fraction": 0.25,           
+    "beta": np.array([2]),      # the nonlinear function is choosen through beta, see synthetic_data.py
+    "band": list(range(0, 50)),  # list(range(0, 50)) | None
+    "noise_type": "uniform"
 }
 
 method_args = {
@@ -46,13 +47,14 @@ method_args = {
     "method": "torrent",        # "torrent" | "bfs"
 }
 
-m = 200   #Number of repetitions for the Monte Carlo
-noise_vars = [0, 1, 4]
+m = 10                                        #Number of repetitions for the Monte Carlo
+noise_vars = [0, 1, 4]                         #
 num_data = [2 ** k for k in range(5, 14)]      # up to k=14 
 
 # ----------------------------------
 # run experiments
 # ----------------------------------
+
 n_x=200     #Resolution of x-axis
 test_points = np.array([i / n_x for i in range(0, n_x)])
 y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["beta"][0])
@@ -65,20 +67,22 @@ for i in range(len(noise_vars)):
         print("number of data points: ", n)
         res["DecoR"].append([])
         res["ols"].append([])
-        L_temp=max((np.floor(np.log(n))).astype(int),1) #max((np.floor(n**(1/2)/4)).astype(int),1)
-        basis_tmp = [np.cos(np.pi * test_points * k ) for k in range(L_temp)]
-        basis = np.vstack(basis_tmp).T
+        L_temp=max((np.floor(n**(1/2)/4)).astype(int),1) #max((np.floor(np.log(n))).astype(int),1) max((np.floor(n**(1/2)/4)).astype(int),1)
+        tmp = [np.cos(np.pi * test_points[1:n_x] * (k + 1 / 2)) for k in range(L_temp)]
+        basis = np.hstack((np.ones((L_temp, 1)), np.sqrt(2) * np.vstack(tmp))).T
+        #basis_tmp = [np.cos(np.pi * test_points * k ) for k in range(L_temp)]
+        #basis = np.vstack(basis_tmp).T
         print("number of coefficients: ", L_temp)
  
         for _ in range(m):
-            data_values = get_data(n, **data_args, noise_var=noise_vars[i], noise_type="normal")
+            data_values = get_data(n, **data_args, noise_var=noise_vars[i])
             data_values.pop('u') 
             outlier_points=data_values.pop('outlier_points')
             estimates_decor = get_results(**data_values, **method_args, L=L_temp)
             y_est=basis @ estimates_decor["estimate"]
             y_est=np.ndarray((n_x, 1), buffer=y_est)
 
-            estimates_fourrier= get_results(**data_values, method="oracle", L=L_temp, a=0, outlier_points=outlier_points)
+            estimates_fourrier= get_results(**data_values, method="ols", L=L_temp, a=0, outlier_points=outlier_points)
             y_fourrier= basis @ estimates_fourrier["estimate"]
             y_fourrier=np.ndarray((n_x, 1), buffer=y_fourrier)
 
@@ -89,4 +93,4 @@ for i in range(len(noise_vars)):
     res["DecoR"], res["ols"] = np.array(res["DecoR"]), np.array(res["ols"])
     with open(path+'noise='+str(noise_vars[i])+'.pkl', 'wb') as fp:
         pickle.dump(res, fp)
-        print('Results saved successfully to file,')
+        print('Results saved successfully to file.')

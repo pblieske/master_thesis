@@ -34,12 +34,18 @@ class BaseDataGenerator:
         Returns:
             tuple[NDArray, NDArray, NDArray]: Noise arrays for x, y, u.
         """
-        if self.noise_type=="normal":
+        if self.noise_type=="uniform":
             a=np.sqrt(3*self.noise_var)     #unifrom on the interval [-a,a]
-            b=np.sqrt(3)
-            noises = [np.random.uniform(-(a if i == 2 else b), (a if i == 2 else b), size=(n, size)) for i, size in enumerate(sizes)]
-        elif self.noise_type=="uniform":
-            noises = [np.random.normal(0, np.sqrt(self.noise_var if i == 2 else 1), size=(n, size)) for i, size in enumerate(sizes)]
+            b=np.sqrt(3/10)
+            c=np.sqrt(3)
+            noises = [np.random.uniform(-(a if i == 2 else (b if i==0 else c)), (a if i == 2 else (b if i==0 else c)), size=(n, size)) for i, size in enumerate(sizes)]
+        elif self.noise_type=="normal":
+            b=np.sqrt(3/10)
+            c=np.sqrt(3)
+            noise_u=np.random.uniform(-b, b, size=(n,1)) 
+            noise_x= np.random.uniform(-c, c, size=(n,1))
+            noise_y = np.random.normal(0, np.sqrt(self.noise_var), size=(n, 1))
+            noises=[noise_u, noise_x, noise_y]
         else:
             raise ValueError("Noise Type not implemented.")
         
@@ -301,6 +307,7 @@ class BLPNonlinearDataGenerator(BaseDataGenerator):
         weights = np.random.normal(0, 1, size=(n, 1))
         u_band = basis @ (weights * band_idx)
         u = u_band + eu
+        k = self.basis_transform(u, outlier_points, basis, n)
 
         weights = np.random.normal(0, 1, size=(n, 1))
         x_band = basis @ (weights * band_idx)
@@ -311,7 +318,7 @@ class BLPNonlinearDataGenerator(BaseDataGenerator):
         diff=max-min
         x=(x-min)/diff
 
-        k = self.basis_transform(u, outlier_points, basis, n)
+        
         y = functions_nonlinear(x, self.beta[0]) + ey + k
         
         return x, y, u
@@ -327,7 +334,7 @@ def functions_nonlinear(x:NDArray, beta:int):
     elif beta==2:
         y = 4*np.sin(2*np.pi*x)
     elif beta==3:
-        y=10/(1+np.exp(-12*x+6))
+        y=10/(1+np.exp(-12*x+6))-5
     elif beta==4:
         y=-1+np.cos(np.pi*x)-3*np.cos(2*np.pi*x)
     else:

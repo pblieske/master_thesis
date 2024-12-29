@@ -107,11 +107,9 @@ def get_handles():
     point_4 = Line2D([0], [0], label="GAM" , color=ibm_cb[4], linestyle='-')
     return [point_1, point_2, point_3, point_4]
 
-
 plt.xlabel("x")
 plt.ylabel("y")
 plt.title("GAM")
-
 plt.legend(handles=get_handles(), loc="lower left")
 plt.tight_layout()
 plt.show()
