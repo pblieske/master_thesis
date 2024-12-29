@@ -81,6 +81,9 @@ def get_funcbasis(x:NDArray, L:int, type="cosine_cont")->NDArray:
         basis = np.vstack(tmp).T
         ind_0=np.arange(0,n)[list(x)==0]
         basis[ind_0, :]=1
+    elif type=="poly":
+        tmp=[ x**k for k in range(L)]
+        basis= np.vstack(tmp).T
     else:
         raise ValueError("Invalid basis type")
     return basis

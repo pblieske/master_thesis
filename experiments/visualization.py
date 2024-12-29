@@ -2,16 +2,12 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
+import sys
 
-
+sys.path.insert(0, '/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_thesis/code/master_thesis')
+from robust_deconfounding.utils import get_funcbasis
 from utils_nonlinear import get_results, get_data, plot_settings, get_conf, check_eigen
 from synthetic_data import functions_nonlinear
-
-import sys
-sys.path.insert(0, '/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_thesis/code/master_thesis')
-
-from robust_deconfounding.utils import get_funcbasis
-
 
 """
 We provide a visualization of a fitted curve using the cosine approximation.
@@ -20,7 +16,7 @@ For this we simulated only one draw for a fixed number of observations n, for Mo
 
 colors, ibm_cb = plot_settings()
 
-SEED = 7
+SEED = 10
 np.random.seed(SEED)
 random.seed(SEED)
 
@@ -28,18 +24,19 @@ data_args = {
     "process_type": "blpnl",    # "ou" | "blp" | "blpnl"
     "basis_type": "cosine",     # "cosine" | "haar"
     "fraction": 0.25,
-    "beta": np.array([2]),
-    "band": list(range(0, 50))  # list(range(0, 50)) | None
+    "noise_type": "normal",
+    "beta": np.array([3]),
+    "band": list(range(0, 50)),  # list(range(0, 50)) | None
 }
 
 method_args = {
     "a": 0.7,
     "method": "torrent",        # "torrent" | "bfs"
-    "basis_type": "cosine_disc",# basis used for the approximation of f
+    "basis_type": "cosine_cont",# basis used for the approximation of f
 }
 
 noise_vars =  1
-n = 2 ** 8 # number of observations
+n = 2 ** 10 # number of observations
 print("number of observations:", n)
 
 # ----------------------------------
@@ -51,24 +48,27 @@ test_points=np.array([i / n_x for i in range(0, n_x)])
 y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["beta"][0])
 L_temp=max(np.floor(1/4*n**(1/2)).astype(int),1)    #Number of coefficients used
 print("number of coefficients:", L_temp)
+
 #Compute the basis and generate the data
 basis=get_funcbasis(x=test_points, L=L_temp, type=method_args["basis_type"])
-data_values = get_data(n, **data_args, noise_var=noise_vars, noise_type="uniform")
-#Save the outlier u and its coresponding frequency
+data_values = get_data(n, **data_args, noise_var=noise_vars)
 u=data_values.pop("u")
 outlier_points=data_values.pop("outlier_points")
+
 #Estimate the function f
 estimates_decor = get_results(**data_values, **method_args, L=L_temp)
 ci=get_conf(x=test_points, **estimates_decor, alpha=0.95, basis_type=method_args["basis_type"])
 estimates_fourier= get_results(**data_values, method="ols", basis_type=method_args["basis_type"], L=L_temp, a=0, outlier_points=outlier_points)
 ci_fourier=get_conf(x=test_points, **estimates_fourier, alpha=0.95, basis_type=method_args["basis_type"])
 y_est=basis @ estimates_decor["estimate"]
-y_fourier= basis @ estimates_fourier["estimate"]
 y_est=np.ndarray((n_x, 1), buffer=y_est)
+y_fourier= basis @ estimates_fourier["estimate"]
+
 #Check the eigenvalue condition
 diag=np.concatenate((np.array([1000000]), np.array([1**4 for i in range(1,L_temp)])))
 K=np.diag(diag)
 print(check_eigen(x=estimates_decor["transformed"]["xn"], S=estimates_decor["inliers"], G=outlier_points, lmbd=0.001, K=K))
+
 #Compute the L^2-error
 print("$L^2$-error: ", 1/np.sqrt(n_x)*np.linalg.norm(y_true-y_est, ord=2))
 

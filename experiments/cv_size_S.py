@@ -5,6 +5,9 @@ from matplotlib.lines import Line2D
 import seaborn as sns
 import pandas as pd
 
+import sys
+sys.path.insert(0, '/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_thesis/code/master_thesis')
+from robust_deconfounding.utils import get_funcbasis
 from utils_nonlinear import get_results, get_data, plot_settings
 from synthetic_data import functions_nonlinear
 
@@ -23,12 +26,14 @@ data_args = {
     "basis_type": "cosine",     # "cosine" | "haar"
     "fraction": 0.3,
     "beta": np.array([2]),
-    "band": list(range(0, 50))  # list(range(0, 50)) | None
+    "band": list(range(0, 50)),  # list(range(0, 50)) | None
+    "noise_type": "normal"
 }
 
 method_args = {
     "a": 0.65,
     "method": "torrent",        # "torrent" | "bfs"
+    "basis_type": "cosine_cont"
 }
 
 m = 200  #Number of repetitions for the Monte Carlo
@@ -51,6 +56,7 @@ for i in range(0, len(num_data)):
     L_temp=max(np.floor(n**(1/2)).astype(int),1)      
     basis_tmp = [np.cos(np.pi * test_points * k ) for k in range(L_temp)]
     basis = np.vstack(basis_tmp).T
+    bais=get_funcbasis(x=test_points, L=L_temp, type=method_args["basis_tmp"])
     print("number of coefficients: ", L_temp)
     #Construct smothness penalty
     diag=np.concatenate((np.array([0]), np.array([i**4 for i in range(1,L_temp)])))

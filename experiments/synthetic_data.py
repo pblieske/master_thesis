@@ -311,7 +311,7 @@ class BLPNonlinearDataGenerator(BaseDataGenerator):
 
         weights = np.random.normal(0, 1, size=(n, 1))
         x_band = basis @ (weights * band_idx)
-        x = x_band + u + ex
+        x = x_band + k + ex
 
         max=np.max(x)
         min=np.min(x)

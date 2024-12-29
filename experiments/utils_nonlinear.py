@@ -104,15 +104,15 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method
         P=get_funcbasis(x=x, L=L, type=basis_type)
         xn = basis.T @ P / n
         yn = basis.T @ y / n
-        model_l = sm.OLS(yn, xn).fit()
+        model_l = sm.OLS(y, P).fit()
         return {"estimate": model_l.params, "transformed": {"xn":xn, "yn": yn}, "inliers": np.array(range(0, n))}
     elif method == "ridge":
         n=len(x)
         P=get_funcbasis(x=x, L=L, type=basis_type)
         xn = basis.T @ P / n
         yn = basis.T @ y / n
-        A=xn.T @ xn + lmbd * K
-        B=xn.T @ yn
+        A=P.T @ P + lmbd * K
+        B=P.T @ yn
         estimate=sp.linalg.solve(A, B)
         return{"estimate": estimate, "transformed": {"xn": xn, "yn":yn} }
     elif method == "oracle":
@@ -241,7 +241,6 @@ def check_eigen(x:NDArray, S: list, G:list, lmbd=0, K=np.array([0])) -> bool:
     x_V=x[list(V), :]
     #Compute eigenvalues
     min=np.min(np.sqrt(np.linalg.eigvals(x_S.T @ x_S + lmbd*K)))
-    #min=np.min(sp.linalg.svdvals(x_S.T))
     max=np.max(sp.linalg.svdvals(x_V.T))
     #Check the eigenvalue condition
     return max/min<1/np.sqrt(2)

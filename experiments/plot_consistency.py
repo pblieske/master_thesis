@@ -13,7 +13,7 @@ path="/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_the
 colors, ibm_cb = plot_settings()
 
 #Parameters used to run the experiments
-m = 10                                        #Number of repetitions for the Monte Carlo
+m = 200                                       #Number of repetitions for the Monte Carlo
 noise_vars = [0, 1, 4]                      
 num_data = [2 ** k for k in range(5, 14)]      # up to k=14 
 
@@ -31,7 +31,7 @@ for i in range(len(noise_vars)):
 # ----------------------------------
 
 def get_handles():
-    point_1 = Line2D([0], [0], label='Oracle', marker='o',
+    point_1 = Line2D([0], [0], label='OLS', marker='o',
                      markeredgecolor='w', color=ibm_cb[5], linestyle='-')
     point_2 = Line2D([0], [0], label='DecoR', marker='X',
                      markeredgecolor='w', color=ibm_cb[5], linestyle='-')
@@ -46,7 +46,7 @@ def get_handles():
 
 plt.xlabel("number of data points")
 plt.ylabel("$L^2$-error")
-plt.title("Oracle vs. DecoR")
+plt.title("$L^2$-Consistency")
 plt.xscale('log')
 plt.xlim(left=num_data[0] - 2)
 plt.hlines(0, num_data[0], num_data[-1], colors='black', linestyles='dashed')
