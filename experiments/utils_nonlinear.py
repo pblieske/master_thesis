@@ -12,7 +12,7 @@ sys.path.insert(0, '/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semes
 
 from robust_deconfounding.robust_regression import Torrent, BFS, Torrent_reg
 from robust_deconfounding.decor import DecoR
-from robust_deconfounding.utils import cosine_basis, haarMatrix
+from robust_deconfounding.utils import cosine_basis, haarMatrix, get_funcbasis
 from experiments.synthetic_data import BLPDataGenerator, OUDataGenerator, BLPNonlinearDataGenerator
 
 def plot_settings():
@@ -65,6 +65,8 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method
         ValueError: If an invalid method is specified.
     """
     if method[0:3] == "tor":
+        P=get_funcbasis(x=x, L=L, type=basis_type)
+        x=P
         if method == "torrent":
             algo = Torrent(a=a, fit_intercept=False)
         elif method == "bfs":
@@ -74,7 +76,7 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method
         elif method =="torrent_cv":
             robust_algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=0)
             algo = DecoR(algo=robust_algo, basis=basis)
-            algo.fit_coef(x=x, y=y, L=L)
+            algo.fit(x=x, y=y)
             trans=algo.get_transformed
             P_n=trans["xn"]
             y_n=trans["yn"]
@@ -90,7 +92,7 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method
             raise ValueError("Invalid method")
 
         algo = DecoR(algo, basis)
-        algo.fit_coef(x, y, L)
+        algo.fit(x, y)
 
         if method =="torrent_cv":
             return {"estimate": algo.estimate, "inliers": algo.inliniers, "transformed": algo.get_transformed, "S":S}
@@ -99,18 +101,14 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method
 
     elif method == "ols":
         n=len(x)
-        tmp = [np.cos(np.pi * x.T * (k + 1 / 2)) for k in range(L)]
-        P = np.sqrt(2) * np.vstack(tmp).T
-        #P_temp = [np.cos(np.pi * x.T * k) for k in range(L)]
-        #P =  np.vstack(P_temp).T
+        P=get_funcbasis(x=x, L=L, type=basis_type)
         xn = basis.T @ P / n
         yn = basis.T @ y / n
         model_l = sm.OLS(yn, xn).fit()
         return {"estimate": model_l.params, "transformed": {"xn":xn, "yn": yn}, "inliers": np.array(range(0, n))}
     elif method == "ridge":
         n=len(x)
-        P_temp = [np.cos(np.pi * x.T * k) for k in range(L)]
-        P =  np.vstack(P_temp).T
+        P=get_funcbasis(x=x, L=L, type=basis_type)
         xn = basis.T @ P / n
         yn = basis.T @ y / n
         A=xn.T @ xn + lmbd * K
@@ -120,10 +118,7 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method
     elif method == "oracle":
         n=len(x)
         inliers=np.delete(np.arange(0,n), list(outlier_points))
-        tmp = [np.cos(np.pi * x.T * (k + 1 / 2)) for k in range(L)]
-        P = np.sqrt(2) * np.vstack(tmp).T
-        #P_temp = [np.cos(np.pi * x.T * k) for k in range(L)]
-        #P =  np.vstack(P_temp).T
+        P=get_funcbasis(x=x, L=L, type=basis_type)
         xn = basis.T @ P / n
         yn = basis.T @ y / n
         model_l = sm.OLS(yn[inliers], xn[inliers]).fit()
@@ -205,7 +200,7 @@ def plot_results(res: dict, num_data: list, m: int, colors) -> None:
                  palette=[colors[0], colors[1]], legend=True)
 
 
-def get_conf(x:NDArray, estimate:NDArray, inliers: list, transformed: NDArray, alpha=0.95, lmbd=0, K=np.diag(np.array([0]))) -> NDArray:
+def get_conf(x:NDArray, estimate:NDArray, inliers: list, transformed: NDArray, alpha=0.95, lmbd=0, K=np.diag(np.array([0])), basis_type="cosine_cont") -> NDArray:
     """
         Returns a confidence interval for the estimated f evaluated at x, assuming that S contains only inliers.
         Problem: In our sample there is a bias present introduced by cutting the series of at L.
@@ -215,15 +210,14 @@ def get_conf(x:NDArray, estimate:NDArray, inliers: list, transformed: NDArray, a
     yn=transformed["yn"][list(inliers)]
 
     #Estimate the variance
-    r=yn[:, 0]- xn@estimate.T
+    r=yn- xn@estimate.T
     n=xn.shape[0]
     L=xn.shape[1]
     df=n-L
     sigma_2=np.sum(np.square(r), axis=0)/df 
     #Compute the linear estimator
 
-    basis = [np.cos(np.pi * x * k ) for k in range(L)] 
-    basis = np.vstack(basis).T  
+    basis=get_funcbasis(x=x, L=L, type=basis_type)
     H=basis @ np.linalg.inv(xn.T @ xn + lmbd*K) @ xn.T
     sigma=np.sqrt(sigma_2*np.diag(H @ H.T))
 
@@ -249,7 +243,5 @@ def check_eigen(x:NDArray, S: list, G:list, lmbd=0, K=np.array([0])) -> bool:
     min=np.min(np.sqrt(np.linalg.eigvals(x_S.T @ x_S + lmbd*K)))
     #min=np.min(sp.linalg.svdvals(x_S.T))
     max=np.max(sp.linalg.svdvals(x_V.T))
-    print(min)
-    print(max)
     #Check the eigenvalue condition
     return max/min<1/np.sqrt(2)

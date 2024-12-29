@@ -35,7 +35,7 @@ data_args = {
 method_args = {
     "a": 0.7,
     "method": "torrent",        # "torrent" | "bfs"
-    "basis_type": "cosine_disc",
+    "basis_type": "cosine_disc",# basis used for the approximation of f
 }
 
 noise_vars =  1
@@ -51,25 +51,19 @@ test_points=np.array([i / n_x for i in range(0, n_x)])
 y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["beta"][0])
 L_temp=max(np.floor(1/4*n**(1/2)).astype(int),1)    #Number of coefficients used
 print("number of coefficients:", L_temp)
-#Compute the basis
+#Compute the basis and generate the data
 basis=get_funcbasis(x=test_points, L=L_temp, type=method_args["basis_type"])
-print(basis)
-#tmp = [np.cos(np.pi * test_points[1:n] * (k + 1 / 2)) for k in range(L_temp)]
-#basis = np.hstack((np.ones((L_temp, 1)), np.sqrt(2) * np.vstack(tmp))).T
-#basis_tmp = [np.cos(np.pi * test_points * k ) for k in range( L_temp)] 
-#basis = np.vstack(basis_tmp).T
-#Generate the data
 data_values = get_data(n, **data_args, noise_var=noise_vars, noise_type="uniform")
 #Save the outlier u and its coresponding frequency
 u=data_values.pop("u")
 outlier_points=data_values.pop("outlier_points")
 #Estimate the function f
 estimates_decor = get_results(**data_values, **method_args, L=L_temp)
-ci=get_conf(x=test_points, **estimates_decor, alpha=0.95)
-estimates_fourrier= get_results(**data_values, method="ols", L=L_temp, a=0, outlier_points=outlier_points)
-ci_fourier=get_conf(x=test_points, **estimates_fourrier, alpha=0.95)
+ci=get_conf(x=test_points, **estimates_decor, alpha=0.95, basis_type=method_args["basis_type"])
+estimates_fourier= get_results(**data_values, method="ols", basis_type=method_args["basis_type"], L=L_temp, a=0, outlier_points=outlier_points)
+ci_fourier=get_conf(x=test_points, **estimates_fourier, alpha=0.95, basis_type=method_args["basis_type"])
 y_est=basis @ estimates_decor["estimate"]
-y_fourrier= basis @ estimates_fourrier["estimate"]
+y_fourier= basis @ estimates_fourier["estimate"]
 y_est=np.ndarray((n_x, 1), buffer=y_est)
 #Check the eigenvalue condition
 diag=np.concatenate((np.array([1000000]), np.array([1**4 for i in range(1,L_temp)])))
@@ -88,7 +82,7 @@ sub=np.linspace(0, n-1, 2**8).astype(int)
 plt.plot(data_values['x'][sub],data_values['y'][sub], 'o:w', mec = 'black')
 plt.plot(test_points, y_true, '-', color='black')
 plt.plot(test_points, y_est, '-', color=ibm_cb[1])
-plt.plot(test_points, y_fourrier, color=ibm_cb[4])
+plt.plot(test_points, y_fourier, color=ibm_cb[4])
 
 plt.fill_between(test_points, y1=ci[:, 0], y2=ci[:, 1], color=ibm_cb[1], alpha=0.1)
 plt.fill_between(test_points, y1=ci_fourier[:, 0], y2=ci_fourier[:, 1], color=ibm_cb[4], alpha=0.1)

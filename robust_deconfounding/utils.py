@@ -79,8 +79,8 @@ def get_funcbasis(x:NDArray, L:int, type="cosine_cont")->NDArray:
         n=len(x)
         tmp = [np.cos(np.pi * x * (k + 1/2)) for k in range(L)]
         basis = np.vstack(tmp).T
-        ind_0=np.arange(0,n)[x==0]
-        basis[list(ind_0), :]=1
+        ind_0=np.arange(0,n)[list(x)==0]
+        basis[ind_0, :]=1
     else:
         raise ValueError("Invalid basis type")
     return basis

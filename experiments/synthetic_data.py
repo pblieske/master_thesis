@@ -317,11 +317,10 @@ class BLPNonlinearDataGenerator(BaseDataGenerator):
         min=np.min(x)
         diff=max-min
         x=(x-min)/diff
-
         
         y = functions_nonlinear(x, self.beta[0]) + ey + k
-        
-        return x, y, u
+
+        return x[:,0], y[:,0], u[:,0]
     
 
 def functions_nonlinear(x:NDArray, beta:int):
