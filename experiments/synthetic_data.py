@@ -276,10 +276,9 @@ class BLPNonlinearDataGenerator(BaseDataGenerator):
     Attributes:
         band (list[int]): Frequency band for concentrated confounding (inclusive).
     """
-    def __init__(self, basis_type: str, beta: NDArray, noise_var: float, band: list[int], fraction: int, noise_type="uniform"):
+    def __init__(self, basis_type: str, beta: NDArray, noise_var: float, band: list[int], noise_type="uniform"):
         super().__init__(basis_type, beta, noise_var, noise_type)
         self.band = band
-        self.fraction = fraction
 
     def get_band_idx(self, n: int) -> NDArray:
         """
@@ -320,7 +319,64 @@ class BLPNonlinearDataGenerator(BaseDataGenerator):
         
         y = functions_nonlinear(x, self.beta[0]) + ey + k
 
-        return x[:,0], y[:,0], u[:,0]
+        return x[:,0], y[:,0], k[:,0]
+
+
+class OUNonlinearDataGenerator(BaseDataGenerator):
+    def __init__(self, basis_type: str, beta: NDArray, noise_var: float, noise_type="normal"):
+        super().__init__(basis_type, beta, noise_var, noise_type)
+
+    def generate_data(self, n: int, outlier_points: NDArray):
+        """
+        Generates data from discretized Ornstein-Uhlenbeck processes with confounding.
+
+        Args:
+            n (int): Number of data points.
+            outlier_points (NDArray): Indicator vector for outlier data points.
+
+        Returns:
+            tuple[NDArray, NDArray]: The generated data (x, y).
+        """
+        AR_object1, AR_object2 = self.get_ar(n)
+
+        eu, ex, ey = self.get_noise_vars(n, [1, 1, 1])
+
+        u = AR_object1.generate_sample(nsample=2 * n)[n:2 * n].reshape(-1, 1) 
+        
+        basis = self.get_basis(n)
+
+        k = self.basis_transform(u, outlier_points, basis, n)
+
+        x = AR_object2.generate_sample(nsample=2 * n)[n:2 * n].reshape(-1, 1)  + k 
+        min=np.min(x)
+        max=np.max(x)
+        x=(x-min)/(max-min)
+
+        y = functions_nonlinear(x, self.beta[0]) + ey + 5*k
+
+        return  x[:,0], y[:,0], k[:,0]
+    
+
+    def get_ar(self, n: int) -> tuple[ArmaProcess, ArmaProcess]:
+        """
+        Generates two discretized Ornstein-Uhlenbeck processes. Note that discretized Ornstein-Uhlenbeck processes are
+        AR processes.
+
+        Args:
+            n (int): Number of data points.
+
+        Returns:
+            tuple[ArmaProcess, ArmaProcess]: Two AR models representing the processes.
+        """
+        ar1 = np.array([1, -0.7, -0.3, 0.1])
+        ma1 = np.array([1])
+        AR_object1 = ArmaProcess(ar1, ma1)
+
+        ar2 = np.array([1, -0.7, -0.3, 0.1])
+        ma2 = np.array([1])
+        AR_object2 = ArmaProcess(ar2, ma2)
+
+        return AR_object1, AR_object2
     
 
 def functions_nonlinear(x:NDArray, beta:int):

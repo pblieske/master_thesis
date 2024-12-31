@@ -21,11 +21,11 @@ np.random.seed(SEED)
 random.seed(SEED)
 
 data_args = {
-    "process_type": "blpnl",    # "ou" | "blp" | "blpnl"
+    "process_type": "ounl",    # "ou" | "blp" | "blpnl"
     "basis_type": "cosine",     # "cosine" | "haar"
-    "fraction": 0.25,
+    "fraction": 0.02,
     "noise_type": "normal",
-    "beta": np.array([3]),
+    "beta": np.array([2]),
     "band": list(range(0, 50)),  # list(range(0, 50)) | None
 }
 
@@ -75,6 +75,12 @@ print("$L^2$-error: ", 1/np.sqrt(n_x)*np.linalg.norm(y_true-y_est, ord=2))
 # ----------------------------------
 # plotting
 # ----------------------------------
+
+plt.plot(np.arange(n), data_values["x"])
+plt.show()
+
+plt.plot(np.arange(n), data_values["y"])
+plt.show()
 
 #Plotting the estimated function
 
