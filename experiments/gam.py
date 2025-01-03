@@ -4,12 +4,11 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from pygam import LinearGAM, s, f
 
-from utils_nonlinear import get_results, get_conf, get_data, plot_settings
-from synthetic_data import functions_nonlinear
-
 import sys
 sys.path.insert(0, '/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_thesis/code/master_thesis')
-from robust_deconfounding.utils import cosine_basis
+from robust_deconfounding.utils import cosine_basis, get_funcbasis
+from utils_nonlinear import get_results, get_conf, get_data, plot_settings
+from synthetic_data import functions_nonlinear
 
 
 """
@@ -19,7 +18,7 @@ For this we simulated only one draw for a fixed number of observations n, for Mo
 
 colors, ibm_cb = plot_settings()
 
-SEED = 3
+SEED = 1
 np.random.seed(SEED)
 random.seed(SEED)
 
@@ -27,6 +26,7 @@ data_args = {
     "process_type": "blpnl",    # "ou" | "blp" | "blpnl"
     "basis_type": "cosine",     # "cosine" | "haar"
     "fraction": 0.25,
+    "noise_type": "normal",
     "beta": np.array([2]),
     "band": list(range(0, 50))  # list(range(0, 50)) | None
 }
@@ -34,6 +34,7 @@ data_args = {
 method_args = {
     "a": 0.7,
     "method": "torrent",        # "torrent" | "bfs"
+    "basis_type": "cosine_cont",# basis used for the approximation of f
 }
 
 
@@ -50,15 +51,12 @@ y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["b
 L=max((np.floor(n**(1/2)/4)).astype(int),1)
 print("number of coefficients:", L)
 
-#Compute the basis
-basis_tmp = [np.cos(np.pi * test_points * k ) for k in range( L)] 
-basis = np.vstack(basis_tmp).T
-
-#Get data
+#Compute the basis and get data
+basis=get_funcbasis(x=test_points, L=L, type=method_args["basis_type"])
 data_values = get_data(n, **data_args, noise_var=noise_vars)
 x=data_values['x']
 y=data_values['y']
-data_values.pop('u')
+u=data_values.pop('u')
 
 #Fit the DecoR estimator
 estimates_decor = get_results(**data_values, **method_args, L=L)
@@ -71,10 +69,11 @@ outliers=np.delete(np.arange(0,n), list(inliers))
 basis=cosine_basis(n)
 coef_conf=1/n*basis[outliers, :]@y
 y_deco=y-basis[outliers, :].T@coef_conf
+x = np.reshape(x, (-1, 1))
 
 #Fit GAM on the deconfounded data
 gam =LinearGAM(n_splines=n)
-gam.gridsearch(x,y_deco, lam=np.array([10**(i/10) for i in range(-100, 100)]))
+gam.gridsearch(x, y_deco, lam=np.array([10**(i/10) for i in range(-100, 100)]))
 gam.summary()
 y_gam=gam.predict(test_points)
 

@@ -37,9 +37,9 @@ np.random.seed(SEED)
 random.seed(SEED)
 
 data_args = {
-    "process_type": "ounl",    # "ou" | "blp" | "blpnl"
+    "process_type": "blpnl",    # "ou" | "blp" | "blpnl"
     "basis_type": "cosine",     # "cosine" | "haar"
-    #"fraction": 0.25,           
+    "fraction": 0.25,           
     "beta": np.array([2]),      # the nonlinear function is choosen through beta, see synthetic_data.py
     "band": list(range(0, 50)),  # list(range(0, 50)) | None
     "noise_type": "normal"
@@ -51,7 +51,7 @@ method_args = {
     "basis_type":"cosine_cont"
 }
 
-m = 10                                        #Number of repetitions for the Monte Carlo
+m = 200                                        #Number of repetitions for the Monte Carlo
 noise_vars = [0, 1, 4]                         #
 num_data = [2 ** k for k in range(5, 14)]      # up to k=14 
 
@@ -77,7 +77,7 @@ for i in range(len(noise_vars)):
         n_con=min((4*n**(-0.5)), 1)
  
         for _ in range(m):
-            data_values = get_data(n, **data_args, fraction=n_con, noise_var=noise_vars[i])
+            data_values = get_data(n, **data_args, noise_var=noise_vars[i])
             data_values.pop('u') 
             outlier_points=data_values.pop('outlier_points')
             estimates_decor = get_results(**data_values, **method_args, L=L_temp)
