@@ -11,12 +11,12 @@ from synthetic_data import functions_nonlinear
 
 """
 We provide a visualization of a fitted curve using the cosine approximation.
-For this we simulated only one draw for a fixed number of observations n, for Monte Carlo simulation look at experiments_nonlinear.py.
+For this we simulated only one draw for a fixed number of observations n, for Monte Carlo simulations look at consistency.py.
 """
 
 colors, ibm_cb = plot_settings()
 
-SEED = 2
+SEED = 10
 np.random.seed(SEED)
 random.seed(SEED)
 
@@ -36,7 +36,7 @@ method_args = {
 }
 
 noise_vars =  1
-n = 2 ** 8 # number of observations
+n = 2 ** 10 # number of observations
 print("number of observations:", n)
 
 # ----------------------------------

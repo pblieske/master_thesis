@@ -307,6 +307,10 @@ class BLPNonlinearDataGenerator(BaseDataGenerator):
         u_band = basis @ (weights * band_idx)
         u = u_band + eu
         k = self.basis_transform(u, outlier_points, basis, n)
+        max_k=np.max(k)
+        min_k=np.min(k)
+        diff_k=max_k-min_k
+        k=10*k/diff_k
 
         weights = np.random.normal(0, 1, size=(n, 1))
         x_band = basis @ (weights * band_idx)
