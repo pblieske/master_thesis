@@ -225,16 +225,20 @@ def get_conf(x:NDArray, estimate:NDArray, inliers: list, transformed: NDArray, a
 
     #Compute the confidence interval
     qt=sp.stats.t.ppf((1-alpha)/2, df)
-    ci_u=basis@estimate.T -qt*sigma 
-    ci_l=basis@estimate.T +qt*sigma 
+    ci_u=basis@estimate.T - qt*sigma 
+    ci_l=basis@estimate.T + qt*sigma 
     ci=np.stack((ci_l, ci_u), axis=-1)
 
     return ci
 
 
-def check_eigen(x:NDArray, S: list, G:list, lmbd=0, K=np.array([0])) -> bool:
+def check_eigen(x:NDArray, S: list, G:list, lmbd=0, K=np.array([0])) -> dict:
     """
     Checks if the eigenvalue condition from theorem 4.2 holds.
+    S: estimated set of inliers from decoR
+    G: true inliers
+    lmbd: regualrization parameter
+    K: regualrization matrix
     """
     n=x.shape[0]
     x_S=x[list(S), :]
@@ -245,4 +249,4 @@ def check_eigen(x:NDArray, S: list, G:list, lmbd=0, K=np.array([0])) -> bool:
     min=np.min(np.sqrt(np.linalg.eigvals(x_S.T @ x_S + lmbd*K)))
     max=np.max(sp.linalg.svdvals(x_V.T))
     #Check the eigenvalue condition
-    return max/min<1/np.sqrt(2)
+    return {'condition': max/min<= 1/np.sqrt(2), 'fraction': max/min}
