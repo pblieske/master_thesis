@@ -212,8 +212,8 @@ def get_conf(x:NDArray, estimate:NDArray, inliers: list, transformed: NDArray, a
         Problem: In our sample there is a bias present introduced by cutting the series of at L.
     """
 
-    xn=transformed["xn"][list(inliers)]
-    yn=transformed["yn"][list(inliers)]
+    xn=transformed["xn"]#[list(inliers)]
+    yn=transformed["yn"]#[list(inliers)]
 
     #Estimate the variance
     r=yn- xn@estimate.T
@@ -221,8 +221,10 @@ def get_conf(x:NDArray, estimate:NDArray, inliers: list, transformed: NDArray, a
     L=xn.shape[1]
     df=n-L
     sigma_2=np.sum(np.square(r), axis=0)/df 
-    #Compute the linear estimator
 
+    #Compute the linear estimator
+    xn=xn[list(inliers)]
+    yn=yn[list(inliers)]
     basis=get_funcbasis(x=x, L=L, type=basis_type)
     H=basis @ np.linalg.inv(xn.T @ xn + lmbd*K) @ xn.T
     sigma=np.sqrt(sigma_2*np.diag(H @ H.T))

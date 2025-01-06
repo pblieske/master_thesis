@@ -15,32 +15,34 @@ For this we simulated only one draw for a fixed number of observations n, for Mo
 
 colors, ibm_cb = plot_settings()
 
-SEED = 5
+SEED = 1
 np.random.seed(SEED)
 random.seed(SEED)
+
+n = 2 ** 12      # number of observations
+m=1000          
+L=max(np.floor(1/4*n**(1/2)).astype(int),1)    #Number of coefficients used
+
 
 data_args = {
     "process_type": "blpnl",    # "ou" | "blp" | "blpnl" |ounl
     "basis_type": "cosine",     # "cosine" | "haar"
-    "fraction": 0.05,
+    "fraction": min((n**(-0.5)), 1),
     "noise_type": "normal",
     "beta": np.array([2]),
     "band": list(range(0, 50)),  # list(range(0, 50)) | None
-    "noise_var": 0,
+    "noise_var": 1,
 }
 
 method_args = {
-    "a": 0.95,
+    "a": 1-data_args["fraction"]*1.25,
     "method": "torrent",        # "torrent" | "bfs"
     "basis_type": "cosine_cont",# basis used for the approximation of f
 }
 
-n = 2 ** 6 # number of observations
 print("number of observations:", n)
-m=200
-T=np.full(m, np.nan)
-L=max(np.floor(1/4*n**(1/2)).astype(int),1)    #Number of coefficients used
 print("number of coefficients:", L)
+T=np.full(m, np.nan)
 
 # ----------------------------------
 # run experiment
@@ -72,6 +74,7 @@ plt.hist(T, bins=bins, color=ibm_cb[0], edgecolor='k', alpha=0.6)
 plt.axvline(1/np.sqrt(2), color=ibm_cb[2])
 plt.xlabel("fraction")
 plt.ylabel("count")
-plt.title("$\sigma^2="+ str(data_args["noise_var"]) + "$ and $c_n/n=" + str(data_args["fraction"]) + "$")
+plt.title("$n="+ str(n) + "$ and $ c_n/n=" + str(data_args["fraction"]) + "$")
+plt.annotate('$1/\sqrt{2}$', xy=(1/np.sqrt(2), 0), xytext=(1/np.sqrt(2)-0.5, -30), color=ibm_cb[2], arrowprops={'arrowstyle': '-'})
 plt.tight_layout()
 plt.show()

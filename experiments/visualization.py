@@ -16,17 +16,17 @@ For this we simulated only one draw for a fixed number of observations n, for Mo
 
 colors, ibm_cb = plot_settings()
 
-SEED = 2
+SEED = 5
 np.random.seed(SEED)
 random.seed(SEED)
 
 data_args = {
-    "process_type": "ounl",    # "ou" | "blp" | "blpnl"
+    "process_type": "blpnl",    # "ou" | "blp" | "blpnl"
     "basis_type": "cosine",     # "cosine" | "haar"
     "fraction": 0.25,
     "noise_type": "normal",
-    "noise_var": 1,
-    "beta": np.array([4]),
+    "noise_var": 4,
+    "beta": np.array([2]),
     "band": list(range(0, 50)),  # list(range(0, 50)) | None
 }
 
@@ -36,7 +36,7 @@ method_args = {
     "basis_type": "cosine_cont",# basis used for the approximation of f
 }
 
-n = 2 ** 8 # number of observations
+n = 2 ** 11 # number of observations
 print("number of observations:", n)
 
 
@@ -77,11 +77,13 @@ print("$L^2$-error: ", 1/np.sqrt(n_x)*np.linalg.norm(y_true-y_est, ord=2))
 # plotting
 # ----------------------------------
 
+"""
+#Plotting X_t and Y_t against t
 plt.plot(np.arange(n), data_values["x"])
 plt.show()
-
 plt.plot(np.arange(n), data_values["y"])
 plt.show()
+"""
 
 #Plotting the estimated function
 
@@ -104,9 +106,9 @@ def get_handles():
 
 plt.xlabel("x")
 plt.ylabel("y")
-plt.title("Exmaple")
+plt.title("confidence interval using all observations")
 
-plt.legend(handles=get_handles(), loc="upper left")
+plt.legend(handles=get_handles(), loc="upper right")
 plt.tight_layout()
 plt.show()
 
