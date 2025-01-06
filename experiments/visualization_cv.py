@@ -25,20 +25,20 @@ np.random.seed(SEED)
 random.seed(SEED)
 
 data_args = {
-    "process_type": "blpnl",       # "ou" | "blp" | "blpnl"
+    "process_type": "ounl",       # "ou" | "blp" | "blpnl"
     "basis_type": "cosine",     # "cosine" | "haar"
-    "fraction": 0.3,
-    "beta": np.array([2]),
+    "fraction": 0.25,
+    "beta": np.array([4]),
     "band": list(range(0, 50))  # list(range(0, 50)) | None
 }
 
 method_args = {
-    "a": 0.65,
+    "a": 0.7,
     "method": "torrent_reg",        # "torrent" | "bfs"
 }
 
-L=50             #Number of basis functions
-noise_vars = 0.5      #Variance of noise
+L=4             #Number of basis functions
+noise_vars = 1      #Variance of noise
 n = 2**10         # number of observations
 print("number of observations:", n)
 print("number of coefficients:", L)

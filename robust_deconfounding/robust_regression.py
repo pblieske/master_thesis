@@ -150,9 +150,7 @@ class BFS(BaseRobustRegression):
 
         for p in permu:
             model = sm.OLS(y[list(p)], x[list(p)]).fit()
-
             err = np.linalg.norm(y[list(p)] - model.predict(x[list(p)]).reshape(an, -1))
-
             if err < err_min:
                 self.inliers = list(p)
                 self.model = model

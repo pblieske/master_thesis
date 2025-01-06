@@ -42,6 +42,8 @@ class BaseDataGenerator:
         elif self.noise_type=="normal":
             b=np.sqrt(3/10)
             c=np.sqrt(3)
+            #noise_u = np.random.normal(0, np.sqrt(self.noise_var), size=(n, 1))
+            #noise_x = np.random.normal(0, np.sqrt(self.noise_var), size=(n, 1))
             noise_u=np.random.uniform(-b, b, size=(n,1)) 
             noise_x= np.random.uniform(-c, c, size=(n,1))
             noise_y = np.random.normal(0, np.sqrt(self.noise_var), size=(n, 1))
@@ -310,7 +312,7 @@ class BLPNonlinearDataGenerator(BaseDataGenerator):
         max_k=np.max(k)
         min_k=np.min(k)
         diff_k=max_k-min_k
-        k=10*k/diff_k
+        k=20*k/diff_k
 
         weights = np.random.normal(0, 1, size=(n, 1))
         x_band = basis @ (weights * band_idx)
@@ -356,7 +358,7 @@ class OUNonlinearDataGenerator(BaseDataGenerator):
         max=np.max(x)
         x=(x-min)/(max-min)
 
-        y = functions_nonlinear(x, self.beta[0]) + ey + 5*k
+        y = functions_nonlinear(x, self.beta[0]) + ey + k
 
         return  x[:,0], y[:,0], k[:,0]
     

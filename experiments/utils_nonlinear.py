@@ -47,7 +47,7 @@ def r_squared(x: NDArray, y_true: NDArray, beta: NDArray) -> float:
     return 1-u/v
 
 
-def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method: str, basis_type:str, lmbd=0, K=np.array([0]), outlier_points=np.array([])) -> NDArray:
+def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method: str, basis_type:str, lmbd=0, K=np.array([0]), outlier_points=np.array([]), normalize=True) -> NDArray:
     """
     Estimates the causal coefficient(s) using DecorR with 'method' as robust regression algorithm.
 
@@ -174,7 +174,11 @@ def get_data(n: int, process_type: str, basis_type: str, fraction: float, beta: 
     else:
         x, y, u = generator.generate_data(n=n, outlier_points=outlier_points)
 
-    return {"x": x, "y": y, "u": u, "basis": basis, "outlier_points": {outlier_points[i,0]*i for i in np.arange(0,n)}}
+    outliers={outlier_points[i,0]*i for i in np.arange(0,n)}
+    if outlier_points[0]==0:
+        outliers=outliers-{0}
+
+    return {"x": x, "y": y, "u": u, "basis": basis, "outlier_points": outliers}
 
 
 def plot_results(res: dict, num_data: list, m: int, colors) -> None:
@@ -247,6 +251,6 @@ def check_eigen(x:NDArray, S: list, G:list, lmbd=0, K=np.array([0])) -> dict:
     x_V=x[list(V), :]
     #Compute eigenvalues
     min=np.min(np.sqrt(np.linalg.eigvals(x_S.T @ x_S + lmbd*K)))
-    max=np.max(sp.linalg.svdvals(x_V.T))
+    max=np.max(sp.linalg.svdvals(x_V.T)) if len(V)!=0 else 0 #np.max(np.sqrt(np.linalg.eigvals(x_V.T @ x_V))) if len(V)!=0 else 0 
     #Check the eigenvalue condition
     return {'condition': max/min<= 1/np.sqrt(2), 'fraction': max/min}

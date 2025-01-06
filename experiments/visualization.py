@@ -16,16 +16,17 @@ For this we simulated only one draw for a fixed number of observations n, for Mo
 
 colors, ibm_cb = plot_settings()
 
-SEED = 3
+SEED = 2
 np.random.seed(SEED)
 random.seed(SEED)
 
 data_args = {
-    "process_type": "blpnl",    # "ou" | "blp" | "blpnl"
+    "process_type": "ounl",    # "ou" | "blp" | "blpnl"
     "basis_type": "cosine",     # "cosine" | "haar"
     "fraction": 0.25,
     "noise_type": "normal",
-    "beta": np.array([2]),
+    "noise_var": 1,
+    "beta": np.array([4]),
     "band": list(range(0, 50)),  # list(range(0, 50)) | None
 }
 
@@ -35,9 +36,9 @@ method_args = {
     "basis_type": "cosine_cont",# basis used for the approximation of f
 }
 
-noise_vars =  1
 n = 2 ** 8 # number of observations
 print("number of observations:", n)
+
 
 # ----------------------------------
 # run experiment
@@ -51,7 +52,7 @@ print("number of coefficients:", L_temp)
 
 #Compute the basis and generate the data
 basis=get_funcbasis(x=test_points, L=L_temp, type=method_args["basis_type"])
-data_values = get_data(n, **data_args, noise_var=noise_vars)
+data_values = get_data(n, **data_args)
 u=data_values.pop("u")
 outlier_points=data_values.pop("outlier_points")
 
