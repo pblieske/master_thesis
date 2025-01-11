@@ -16,27 +16,27 @@ For this we simulated only one draw for a fixed number of observations n, for Mo
 
 colors, ibm_cb = plot_settings()
 
-SEED = 5
+SEED = 2
 np.random.seed(SEED)
 random.seed(SEED)
 
 data_args = {
-    "process_type": "blpnl",    # "ou" | "blp" | "blpnl"
+    "process_type": "ounl",    # "ou" | "blp" | "blpnl"
     "basis_type": "cosine",     # "cosine" | "haar"
     "fraction": 0.25,
     "noise_type": "normal",
     "noise_var": 4,
-    "beta": np.array([2]),
+    "beta": np.array([1]),
     "band": list(range(0, 50)),  # list(range(0, 50)) | None
 }
 
 method_args = {
     "a": 0.7,
     "method": "torrent",        # "torrent" | "bfs"
-    "basis_type": "cosine_cont",# basis used for the approximation of f
+    "basis_type": "poly",# basis used for the approximation of f
 }
 
-n = 2 ** 11 # number of observations
+n = 2 ** 10 # number of observations
 print("number of observations:", n)
 
 
@@ -45,9 +45,9 @@ print("number of observations:", n)
 # ----------------------------------
 
 n_x=200     #Resolution of x-axis
-test_points=np.array([i / n_x for i in range(0, n_x)])
+test_points=np.array([i / n_x for i in range(n_x)])
 y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["beta"][0])
-L_temp=max(np.floor(1/4*n**(1/2)).astype(int),1)    #Number of coefficients used
+L_temp=3 #max(np.floor(1/4*n**(1/2)).astype(int),1)    #Number of coefficients used
 print("number of coefficients:", L_temp)
 
 #Compute the basis and generate the data
@@ -64,6 +64,7 @@ ci_fourier=get_conf(x=test_points, **estimates_fourier, alpha=0.95, basis_type=m
 y_est=basis @ estimates_decor["estimate"]
 y_est=np.ndarray((n_x, 1), buffer=y_est)
 y_fourier= basis @ estimates_fourier["estimate"]
+print(estimates_decor["estimate"])
 
 #Check the eigenvalue condition
 diag=np.concatenate((np.array([0]), np.array([i**4 for i in range(1,L_temp)])))
@@ -77,24 +78,28 @@ print("$L^2$-error: ", 1/np.sqrt(n_x)*np.linalg.norm(y_true-y_est, ord=2))
 # plotting
 # ----------------------------------
 
-"""
+
 #Plotting X_t and Y_t against t
+
 plt.plot(np.arange(n), data_values["x"])
 plt.show()
 plt.plot(np.arange(n), data_values["y"])
 plt.show()
-"""
+
 
 #Plotting the estimated function
 
 sub=np.linspace(0, n-1, 2**8).astype(int)
-plt.plot(data_values['x'][sub],data_values['y'][sub], 'o:w', mec = 'black')
+#plt.plot(data_values['x'][sub],data_values['y'][sub], 'o:w', mec = 'black')
+plt.plot(data_values['x'],data_values['y'], 'o:w', mec = 'black')
 plt.plot(test_points, y_true, '-', color='black')
 plt.plot(test_points, y_est, '-', color=ibm_cb[1])
 plt.plot(test_points, y_fourier, color=ibm_cb[4])
 
 plt.fill_between(test_points, y1=ci[:, 0], y2=ci[:, 1], color=ibm_cb[1], alpha=0.1)
 plt.fill_between(test_points, y1=ci_fourier[:, 0], y2=ci_fourier[:, 1], color=ibm_cb[4], alpha=0.1)
+#plt.xlim(0,1)
+#plt.ylim(-10,10)
 
 def get_handles():
     point_1 = Line2D([0], [0], label='Observations', marker='o', mec='black', color='w')

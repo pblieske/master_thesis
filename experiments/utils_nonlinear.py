@@ -65,8 +65,7 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method
         ValueError: If an invalid method is specified.
     """
     if method[0:3] == "tor":
-        P=get_funcbasis(x=x, L=L, type=basis_type)
-        x=P
+        x=get_funcbasis(x=x, L=L, type=basis_type)
         if method == "torrent":
             algo = Torrent(a=a, fit_intercept=False)
         elif method == "bfs":

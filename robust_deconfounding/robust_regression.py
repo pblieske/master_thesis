@@ -99,6 +99,19 @@ class Torrent(BaseRobustRegression):
         if an == 0:
             raise ValueError("'a' is too small. Increase 'a' or the number of data points .")
 
+        """
+        #normalize the data
+        y_m=np.mean(y)
+        y_std=np.std(y)
+        y=(y-y_m)/y_std
+        d=x.shape[1]
+        x_m=np.zeros(d)
+        x_std=np.zeros(d)
+        for i in range(d):
+            x_m[i]=np.mean(x[:,i])
+            x_std[i]=np.mean(x[:,i])
+            x[:,i]=(x[:,i]-x_m[i])/x_std[i]
+        """
         self.inliers = list(range(n))
         self.predicted_inliers.append(self.inliers)
 
@@ -113,8 +126,16 @@ class Torrent(BaseRobustRegression):
 
             if set(self.inliers) == set(old_inliers):
                 break
-
-        self.coef=self.model.params    
+        
+        #Transform the coefficients back
+        self.coef=self.model.params  
+        """ 
+        coef=self.coef
+        #coef[0]=y_m+y_std/x_std*x_m*coef[1:(d+1)]
+        for i in range(1,d):
+            coef[i]=y_std/x_std[i]*coef[i]
+        self.coef=coef  
+        """
         return self
 
 

@@ -40,12 +40,12 @@ class BaseDataGenerator:
             c=np.sqrt(3)
             noises = [np.random.uniform(-(a if i == 2 else (b if i==0 else c)), (a if i == 2 else (b if i==0 else c)), size=(n, size)) for i, size in enumerate(sizes)]
         elif self.noise_type=="normal":
-            b=np.sqrt(3/10)
-            c=np.sqrt(3)
-            #noise_u = np.random.normal(0, np.sqrt(self.noise_var), size=(n, 1))
-            #noise_x = np.random.normal(0, np.sqrt(self.noise_var), size=(n, 1))
-            noise_u=np.random.uniform(-b, b, size=(n,1)) 
-            noise_x= np.random.uniform(-c, c, size=(n,1))
+            b=np.sqrt(3)
+            c=np.sqrt(3/10)
+            noise_u = np.random.normal(0, 1, size=(n, 1))
+            noise_x = np.random.normal(0, 1, size=(n, 1))
+            #noise_u=np.random.uniform(-b, b, size=(n,1)) 
+            #noise_x= np.random.uniform(-c, c, size=(n,1))
             noise_y = np.random.normal(0, np.sqrt(self.noise_var), size=(n, 1))
             noises=[noise_u, noise_x, noise_y]
         else:
@@ -267,7 +267,7 @@ class BLPDataGenerator(BaseDataGenerator):
         x = np.hstack((x_1, x_2)) + ex
         x = x.reshape(-1, 2)
 
-        y = x @ self.beta + ey + 10 * k
+        y = x @ self.beta + ey + 10*k
 
         return x, y
 
@@ -309,23 +309,24 @@ class BLPNonlinearDataGenerator(BaseDataGenerator):
         u_band = basis @ (weights * band_idx)
         u = u_band + eu
         k = self.basis_transform(u, outlier_points, basis, n)
-        max_k=np.max(k)
-        min_k=np.min(k)
-        diff_k=max_k-min_k
-        k=20*k/diff_k
 
         weights = np.random.normal(0, 1, size=(n, 1))
         x_band = basis @ (weights * band_idx)
         x = x_band + k + ex
-
+        """
+        max_k=np.max(k)
+        min_k=np.min(k)
+        diff_k=max_k-min_k
+        k=k/diff_k
+        
         max=np.max(x)
         min=np.min(x)
-        diff=max-min
-        x=(x-min)/diff
+        x=(x-min)/(max-min)
+        """
         
-        y = functions_nonlinear(x, self.beta[0]) + ey + k
+        y = functions_nonlinear(x, self.beta[0]) + ey + 5*k
 
-        return x[:,0], y[:,0], k[:,0]
+        return x[:,0], y[:,0], 5*k[:,0]
 
 
 class OUNonlinearDataGenerator(BaseDataGenerator):
@@ -347,20 +348,27 @@ class OUNonlinearDataGenerator(BaseDataGenerator):
 
         eu, ex, ey = self.get_noise_vars(n, [1, 1, 1])
 
-        u = AR_object1.generate_sample(nsample=2 * n)[n:2 * n].reshape(-1, 1) 
+        u = AR_object1.generate_sample(nsample=2 * n)[n:2 * n].reshape(-1, 1) + eu
         
         basis = self.get_basis(n)
 
         k = self.basis_transform(u, outlier_points, basis, n)
 
-        x = AR_object2.generate_sample(nsample=2 * n)[n:2 * n].reshape(-1, 1)  + k 
+        x = AR_object2.generate_sample(nsample=2 * n)[n:2 * n].reshape(-1, 1)  + 3*k + ex  
+        """
         min=np.min(x)
         max=np.max(x)
-        x=(x-min)/(max-min)
+        x=2*(x-(max+min)/2)/(max-min)
 
-        y = functions_nonlinear(x, self.beta[0]) + ey + k
+        max_k=np.max(k)
+        min_k=np.min(k)
+        diff_k=max_k-min_k
+        k=k/diff_k
+        """
 
-        return  x[:,0], y[:,0], k[:,0]
+        y = functions_nonlinear(x, self.beta[0]) + ey + 20*k
+
+        return  x[:,0], y[:,0], 20*k[:,0]
     
 
     def get_ar(self, n: int) -> tuple[ArmaProcess, ArmaProcess]:
@@ -373,14 +381,25 @@ class OUNonlinearDataGenerator(BaseDataGenerator):
 
         Returns:
             tuple[ArmaProcess, ArmaProcess]: Two AR models representing the processes.
+       
         """
-        ar1 = np.array([1, -0.7, -0.3, 0.1])
+        ar1 = np.array([1, -0.8/n])
+        ma1 = np.array([1/np.sqrt(n)])
+        AR_object1 = ArmaProcess(ar1, ma1)
+
+        ar2 = np.array([1, -0.5/n])
+        ma2 = np.array([1/np.sqrt(n)])
+        AR_object2 = ArmaProcess(ar2, ma2)
+
+        """
+        ar1 = np.array([1, -0.7, 0.1])
         ma1 = np.array([1])
         AR_object1 = ArmaProcess(ar1, ma1)
 
-        ar2 = np.array([1, -0.7, -0.3, 0.1])
+        ar2 = np.array([1, -0.7, 0.1])
         ma2 = np.array([1])
         AR_object2 = ArmaProcess(ar2, ma2)
+        """
 
         return AR_object1, AR_object2
     
@@ -389,15 +408,17 @@ def functions_nonlinear(x:NDArray, beta:int):
     """"
     Returns the value of different nonlinear functions evaluated at x where the type can be choosen over the integer beta.
     """
-    n=np.size(x)
+  
     if beta==1:
-        y = 25*(x - np.full((n, 1), 0.5, dtype=float))**2 
+        y = 5*x**2 #25*(x - np.full((n, 1), 0.5, dtype=float))**2 
     elif beta==2:
         y = 4*np.sin(2*np.pi*x)
     elif beta==3:
         y=10/(1+np.exp(-12*x+6))-5
     elif beta==4:
         y=-1+np.cos(np.pi*x)-3*np.cos(2*np.pi*x)
+    elif beta==5:
+        y=3*x
     else:
         raise ValueError("Function not implemented.")
     return y
