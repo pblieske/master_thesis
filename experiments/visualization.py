@@ -1,9 +1,10 @@
 import numpy as np
 import random
+from pygam import LinearGAM, s
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
-import sys
 
+import sys 
 sys.path.insert(0, '/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_thesis/code/master_thesis')
 from robust_deconfounding.utils import get_funcbasis
 from utils_nonlinear import get_results, get_data, plot_settings, get_conf, check_eigen
@@ -16,7 +17,7 @@ For this we simulated only one draw for a fixed number of observations n, for Mo
 
 colors, ibm_cb = plot_settings()
 
-SEED = 2
+SEED = 5
 np.random.seed(SEED)
 random.seed(SEED)
 
@@ -33,10 +34,11 @@ data_args = {
 method_args = {
     "a": 0.7,
     "method": "torrent",        # "torrent" | "bfs"
-    "basis_type": "poly",# basis used for the approximation of f
+    "basis_type": "cosine_cont",# basis used for the approximation of f
 }
 
-n = 2 ** 10 # number of observations
+benchmark="spline"
+n = 2 ** 8 # number of observations
 print("number of observations:", n)
 
 
@@ -47,7 +49,7 @@ print("number of observations:", n)
 n_x=200     #Resolution of x-axis
 test_points=np.array([i / n_x for i in range(n_x)])
 y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["beta"][0])
-L_temp=3 #max(np.floor(1/4*n**(1/2)).astype(int),1)    #Number of coefficients used
+L_temp=max(np.floor(1/4*n**(1/2)).astype(int),4)    #Number of coefficients used
 print("number of coefficients:", L_temp)
 
 #Compute the basis and generate the data
@@ -56,15 +58,26 @@ data_values = get_data(n, **data_args)
 u=data_values.pop("u")
 outlier_points=data_values.pop("outlier_points")
 
-#Estimate the function f
+#Estimate the function f by DecoR
 estimates_decor = get_results(**data_values, **method_args, L=L_temp)
 ci=get_conf(x=test_points, **estimates_decor, alpha=0.95, basis_type=method_args["basis_type"])
-estimates_fourier= get_results(**data_values, method="ols", basis_type=method_args["basis_type"], L=L_temp, a=0, outlier_points=outlier_points)
-ci_fourier=get_conf(x=test_points, **estimates_fourier, alpha=0.95, basis_type=method_args["basis_type"])
 y_est=basis @ estimates_decor["estimate"]
 y_est=np.ndarray((n_x, 1), buffer=y_est)
-y_fourier= basis @ estimates_fourier["estimate"]
 print(estimates_decor["estimate"])
+
+#Estimate the function by the benchmark
+if benchmark=="ols":
+    estimates_fourier= get_results(**data_values, method="ols", basis_type=method_args["basis_type"], L=L_temp, a=0, outlier_points=outlier_points)
+    ci_bench=get_conf(x=test_points, **estimates_fourier, alpha=0.95, basis_type=method_args["basis_type"])
+    y_bench= basis @ estimates_fourier["estimate"]
+elif benchmark=="spline":
+    x=np.reshape(data_values["x"], (-1,1))
+    y=data_values["y"]
+    gam = LinearGAM(s(0)).gridsearch(x, y)
+    y_bench=gam.predict(test_points)
+    ci_bench=gam.confidence_intervals(test_points, width=0.95)
+else:
+    raise ValueError("benchmark not implemented")
 
 #Check the eigenvalue condition
 diag=np.concatenate((np.array([0]), np.array([i**4 for i in range(1,L_temp)])))
@@ -72,6 +85,7 @@ K=np.diag(diag)
 print('Eigenvalue condition: ', check_eigen(x=estimates_decor["transformed"]["xn"], S=estimates_decor["inliers"], G=outlier_points, lmbd=0, K=K))
 
 #Compute the L^2-error
+print("$L^1$-error: ", 1/n_x*np.linalg.norm(y_true-y_est, ord=1))
 print("$L^2$-error: ", 1/np.sqrt(n_x)*np.linalg.norm(y_true-y_est, ord=2))
 
 # ----------------------------------
@@ -80,12 +94,12 @@ print("$L^2$-error: ", 1/np.sqrt(n_x)*np.linalg.norm(y_true-y_est, ord=2))
 
 
 #Plotting X_t and Y_t against t
-
+"""
 plt.plot(np.arange(n), data_values["x"])
 plt.show()
 plt.plot(np.arange(n), data_values["y"])
 plt.show()
-
+"""
 
 #Plotting the estimated function
 
@@ -94,10 +108,10 @@ sub=np.linspace(0, n-1, 2**8).astype(int)
 plt.plot(data_values['x'],data_values['y'], 'o:w', mec = 'black')
 plt.plot(test_points, y_true, '-', color='black')
 plt.plot(test_points, y_est, '-', color=ibm_cb[1])
-plt.plot(test_points, y_fourier, color=ibm_cb[4])
+plt.plot(test_points, y_bench, color=ibm_cb[4])
 
 plt.fill_between(test_points, y1=ci[:, 0], y2=ci[:, 1], color=ibm_cb[1], alpha=0.1)
-plt.fill_between(test_points, y1=ci_fourier[:, 0], y2=ci_fourier[:, 1], color=ibm_cb[4], alpha=0.1)
+plt.fill_between(test_points, y1=ci_bench[:, 0], y2=ci_bench[:, 1], color=ibm_cb[4], alpha=0.1)
 #plt.xlim(0,1)
 #plt.ylim(-10,10)
 
@@ -105,13 +119,13 @@ def get_handles():
     point_1 = Line2D([0], [0], label='Observations', marker='o', mec='black', color='w')
     point_2 = Line2D([0], [0], label='Truth', markeredgecolor='w', color='black', linestyle='-')
     point_3 = Line2D([0], [0], label="DecoR" , color=ibm_cb[1], linestyle='-')
-    point_4= Line2D([0], [0], label="OLS" , color=ibm_cb[4], linestyle='-')
+    point_4= Line2D([0], [0], label="Gam" , color=ibm_cb[4], linestyle='-')
 
     return [point_1, point_2, point_3, point_4]
 
 plt.xlabel("x")
 plt.ylabel("y")
-plt.title("confidence interval using all observations")
+plt.title("Example")
 
 plt.legend(handles=get_handles(), loc="upper right")
 plt.tight_layout()

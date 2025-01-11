@@ -48,6 +48,13 @@ class BaseDataGenerator:
             #noise_x= np.random.uniform(-c, c, size=(n,1))
             noise_y = np.random.normal(0, np.sqrt(self.noise_var), size=(n, 1))
             noises=[noise_u, noise_x, noise_y]
+        elif self.noise_type=="normal_uniform":
+            b=np.sqrt(3)
+            c=np.sqrt(3/10)
+            noise_u=np.random.uniform(-b, b, size=(n,1)) 
+            noise_x= np.random.uniform(-c, c, size=(n,1))
+            noise_y = np.random.normal(0, np.sqrt(self.noise_var), size=(n, 1))
+            noises=[noise_u, noise_x, noise_y]
         else:
             raise ValueError("Noise Type not implemented.")
         
@@ -312,8 +319,8 @@ class BLPNonlinearDataGenerator(BaseDataGenerator):
 
         weights = np.random.normal(0, 1, size=(n, 1))
         x_band = basis @ (weights * band_idx)
-        x = x_band + k + ex
-        """
+        x = x_band + 2*u + ex
+     
         max_k=np.max(k)
         min_k=np.min(k)
         diff_k=max_k-min_k
@@ -322,11 +329,10 @@ class BLPNonlinearDataGenerator(BaseDataGenerator):
         max=np.max(x)
         min=np.min(x)
         x=(x-min)/(max-min)
-        """
-        
-        y = functions_nonlinear(x, self.beta[0]) + ey + 5*k
 
-        return x[:,0], y[:,0], 5*k[:,0]
+        y = functions_nonlinear(x, self.beta[0]) + ey + 20*k
+
+        return x[:,0], y[:,0], 20*k[:,0]
 
 
 class OUNonlinearDataGenerator(BaseDataGenerator):
@@ -354,7 +360,7 @@ class OUNonlinearDataGenerator(BaseDataGenerator):
 
         k = self.basis_transform(u, outlier_points, basis, n)
 
-        x = AR_object2.generate_sample(nsample=2 * n)[n:2 * n].reshape(-1, 1)  + 3*k + ex  
+        x = AR_object2.generate_sample(nsample=2 * n)[n:2 * n].reshape(-1, 1)  + 2*k + ex  
         """
         min=np.min(x)
         max=np.max(x)
@@ -366,9 +372,9 @@ class OUNonlinearDataGenerator(BaseDataGenerator):
         k=k/diff_k
         """
 
-        y = functions_nonlinear(x, self.beta[0]) + ey + 20*k
+        y = functions_nonlinear(x, self.beta[0]) + ey + 10*k
 
-        return  x[:,0], y[:,0], 20*k[:,0]
+        return  x[:,0], y[:,0], 10*k[:,0]
     
 
     def get_ar(self, n: int) -> tuple[ArmaProcess, ArmaProcess]:
@@ -412,9 +418,9 @@ def functions_nonlinear(x:NDArray, beta:int):
     if beta==1:
         y = 5*x**2 #25*(x - np.full((n, 1), 0.5, dtype=float))**2 
     elif beta==2:
-        y = 4*np.sin(2*np.pi*x)
+        y = 6*np.sin(2*np.pi*x)
     elif beta==3:
-        y=10/(1+np.exp(-12*x+6))-5
+        y=5/(1+np.exp(-16*x+6))-2.5
     elif beta==4:
         y=-1+np.cos(np.pi*x)-3*np.cos(2*np.pi*x)
     elif beta==5:

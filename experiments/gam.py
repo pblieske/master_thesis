@@ -18,7 +18,7 @@ For this we simulated only one draw for a fixed number of observations n, for Mo
 
 colors, ibm_cb = plot_settings()
 
-SEED = 1
+SEED = 7
 np.random.seed(SEED)
 random.seed(SEED)
 
@@ -26,7 +26,7 @@ data_args = {
     "process_type": "blpnl",    # "ou" | "blp" | "blpnl"
     "basis_type": "cosine",     # "cosine" | "haar"
     "fraction": 0.25,
-    "noise_type": "normal",
+    "noise_type": "uniform",
     "beta": np.array([2]),
     "band": list(range(0, 50))  # list(range(0, 50)) | None
 }
@@ -39,7 +39,7 @@ method_args = {
 
 
 noise_vars =  1
-n = 2 ** 8 # number of observations
+n = 2 ** 10 # number of observations
 print("number of observations:", n)
 
 # ----------------------------------
@@ -73,7 +73,7 @@ x = np.reshape(x, (-1, 1))
 
 #Fit GAM on the deconfounded data
 gam =LinearGAM(n_splines=n)
-gam.gridsearch(x, y_deco, lam=np.array([10**(i/10) for i in range(-100, 100)]))
+gam.gridsearch(x, y_deco) #lam=np.array([10**(i/10) for i in range(-100, 100)]))
 gam.summary()
 y_gam=gam.predict(test_points)
 

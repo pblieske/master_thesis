@@ -73,7 +73,7 @@ def get_funcbasis(x:NDArray, L:int, type="cosine_cont")->NDArray:
         type: type of basis spanning the L^2-space
     """
     if type=="cosine_cont":
-        tmp = [np.cos(np.pi * x * (k+1/2) ) for k in range(L)] 
+        tmp = [np.cos(np.pi * x * k)  for k in range(L)] 
         basis = np.vstack(tmp).T
     elif type=="cosine_disc":
         n=len(x)
