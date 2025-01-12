@@ -5,6 +5,7 @@ import statsmodels.api as sm
 import pandas as pd
 import seaborn as sns
 import pylab
+import matplotlib.pyplot as plt
 
 
 import sys
@@ -203,6 +204,42 @@ def plot_results(res: dict, num_data: list, m: int, colors) -> None:
     sns.lineplot(data=df, x="n", y="value", hue="method", style="method",
                  markers=["o", "X"], dashes=False, errorbar=("ci", 95), err_style="band",
                  palette=[colors[0], colors[1]], legend=True)
+    
+def plot_results_2yaxis(res: dict, num_data: list, m: int, colors, first=False) -> None:
+    """
+    Plots the estimated coefficients using DecoR and OLS methods across different data sizes.
+
+    Args:
+        res (dict): A dictionary containing estimated coefficients for DecoR and OLS.
+        num_data (list): A list of data sizes used in the experiments.
+        m (int): Number of repetitions for each data size.
+        colors (list): A list of colors for plotting the methods.
+    """
+    values = np.concatenate([np.expand_dims(res["ols"], 2)], axis=2).ravel()
+
+    time = np.repeat(num_data, m)
+    method = np.tile(["OLS"], len(values))
+
+    df = pd.DataFrame({"value": values.astype(float),
+                       "n": time.astype(float),
+                       "method": method})
+
+    sns.lineplot(data=df, x="n", y="value", hue="method", style="method",
+                 markers=["o"], dashes=False, errorbar=("ci", 95), err_style="band",
+                 palette=[colors[0]], legend=True)
+    
+
+    values = np.concatenate([np.expand_dims(res["DecoR"], 2)], axis=2).ravel()
+    method = np.tile(["DecoR"], len(values))
+
+    df = pd.DataFrame({"value": values.astype(float),
+                       "n": time.astype(float),
+                       "method": method})
+    if first:
+        ax2 = plt.twinx()
+    sns.lineplot(data=df, x="n", y="value", hue="method", style="method",
+                 markers=["X"], dashes=False, errorbar=("ci", 95), err_style="band",
+                 palette=[colors[1]], legend=True, ax=ax2)       
 
 
 def get_conf(x:NDArray, estimate:NDArray, inliers: list, transformed: NDArray, alpha=0.95, lmbd=0, K=np.diag(np.array([0])), basis_type="cosine_cont") -> NDArray:

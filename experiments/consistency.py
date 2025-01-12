@@ -38,21 +38,21 @@ np.random.seed(SEED)
 random.seed(SEED)
 
 data_args = {
-    "process_type": "ounl",    # "ou" | "blp" | "blpnl"
+    "process_type": "blpnl",    # "ou" | "blp" | "blpnl"
     "basis_type": "cosine",     # "cosine" | "haar"
-    "fraction": 0.25,           
-    "beta": np.array([1]),      # the nonlinear function is choosen through beta, see synthetic_data.py
+    #"fraction": 0.25,           
+    "beta": np.array([2]),      # the nonlinear function is choosen through beta, see synthetic_data.py
     "band": list(range(0, 50)),  # list(range(0, 50)) | None
-    "noise_type": "poly"
+    "noise_type": "normal_uniform"
 }
 
 method_args = {
-    "a": 0.7,
+    #"a": 0.7,
     "method": "torrent_reg",        # "torrent" | "bfs"
     "basis_type":"cosine_cont"
 }
 
-m = 50                                         #Number of repetitions for the Monte Carlo
+m = 200                                         #Number of repetitions for the Monte Carlo
 noise_vars = [0, 1, 4]                          #Noise variance added to f(x)
 #lmbd=[0, 10**(-8), 10**(-5)]
 L_frac=[1, 4, 4]
@@ -74,20 +74,20 @@ for i in range(len(noise_vars)):
         print("number of data points: ", n)
         res["DecoR"].append([])
         res["ols"].append([])
-        L_temp=3 #max((np.ceil(n**0.5)/L_frac[i]).astype(int),4) #max((np.floor(np.log(n))).astype(int),1) max((np.floor(n**(1/2)/4)).astype(int),1)
+        L_temp=max((np.ceil(n**0.5)/L_frac[i]).astype(int),4) #max((np.floor(np.log(n))).astype(int),1) max((np.floor(n**(1/2)/4)).astype(int),1)
         basis=get_funcbasis(x=test_points, L=L_temp, type=method_args["basis_type"])
         n_con=min((2*n**(-0.5)), 1)
         print("number of coefficients: ", L_temp)
         print("number of confounded frequencies: ", n_con)
 
         for _ in range(m):
-            data_values = get_data(n, **data_args, noise_var=noise_vars[i])# fraction=n_con)
+            data_values = get_data(n, **data_args, noise_var=noise_vars[i], fraction=n_con)
             data_values.pop('u') 
             outlier_points=data_values.pop('outlier_points')
-            estimates_decor = get_results(**data_values, **method_args, L=L_temp) # a=1-n_con*1.25)
+            estimates_decor = get_results(**data_values, **method_args, L=L_temp, a=1-n_con*1.25)
             y_est=basis @ estimates_decor["estimate"]
             y_est=np.ndarray((n_x, 1), buffer=y_est)
-             
+            """ 
             estimates_fourrier= get_results(**data_values, method="ols", L=L_temp, a=0, outlier_points=outlier_points, basis_type=method_args["basis_type"])
             y_bench= basis @ estimates_fourrier["estimate"]
             y_bench=np.ndarray((n_x, 1), buffer=y_bench)
@@ -96,7 +96,7 @@ for i in range(len(noise_vars)):
             y=data_values["y"]
             gam = LinearGAM(s(0)).gridsearch(x, y)
             y_bench=gam.predict(test_points)
-            """
+           
             res["DecoR"][-1].append(1/np.sqrt(n_x)*np.linalg.norm(y_true-y_est, ord=2))
             res["ols"][-1].append(1/np.sqrt(n_x)*np.linalg.norm(y_true-y_bench, ord=2))
 
