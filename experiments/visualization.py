@@ -17,17 +17,17 @@ For this we simulated only one draw for a fixed number of observations n, for Mo
 
 colors, ibm_cb = plot_settings()
 
-SEED = 5
+SEED = 9
 np.random.seed(SEED)
 random.seed(SEED)
 
 data_args = {
-    "process_type": "ounl",    # "ou" | "blp" | "blpnl"
+    "process_type": "blpnl",    # "ou" | "blp" | "blpnl"
     "basis_type": "cosine",     # "cosine" | "haar"
     "fraction": 0.25,
     "noise_type": "normal",
-    "noise_var": 4,
-    "beta": np.array([1]),
+    "noise_var": 1,
+    "beta": np.array([2]),
     "band": list(range(0, 50)),  # list(range(0, 50)) | None
 }
 
@@ -38,7 +38,7 @@ method_args = {
 }
 
 benchmark="spline"
-n = 2 ** 8 # number of observations
+n = 2**8 # number of observations
 print("number of observations:", n)
 
 
@@ -49,7 +49,7 @@ print("number of observations:", n)
 n_x=200     #Resolution of x-axis
 test_points=np.array([i / n_x for i in range(n_x)])
 y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["beta"][0])
-L_temp=max(np.floor(1/4*n**(1/2)).astype(int),4)    #Number of coefficients used
+L_temp=4 #max(np.floor(1/4*n**(1/2)).astype(int),4)    #Number of coefficients used
 print("number of coefficients:", L_temp)
 
 #Compute the basis and generate the data
@@ -80,12 +80,11 @@ else:
     raise ValueError("benchmark not implemented")
 
 #Check the eigenvalue condition
-diag=np.concatenate((np.array([0]), np.array([i**4 for i in range(1,L_temp)])))
-K=np.diag(diag)
-print('Eigenvalue condition: ', check_eigen(x=estimates_decor["transformed"]["xn"], S=estimates_decor["inliers"], G=outlier_points, lmbd=0, K=K))
+#diag=np.concatenate((np.array([0]), np.array([i**4 for i in range(1,L_temp)])))
+#K=np.diag(diag)
+#print('Eigenvalue condition: ', check_eigen(x=estimates_decor["transformed"]["xn"], S=estimates_decor["inliers"], G=outlier_points, lmbd=0, K=K))
 
 #Compute the L^2-error
-print("$L^1$-error: ", 1/n_x*np.linalg.norm(y_true-y_est, ord=1))
 print("$L^2$-error: ", 1/np.sqrt(n_x)*np.linalg.norm(y_true-y_est, ord=2))
 
 # ----------------------------------
@@ -103,23 +102,21 @@ plt.show()
 
 #Plotting the estimated function
 
-sub=np.linspace(0, n-1, 2**8).astype(int)
+#sub=np.linspace(0, n-1, 2**8).astype(int)
 #plt.plot(data_values['x'][sub],data_values['y'][sub], 'o:w', mec = 'black')
-plt.plot(data_values['x'],data_values['y'], 'o:w', mec = 'black')
+plt.scatter(x=data_values['x'], y=data_values['y'], marker='o', color='w', edgecolors='black') 
 plt.plot(test_points, y_true, '-', color='black')
 plt.plot(test_points, y_est, '-', color=ibm_cb[1])
 plt.plot(test_points, y_bench, color=ibm_cb[4])
 
 plt.fill_between(test_points, y1=ci[:, 0], y2=ci[:, 1], color=ibm_cb[1], alpha=0.1)
 plt.fill_between(test_points, y1=ci_bench[:, 0], y2=ci_bench[:, 1], color=ibm_cb[4], alpha=0.1)
-#plt.xlim(0,1)
-#plt.ylim(-10,10)
 
 def get_handles():
     point_1 = Line2D([0], [0], label='Observations', marker='o', mec='black', color='w')
     point_2 = Line2D([0], [0], label='Truth', markeredgecolor='w', color='black', linestyle='-')
     point_3 = Line2D([0], [0], label="DecoR" , color=ibm_cb[1], linestyle='-')
-    point_4= Line2D([0], [0], label="Gam" , color=ibm_cb[4], linestyle='-')
+    point_4= Line2D([0], [0], label="GAM" , color=ibm_cb[4], linestyle='-')
 
     return [point_1, point_2, point_3, point_4]
 
@@ -134,7 +131,7 @@ plt.show()
 
 #Plotting the confounder
 
-plt.plot(data_values['x'][sub], u[sub], 'o:w', mec=ibm_cb[4] )
+plt.plot(data_values['x'], u, 'o:w', mec=ibm_cb[4] )
 
 def get_handles():
     point_1 = Line2D([0], [0], label='Confounder', marker='o', color='w', mec=ibm_cb[4], ls='')
@@ -182,11 +179,10 @@ def get_handles():
 
     point_1 = Line2D([0], [0], label='outliers found', marker='o', color=ibm_cb[1], ls='')
     point_2 = Line2D([0], [0], label='outliers missed', marker='o', color=ibm_cb[4], ls='')
-    point_3 = Line2D([0], [0], label="inliniers found" , marker='o', mec=ibm_cb[0], color='w')
+    point_3 = Line2D([0], [0], label="inliers found" , marker='o', mec=ibm_cb[0], color='w')
 
     return [point_1, point_2, point_3]
 
-plt.suptitle("Detected Outliers")
 plt.tight_layout()
 fig.subplots_adjust(top=0.8)
 fig.legend(handles=get_handles(), loc="upper center", bbox_to_anchor=(0.55, 0.9), ncol=3)

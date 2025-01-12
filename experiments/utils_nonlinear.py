@@ -109,11 +109,11 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method
     elif method == "ridge":
         n=len(x)
         P=get_funcbasis(x=x, L=L, type=basis_type)
+        A=P.T @ P + lmbd * K
+        B=P.T @ y
+        estimate=sp.linalg.solve(A, B)
         xn = basis.T @ P / n
         yn = basis.T @ y / n
-        A=P.T @ P + lmbd * K
-        B=P.T @ yn
-        estimate=sp.linalg.solve(A, B)
         return{"estimate": estimate, "transformed": {"xn": xn, "yn":yn} }
     elif method == "oracle":
         n=len(x)

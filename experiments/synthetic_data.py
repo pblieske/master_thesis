@@ -361,16 +361,6 @@ class OUNonlinearDataGenerator(BaseDataGenerator):
         k = self.basis_transform(u, outlier_points, basis, n)
 
         x = AR_object2.generate_sample(nsample=2 * n)[n:2 * n].reshape(-1, 1)  + 2*k + ex  
-        """
-        min=np.min(x)
-        max=np.max(x)
-        x=2*(x-(max+min)/2)/(max-min)
-
-        max_k=np.max(k)
-        min_k=np.min(k)
-        diff_k=max_k-min_k
-        k=k/diff_k
-        """
 
         y = functions_nonlinear(x, self.beta[0]) + ey + 10*k
 
@@ -397,16 +387,6 @@ class OUNonlinearDataGenerator(BaseDataGenerator):
         ma2 = np.array([1/np.sqrt(n)])
         AR_object2 = ArmaProcess(ar2, ma2)
 
-        """
-        ar1 = np.array([1, -0.7, 0.1])
-        ma1 = np.array([1])
-        AR_object1 = ArmaProcess(ar1, ma1)
-
-        ar2 = np.array([1, -0.7, 0.1])
-        ma2 = np.array([1])
-        AR_object2 = ArmaProcess(ar2, ma2)
-        """
-
         return AR_object1, AR_object2
     
 
@@ -416,7 +396,7 @@ def functions_nonlinear(x:NDArray, beta:int):
     """
   
     if beta==1:
-        y = 5*x**2 #25*(x - np.full((n, 1), 0.5, dtype=float))**2 
+        y = 5*x**2 
     elif beta==2:
         y = 6*np.sin(2*np.pi*x)
     elif beta==3:
