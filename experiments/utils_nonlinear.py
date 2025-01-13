@@ -13,7 +13,7 @@ sys.path.insert(0, '/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semes
 
 from robust_deconfounding.robust_regression import Torrent, BFS, Torrent_reg
 from robust_deconfounding.decor import DecoR
-from robust_deconfounding.utils import cosine_basis, haarMatrix, get_funcbasis
+from robust_deconfounding.utils import cosine_basis, haarMatrix, get_funcbasis, get_funcbasis_multivariate
 from experiments.synthetic_data import BLPDataGenerator, OUDataGenerator, BLPNonlinearDataGenerator, OUNonlinearDataGenerator
 
 def plot_settings():
@@ -48,7 +48,7 @@ def r_squared(x: NDArray, y_true: NDArray, beta: NDArray) -> float:
     return 1-u/v
 
 
-def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method: str, basis_type:str, lmbd=0, K=np.array([0]), outlier_points=np.array([]), normalize=True) -> NDArray:
+def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int|NDArray, method: str, basis_type:str, lmbd=0, K=np.array([0]), outlier_points=np.array([])) -> NDArray:
     """
     Estimates the causal coefficient(s) using DecorR with 'method' as robust regression algorithm.
 
@@ -58,15 +58,26 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method
         basis (NDArray): The basis for transformation.
         a (float): Hyperparameter for the robust regression method.
         method (str): The method to use for DecoR ("torrent", "bfs", or "ols").
-
+        L (NDArray or int): one-dimensional: number of basis functions to use for the approximation
+                            additive model: number of basis functions to use for the approximation for each explenatory variable
     Returns:
         NDArray: The estimated coefficients.
 
     Raises:
         ValueError: If an invalid method is specified.
+        ValueError: If dimensions of x and L dont coincide.
     """
+
+    #Compute the basis
+    if isinstance(L, int):
+        R=get_funcbasis(x=x, L=L, type=basis_type)
+        n=len(x)
+    else:
+        R=get_funcbasis_multivariate(x=x, L=L, type=basis_type)
+        n=x.shape[0]
+
+    #Running DecoR
     if method[0:3] == "tor":
-        x=get_funcbasis(x=x, L=L, type=basis_type)
         if method == "torrent":
             algo = Torrent(a=a, fit_intercept=False)
         elif method == "bfs":
@@ -92,34 +103,29 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int, method
             raise ValueError("Invalid method")
 
         algo = DecoR(algo, basis)
-        algo.fit(x, y)
+        algo.fit(R, y)
 
         if method =="torrent_cv":
             return {"estimate": algo.estimate, "inliers": algo.inliniers, "transformed": algo.get_transformed, "S":S}
         else:
             return {"estimate": algo.estimate, "inliers": algo.inliniers, "transformed": algo.get_transformed}
-
+        
+    #Running benchamrk methods
     elif method == "ols":
-        n=len(x)
-        P=get_funcbasis(x=x, L=L, type=basis_type)
-        xn = basis.T @ P / n
+        xn = basis.T @ R / n
         yn = basis.T @ y / n
-        model_l = sm.OLS(y, P).fit()
+        model_l = sm.OLS(y, R).fit()
         return {"estimate": model_l.params, "transformed": {"xn":xn, "yn": yn}, "inliers": np.array(range(0, n))}
     elif method == "ridge":
-        n=len(x)
-        P=get_funcbasis(x=x, L=L, type=basis_type)
-        A=P.T @ P + lmbd * K
-        B=P.T @ y
+        A=R.T @ R + lmbd * K
+        B=R.T @ y
         estimate=sp.linalg.solve(A, B)
-        xn = basis.T @ P / n
+        xn = basis.T @ R / n
         yn = basis.T @ y / n
         return{"estimate": estimate, "transformed": {"xn": xn, "yn":yn} }
     elif method == "oracle":
-        n=len(x)
         inliers=np.delete(np.arange(0,n), list(outlier_points))
-        P=get_funcbasis(x=x, L=L, type=basis_type)
-        xn = basis.T @ P / n
+        xn = basis.T @ R / n
         yn = basis.T @ y / n
         model_l = sm.OLS(yn[inliers], xn[inliers]).fit()
         return {"estimate": model_l.params, "transformed": {"xn":xn, "yn": yn}, "inliers":inliers}

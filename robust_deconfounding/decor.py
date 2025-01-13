@@ -43,23 +43,6 @@ class DecoR:
         self.algo.fit(self.xn, self.yn)
 
         return self
-    
-    """
-    old, can be deleted at the end, was used to perform transformation and fitting in one
-    def fit_coef(self, x:NDArray, y: NDArray, L:int) -> Self:
-        self._validate_inputs(x,y)
-        n=len(y)
-        if self.basis is None:
-            self.xn = sp.fft.fft(x.T, norm="forward").T
-            self.yn = sp.fft.fft(y, norm="forward")
-        else:
-            self.xn = self.basis.T @ x / n
-            self.yn = self.basis.T @ y / n
-
-        self.algo.fit(self.xn, self.yn)
-
-        return self
-    """
 
     @property
     def estimate(self) -> NDArray:
