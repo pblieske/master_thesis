@@ -4,7 +4,7 @@ sys.path.insert(0, '/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semes
 from robust_deconfounding import DecoR
 from robust_deconfounding.robust_regression import Torrent
 from robust_deconfounding.utils import cosine_basis, get_funcbasis, get_funcbasis_multivariate
-from utils_nonlinear import get_results, plot_settings, get_conf
+from utils_nonlinear import get_results, plot_settings, get_conf, conf_help
 
 
 from pygam import GAM, s, intercept, te
@@ -63,7 +63,7 @@ plt.show()
 # ----------------------------------
 
 #Adjust for delay from x to y in days
-delay=1
+delay=1     #Delay between ozon exposure and outcome in days
 x=x[0:(n-delay)]
 y=y[delay:n]
 x_min=np.min(x)
@@ -89,7 +89,7 @@ method_args = {
 }
 
 bench_mark="spline"         #Benchmark type
-L=6                        #Number of coefficinet for DecoR regression only on ozone levels
+L=6                         #Number of coefficinet for DecoR regression only on ozone levels
 L_adjst=np.array([6, 8])    #Number of coefficients, [ozone, temperature]
 
 #if method_args["method"] in ["torrent_cv", "torrent_reg"]:
@@ -100,8 +100,8 @@ n_x=200     #Resolution of x-axis
 
 #Compute matrices to obtain estimations of y
 test_points=np.linspace(0, 1, num=n_x)
-test_points_adjst=np.stack((test_points, np.repeat(np.mean(temp_norm), n_x)))
-test_points_adjst_temp=np.stack((np.repeat(np.mean(x_norm), n_x), test_points))
+test_points_adjst=np.stack((test_points, np.repeat(0, n_x)))
+test_points_adjst_temp=np.stack((np.repeat(0, n_x), test_points))
 basis=get_funcbasis(x=test_points, L=L, type=method_args["basis_type"])
 basis_adjst=get_funcbasis_multivariate(x=test_points_adjst, L=L_adjst, type=method_args["basis_type"])
 basis_temp=get_funcbasis_multivariate(x=test_points_adjst_temp, L=L_adjst, type=method_args["basis_type"])
@@ -109,12 +109,15 @@ basis_temp=get_funcbasis_multivariate(x=test_points_adjst_temp, L=L_adjst, type=
 #Fit DecoR without adjustement for the temperature
 estimates_decor=get_results(x=x_norm, y=y, **method_args, basis=cosine_basis(n-1), L=L, K=K, lmbd=0.001)
 y_est=basis @ estimates_decor["estimate"]
-ci=get_conf(x=test_points, **estimates_decor, alpha=0.95, basis_type=method_args["basis_type"])
+ci=get_conf(x=test_points, **estimates_decor, L=L, alpha=0.95, basis_type=method_args["basis_type"])
 
 #Fit DecoR with adjustement for the temperature
 estimates_decor_adjst=get_results(x=X, y=y, **method_args, basis=cosine_basis(n-1), L=L_adjst, K=K, lmbd=10**(-4))
 y_adjst=basis_adjst @ estimates_decor_adjst["estimate"]
-ci_adjst=get_conf(x=test_points_adjst, **estimates_decor_adjst, alpha=0.9, L=L_adjst, basis_type=method_args["basis_type"])
+ci_adjst_help=conf_help(**estimates_decor_adjst, L=L_adjst, alpha=0.95)
+H=basis_adjst[:,1:(L_adjst[0]+1)]@(ci_adjst_help['H'])[1:(L_adjst[0]+1), :]
+sigma=ci_adjst_help['sigma']*np.sqrt(np.diag(H@H.T))
+ci_adjst=np.stack((y_adjst-ci_adjst_help['qt']*sigma, y_adjst+ci_adjst_help['qt']*sigma)).T
 
 #Fit benchmark for comparison and to make the confounding visable    
 if bench_mark=="spline":
@@ -125,7 +128,6 @@ else:
     estimates_fourier= get_results(x=x_norm, y=y, basis=cosine_basis(n-2), method="ols", L=L, basis_type=method_args["basis_type"], a=method_args["a"])
     y_bench=basis @ estimates_fourier["estimate"]
     ci_bench=get_conf(x=test_points, **estimates_fourier, alpha=0.95, basis_type=method_args["basis_type"])
-
 
 # ----------------------------------
 # A Try to estimate the number of death caused by ozone
@@ -149,6 +151,7 @@ ci_lim=get_conf(x=np.stack((np.repeat(x_lim, n_high), t_high)), **estimates_deco
 #Compute the mean per year
 num_deaths={"mean": sum(y_caused)/5, "lower bound": sum(ci_pred[:,0] -ci_lim[:,1])/5, "upper bound": sum(ci_pred[:,1] -ci_lim[:,0])/5}
 print("Number of deaths caused per year trough a ozone levels over 60 mg/m^2: " , num_deaths)
+
 
 # ----------------------------------
 # plotting
@@ -188,10 +191,13 @@ plt.title("Histogramm of Excluded Frequencies")
 plt.tight_layout()
 plt.show()
 
-#Plot the influence of temperature on #deaths
+#Plot the influence of temperature on #death
 y_temp=basis_temp @ estimates_decor_adjst["estimate"]
 test_temp=(test_points)*(t_max-t_min)+t_min
-ci_temp=get_conf(x=test_points_adjst_temp, **estimates_decor_adjst, alpha=0.95, L=L_adjst, basis_type=method_args["basis_type"])
+ci_adjst=np.stack((y_adjst-ci_adjst_help['qt']*sigma, y_adjst+ci_adjst_help['qt']*sigma)).T
+H=basis_temp[:,(L_adjst[0]+1):(L_adjst[1]+L_adjst[0]+1)]@(ci_adjst_help['H'])[(L_adjst[0]+1):(L_adjst[0]+L_adjst[1]+1), :]
+sigma=ci_adjst_help['sigma']*np.sqrt(np.diag(H@H.T))
+ci_temp=np.stack((y_temp-ci_adjst_help['qt']*sigma, y_temp+ci_adjst_help['qt']*sigma)).T
 
 plt.scatter(x=temp, y=y, marker='o', color='w', edgecolors="gray", s=5) 
 plt.plot(test_temp, y_temp, '-', color=ibm_cb[2], linewidth=1.5)
@@ -203,7 +209,6 @@ plt.xlabel("temperature ($C^\circ$)")
 plt.title("Influence of Temperature")
 plt.tight_layout()
 plt.show()
-
 
 #Comparing the with and without adjustement
 y_diff=y_est-y_adjst

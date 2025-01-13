@@ -267,34 +267,71 @@ def get_conf(x:NDArray, estimate:NDArray, inliers: list, transformed: NDArray, a
 
     if isinstance(L, int):
         n=xn.shape[0]
-        L=xn.shape[1]-1
+        L_tot=xn.shape[1]-1
         basis=get_funcbasis(x=x, L=L, type=basis_type)
     else:
         basis=get_funcbasis_multivariate(x=x, L=L, type=basis_type)
         n=xn.shape[0]
-        L=np.sum(L)+1
+        L_tot=np.sum(L)+1
 
     #Estimate the variance
-    
     r=yn- xn@estimate.T
     n=xn.shape[0]
-    L=xn.shape[1]
-    df=n-L
+    df=n-L_tot
     sigma_2=np.sum(np.square(r), axis=0)/df 
 
     #Compute the linear estimator
     xn=xn[list(inliers)]
     yn=yn[list(inliers)]
-    H=basis @ np.linalg.inv(xn.T @ xn + lmbd*K) @ xn.T
-    sigma=np.sqrt(sigma_2*np.diag(H @ H.T))
+    H_help=np.linalg.solve(xn.T @ xn + lmbd*K, xn.T)
+    H=basis @ H_help
+    sigma=np.sqrt(sigma_2 * np.diag(H @ H.T))
 
     #Compute the confidence interval
     qt=sp.stats.t.ppf((1-alpha)/2, df)
-    ci_u=basis@estimate.T - qt*sigma 
-    ci_l=basis@estimate.T + qt*sigma 
+    ci_u=basis@estimate.T - qt*sigma
+    ci_l=basis@estimate.T + qt*sigma
     ci=np.stack((ci_l, ci_u), axis=-1)
 
     return ci
+
+
+def conf_help(estimate:NDArray, inliers: list, transformed: NDArray, alpha=0.95, lmbd=0, K=np.diag(np.array([0])), L=0)->dict:
+    """
+        Returns a estimation of the variance sigma and
+        Caution: We use all points to estimate the variance (not only the inliers) to avoid a underestimation and 
+                to countersteer the fact we only get an interval for \hat{f}
+        Arguements:
+            x: Points where confidence interval should be evaluated
+            estimate: estimated coefficients
+            inliers: estimated inliers from DecoR
+            alpha: level for the confidence interval
+        Output:
+            ci=[ci_l, ci_u]: the lower and upper bound for the confidence interval
+    """
+
+    xn=transformed["xn"]
+    yn=transformed["yn"]
+
+    if isinstance(L, int):
+        n=xn.shape[0]
+        L_tot=xn.shape[1]-1
+    else:
+        n=xn.shape[0]
+        L_tot=np.sum(L)+1
+
+    #Estimate the variance
+    r=yn- xn@estimate.T
+    n=xn.shape[0]
+    df=n-L_tot
+    xn=transformed["xn"][list(inliers)]
+
+    #Compute results
+    qt=sp.stats.t.ppf((1-alpha)/2, df)
+    sigma=np.sqrt(np.sum(np.square(r), axis=0)/df)
+    H=np.linalg.solve(xn.T @ xn + lmbd*K, xn.T)
+
+    return{'sigma': sigma, 'H':H , 'qt': qt}
 
 
 def check_eigen(x:NDArray, S: list, G:list, lmbd=0, K=np.array([0])) -> dict:
