@@ -248,16 +248,34 @@ def plot_results_2yaxis(res: dict, num_data: list, m: int, colors, first=False) 
                  palette=[colors[1]], legend=True, ax=ax2)       
 
 
-def get_conf(x:NDArray, estimate:NDArray, inliers: list, transformed: NDArray, alpha=0.95, lmbd=0, K=np.diag(np.array([0])), basis_type="cosine_cont") -> NDArray:
+def get_conf(x:NDArray, estimate:NDArray, inliers: list, transformed: NDArray, alpha=0.95, lmbd=0, K=np.diag(np.array([0])), L=0, basis_type="cosine_cont") -> NDArray:
     """
-        Returns a confidence interval for the estimated f evaluated at x, assuming that S contains only inliers.
-        Problem: In our sample there is a bias present introduced by cutting the series of at L.
+        Returns a confidence interval for the estimated f evaluated at x.
+        Caution: We use all points to estimate the variance (not only the inliers) to avoid a underestimation and 
+                to countersteer the fact we only get an interval for \hat{f}
+        Arguements:
+            x: Points where confidence interval should be evaluated
+            estimate: estimated coefficients
+            inliers: estimated inliers from DecoR
+            alpha: level for the confidence interval
+        Output:
+            ci=[ci_l, ci_u]: the lower and upper bound for the confidence interval
     """
 
-    xn=transformed["xn"]#[list(inliers)]
-    yn=transformed["yn"]#[list(inliers)]
+    xn=transformed["xn"]
+    yn=transformed["yn"]
+
+    if isinstance(L, int):
+        n=xn.shape[0]
+        L=xn.shape[1]-1
+        basis=get_funcbasis(x=x, L=L, type=basis_type)
+    else:
+        basis=get_funcbasis_multivariate(x=x, L=L, type=basis_type)
+        n=xn.shape[0]
+        L=np.sum(L)+1
 
     #Estimate the variance
+    
     r=yn- xn@estimate.T
     n=xn.shape[0]
     L=xn.shape[1]
@@ -267,7 +285,6 @@ def get_conf(x:NDArray, estimate:NDArray, inliers: list, transformed: NDArray, a
     #Compute the linear estimator
     xn=xn[list(inliers)]
     yn=yn[list(inliers)]
-    basis=get_funcbasis(x=x, L=L, type=basis_type)
     H=basis @ np.linalg.inv(xn.T @ xn + lmbd*K) @ xn.T
     sigma=np.sqrt(sigma_2*np.diag(H @ H.T))
 

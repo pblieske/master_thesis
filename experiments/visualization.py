@@ -63,7 +63,6 @@ estimates_decor = get_results(**data_values, **method_args, L=L_temp)
 ci=get_conf(x=test_points, **estimates_decor, alpha=0.95, basis_type=method_args["basis_type"])
 y_est=basis @ estimates_decor["estimate"]
 y_est=np.ndarray((n_x, 1), buffer=y_est)
-print(estimates_decor["estimate"])
 
 #Estimate the function by the benchmark
 if benchmark=="ols":

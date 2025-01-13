@@ -73,19 +73,19 @@ def get_funcbasis(x:NDArray, L:int, type="cosine_cont", intercept=True)->NDArray
         type: type of basis spanning the L^2-space
     """
 
-    L_0=(0 if intercept else 0)
+    L_0=(0 if intercept else 1)
    
     if type=="cosine_cont":
-        tmp = [np.cos(np.pi * x * k)  for k in range(L_0,L)] 
+        tmp = [np.cos(np.pi * x * k)  for k in range(L_0,L+1)] 
         basis = np.vstack(tmp).T
     elif type=="cosine_disc":
         n=len(x)
-        tmp = [np.cos(np.pi * x * (k + 1/2)) for k in range(L_0, L)]
+        tmp = [np.cos(np.pi * x * (k + 1/2)) for k in range(L_0, L+1)]
         basis = np.vstack(tmp).T
         ind_0=np.arange(0,n)[list(x)==0]
         basis[ind_0, :]=1
     elif type=="poly":
-        tmp=[x**k for k in range(L_0, L)]
+        tmp=[x**k for k in range(L_0, L+1)]
         basis= np.vstack(tmp).T
     else:
         raise ValueError("Invalid basis type")
@@ -102,7 +102,7 @@ def get_funcbasis_multivariate(x:NDArray, L:NDArray, type="cosine_cont")->NDArra
 
     if len(L)!=x.shape[0]:
         raise ValueError("Dimensions of L and x don't coincide.")
-    basis=get_funcbasis(x=x[0, :], L=L[0], type=type)
+    basis=get_funcbasis(x=x[0, :], L=L[0], type=type, intercept=True)
     for i in range(1,len(L)):
         basis_add=get_funcbasis(x=x[i, :], L=L[i], type=type, intercept=False)
         basis=np.concatenate((basis,basis_add), axis=1)

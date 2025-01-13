@@ -238,7 +238,9 @@ class Torrent_reg(BaseRobustRegression):
 
             if set(self.inliers) == set(old_inliers):
                 break
-            
+
+        self.coef=self.coef[:,0]    
+        
         return self
     
     def cv(self, x: NDArray, y: NDArray, Lmbd: NDArray, k=10) -> dict:
