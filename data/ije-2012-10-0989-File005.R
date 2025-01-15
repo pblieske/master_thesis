@@ -9,7 +9,8 @@
 # (THE FUNCTION read.dta IN THE PACKAGE foreign CAN DO THE JOB)
 # (THE PACKAGE IS NOT PRE-LOADED INTO THE SESSION AND NEEDS TO BE LOADED)
 library(foreign)
-data <- read.dta("londondataset2002_2006.dta")
+data<- read.dta("ije-2012-10-0989-File003.dta")
+#data <- read.dta("londondataset2002_2006.dta")
 
 # SET THE DEFAULT ACTION FOR MISSING DATA TO na.exclude
 # (MISSING EXCLUDED IN ESTIMATION BUT RE-INSERTED IN PREDICTION/RESIDUALS)
@@ -231,6 +232,8 @@ for(i in 0:7) {
   # LAG SAME AS ABOVE, BUT WITH STRATA TERMS INSTEAD THAN LINEAR
   mod <- glm(numdeaths ~ ozone10lag + tempdecilelag + spl,data,
     family=quasipoisson)
+  print(c("Lag: ", i))
+  print(summary(mod))
   tablag[i+1,] <- ci.lin(mod,subset="ozone10lag",Exp=T)[5:7]
 }
 tablag

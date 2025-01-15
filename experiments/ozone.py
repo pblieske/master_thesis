@@ -85,12 +85,12 @@ X=np.stack((x_norm, temp_norm))
 method_args = {
     "a": 0.95,
     "method": "torrent",        # "torrent" | "bfs"
-    "basis_type": "cosine_cont",# basis used for the approximation of f
+    "basis_type": "poly",# basis used for the approximation of f
 }
 
 bench_mark="spline"         #Benchmark type
 L=6                         #Number of coefficinet for DecoR regression only on ozone levels
-L_adjst=np.array([6, 8])    #Number of coefficients, [ozone, temperature]
+L_adjst=np.array([5, 2])    #Number of coefficients, [ozone, temperature]
 
 #if method_args["method"] in ["torrent_cv", "torrent_reg"]:
 diag=np.concatenate((np.array([0]), np.array([i**2 for i in range(1,L_adjst[0]+1)]), np.array([i**4 for i in range(1,L_adjst[1]+1)])))
@@ -159,19 +159,27 @@ print("Number of deaths caused per year trough a ozone levels over 60 mg/m^2: " 
 
 test_ozone=(test_points)*(x_max-x_min)+x_min
 
+#Compute estimate from Bhaskaran et al. 2013
+y_ref=np.exp(0.0007454149*test_ozone*1/10)*np.mean(y)
+y_ref_l=np.exp(0.00042087681*test_ozone*1/10)*np.mean(y)
+y_ref_u=np.exp(0.0010698931*test_ozone*1/10)*np.mean(y)
+
 plt.scatter(x=x, y=y, color='w', edgecolors="gray", s=4) 
 plt.plot(test_ozone, y_bench, '-', color=ibm_cb[4], linewidth=1.5)
 plt.plot(test_ozone, y_adjst, '-', color=ibm_cb[1], linewidth=1.5)
+plt.plot(test_ozone, y_ref, '--', color="black", linewidth=1)
 
 #Plot confidence intervals
 plt.fill_between(test_ozone, y1=ci_bench[:, 0], y2=ci_bench[:, 1], color=ibm_cb[4], alpha=0.4)
 plt.fill_between(test_ozone, y1=ci_adjst[:, 0], y2=ci_adjst[:, 1], color=ibm_cb[1], alpha=0.4)
+plt.fill_between(test_ozone, y1=y_ref_l, y2=y_ref_u, color="black", alpha=0.4)
 
 def get_handles():
     point_1 = Line2D([0], [0], label='Observations', marker='o', mec="gray", markersize=3, linestyle='')
+    point_2= Line2D([0], [0], label='Bhaskaran et al.', color="black", marker='', mec="black", markersize=3, linestyle='--')
     point_3 = Line2D([0], [0], label="DecoR" , color=ibm_cb[1], linestyle='-')
     point_4= Line2D([0], [0], label="GAM" , color=ibm_cb[4], linestyle='-')
-    return [point_1,  point_3, point_4]
+    return [point_1,  point_2, point_3, point_4]
 
 plt.xlabel("Ozone ($\mu g/m^3$)")
 plt.ylabel("# Deaths")
