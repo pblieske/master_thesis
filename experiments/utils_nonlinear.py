@@ -211,6 +211,7 @@ def plot_results(res: dict, num_data: list, m: int, colors) -> None:
                  markers=["o", "X"], dashes=False, errorbar=("ci", 95), err_style="band",
                  palette=[colors[0], colors[1]], legend=True)
     
+
 def plot_results_2yaxis(res: dict, num_data: list, m: int, colors, first=False) -> None:
     """
     Plots the estimated coefficients using DecoR and OLS methods across different data sizes.
@@ -266,9 +267,10 @@ def get_conf(x:NDArray, estimate:NDArray, inliers: list, transformed: NDArray, a
     yn=transformed["yn"]
 
     if isinstance(L, int):
-        n=xn.shape[0]
-        L_tot=xn.shape[1]-1
+        n=xn.shape[0] 
         basis=get_funcbasis(x=x, L=L, type=basis_type)
+        L_tot=L
+        print("good")
     else:
         basis=get_funcbasis_multivariate(x=x, L=L, type=basis_type)
         n=xn.shape[0]
@@ -307,7 +309,9 @@ def conf_help(estimate:NDArray, inliers: list, transformed: NDArray, alpha=0.95,
             inliers: estimated inliers from DecoR
             alpha: level for the confidence interval
         Output:
-            ci=[ci_l, ci_u]: the lower and upper bound for the confidence interval
+            H: Hat matrix for the coefficients beta
+            sigma: estimated variance
+            qt: (1-alpha)/2- quantile of the student-t distributions 
     """
 
     xn=transformed["xn"]

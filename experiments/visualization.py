@@ -49,24 +49,24 @@ print("number of observations:", n)
 n_x=200     #Resolution of x-axis
 test_points=np.array([i / n_x for i in range(n_x)])
 y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["beta"][0])
-L_temp=4 #max(np.floor(1/4*n**(1/2)).astype(int),4)    #Number of coefficients used
-print("number of coefficients:", L_temp)
+L=4 #max(np.floor(1/4*n**(1/2)).astype(int),4)    #Number of coefficients used
+print("number of coefficients:", L)
 
 #Compute the basis and generate the data
-basis=get_funcbasis(x=test_points, L=L_temp, type=method_args["basis_type"])
+basis=get_funcbasis(x=test_points, L=L, type=method_args["basis_type"])
 data_values = get_data(n, **data_args)
 u=data_values.pop("u")
 outlier_points=data_values.pop("outlier_points")
 
 #Estimate the function f by DecoR
-estimates_decor = get_results(**data_values, **method_args, L=L_temp)
-ci=get_conf(x=test_points, **estimates_decor, alpha=0.95, basis_type=method_args["basis_type"])
+estimates_decor = get_results(**data_values, **method_args, L=L)
+ci=get_conf(x=test_points, **estimates_decor, L=L, alpha=0.95, basis_type=method_args["basis_type"])
 y_est=basis @ estimates_decor["estimate"]
 y_est=np.ndarray((n_x, 1), buffer=y_est)
 
 #Estimate the function by the benchmark
 if benchmark=="ols":
-    estimates_fourier= get_results(**data_values, method="ols", basis_type=method_args["basis_type"], L=L_temp, a=0, outlier_points=outlier_points)
+    estimates_fourier= get_results(**data_values, method="ols", basis_type=method_args["basis_type"], L=L, a=0, outlier_points=outlier_points)
     ci_bench=get_conf(x=test_points, **estimates_fourier, alpha=0.95, basis_type=method_args["basis_type"])
     y_bench= basis @ estimates_fourier["estimate"]
 elif benchmark=="spline":
@@ -79,7 +79,7 @@ else:
     raise ValueError("benchmark not implemented")
 
 #Check the eigenvalue condition
-#diag=np.concatenate((np.array([0]), np.array([i**4 for i in range(1,L_temp)])))
+#diag=np.concatenate((np.array([0]), np.array([i**4 for i in range(1,L)])))
 #K=np.diag(diag)
 #print('Eigenvalue condition: ', check_eigen(x=estimates_decor["transformed"]["xn"], S=estimates_decor["inliers"], G=outlier_points, lmbd=0, K=K))
 
@@ -159,10 +159,10 @@ detected_outliers=true_outliers.difference(inliniers)
 not_detected_outliers=true_outliers.difference(detected_outliers)
 true_intliniers=inliniers.difference(true_outliers)
 
-m_plots=np.ceil(L_temp/2).astype(int)
+m_plots=np.ceil(L/2).astype(int)
 fig, axs = plt.subplots(m_plots, 2)
 
-for l in range(0, L_temp):
+for l in range(0, L):
     i=np.floor(l/2).astype(int)
     j=np.mod(l,2)
     axs[i, j].plot(P_n[:, l], y_n, 'o:w', mec='black')

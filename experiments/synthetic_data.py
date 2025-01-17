@@ -295,6 +295,42 @@ class BLPNonlinearDataGenerator(BaseDataGenerator):
         """
         return np.array([1 if i in self.band else 0 for i in range(n)]).reshape(-1, 1)
 
+    
+    def get_noise_vars(self, n: int, sizes: list[int]) -> tuple[NDArray, NDArray, NDArray]:
+        """
+        Generates noise terms for the data with different variances.
+
+        Args:
+            n (int): Number of data points.
+            sizes (list[int]): Sizes of the noise arrays (for x, y, u).
+
+        Returns:
+            tuple[NDArray, NDArray, NDArray]: Noise arrays for x, y, u.
+        """
+        if self.noise_type=="uniform":
+            a=np.sqrt(3*self.noise_var)     #unifrom on the interval [-a,a]
+            b=np.sqrt(3/10)
+            c=np.sqrt(3)
+            noises = [np.random.uniform(-(a if i == 2 else (b if i==0 else c)), (a if i == 2 else (b if i==0 else c)), size=(n, size)) for i, size in enumerate(sizes)]
+        elif self.noise_type=="normal":
+            b=np.sqrt(3)
+            c=np.sqrt(3/10)
+            noise_u = np.random.normal(0, 1, size=(n, 1))
+            noise_x = np.random.normal(0, 1, size=(n, 1))
+            noise_y = np.random.normal(0, np.sqrt(self.noise_var), size=(n, 1))
+            noises=[noise_u, noise_x, noise_y]
+        elif self.noise_type=="normal_uniform":
+            b=np.sqrt(3)
+            c=np.sqrt(3/10)
+            noise_u=np.random.uniform(-b, b, size=(n,1)) 
+            noise_x= np.random.uniform(-c, c, size=(n,1))
+            noise_y = np.random.normal(0, np.sqrt(self.noise_var), size=(n, 1))
+            noises=[noise_u, noise_x, noise_y]
+        else:
+            raise ValueError("Noise Type not implemented.")
+        
+        return noises
+
    
     def generate_data(self, n: int, outlier_points: NDArray) -> tuple[NDArray, NDArray]:
         """
@@ -388,6 +424,41 @@ class OUNonlinearDataGenerator(BaseDataGenerator):
         AR_object2 = ArmaProcess(ar2, ma2)
 
         return AR_object1, AR_object2
+
+    def get_noise_vars(self, n: int, sizes: list[int]) -> tuple[NDArray, NDArray, NDArray]:
+        """
+        Generates noise terms for the data with different variances.
+
+        Args:
+            n (int): Number of data points.
+            sizes (list[int]): Sizes of the noise arrays (for x, y, u).
+
+        Returns:
+            tuple[NDArray, NDArray, NDArray]: Noise arrays for x, y, u.
+        """
+        if self.noise_type=="uniform":
+            a=np.sqrt(3*self.noise_var)     #unifrom on the interval [-a,a]
+            b=np.sqrt(3/10)
+            c=np.sqrt(3)
+            noises = [np.random.uniform(-(a if i == 2 else (b if i==0 else c)), (a if i == 2 else (b if i==0 else c)), size=(n, size)) for i, size in enumerate(sizes)]
+        elif self.noise_type=="normal":
+            b=np.sqrt(3)
+            c=np.sqrt(3/10)
+            noise_u = np.random.normal(0, 1, size=(n, 1))
+            noise_x = np.random.normal(0, 1, size=(n, 1))
+            noise_y = np.random.normal(0, np.sqrt(self.noise_var), size=(n, 1))
+            noises=[noise_u, noise_x, noise_y]
+        elif self.noise_type=="normal_uniform":
+            b=np.sqrt(3)
+            c=np.sqrt(3/10)
+            noise_u=np.random.uniform(-b, b, size=(n,1)) 
+            noise_x= np.random.uniform(-c, c, size=(n,1))
+            noise_y = np.random.normal(0, np.sqrt(self.noise_var), size=(n, 1))
+            noises=[noise_u, noise_x, noise_y]
+        else:
+            raise ValueError("Noise Type not implemented.")
+        
+        return noises  
     
 
 def functions_nonlinear(x:NDArray, beta:int):
