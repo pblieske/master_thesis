@@ -14,7 +14,7 @@ sys.path.insert(0, '/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semes
 from robust_deconfounding.robust_regression import Torrent, BFS, Torrent_reg
 from robust_deconfounding.decor import DecoR
 from robust_deconfounding.utils import cosine_basis, haarMatrix, get_funcbasis, get_funcbasis_multivariate
-from experiments.synthetic_data import BLPDataGenerator, OUDataGenerator, BLPNonlinearDataGenerator, OUNonlinearDataGenerator
+from experiments.synthetic_data import BLPDataGenerator, OUDataGenerator, BLPNonlinearDataGenerator, OUNonlinearDataGenerator, UniformNonlinearDataGenerator
 
 def plot_settings():
     """
@@ -161,6 +161,8 @@ def get_data(n: int, process_type: str, basis_type: str, fraction: float, beta: 
         generator = BLPNonlinearDataGenerator(basis_type=basis_type, beta=beta, noise_var=noise_var, band=band, noise_type=noise_type)
     elif process_type=="ounl":
         generator = OUNonlinearDataGenerator(basis_type=basis_type, beta=beta, noise_var=noise_var, noise_type=noise_type)
+    elif process_type=="uniform":
+        generator =  UniformNonlinearDataGenerator(basis_type=basis_type, beta=beta, noise_var=noise_var)
     else:
         raise ValueError("process_type not implemented")
 

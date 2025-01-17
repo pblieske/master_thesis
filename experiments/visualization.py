@@ -22,7 +22,7 @@ np.random.seed(SEED)
 random.seed(SEED)
 
 data_args = {
-    "process_type": "blpnl",    # "ou" | "blp" | "blpnl"
+    "process_type": "uniform",    # "ou" | "blp" | "blpnl" | "ounl" | "unifrom"
     "basis_type": "cosine",     # "cosine" | "haar"
     "fraction": 0.25,
     "noise_type": "normal",
@@ -38,7 +38,7 @@ method_args = {
 }
 
 benchmark="spline"
-n = 2**8 # number of observations
+n = 2**10 # number of observations
 print("number of observations:", n)
 
 

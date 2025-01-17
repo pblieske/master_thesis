@@ -460,10 +460,70 @@ class OUNonlinearDataGenerator(BaseDataGenerator):
         
         return noises  
     
+class UniformNonlinearDataGenerator(BaseDataGenerator):
+    """
+    Generates data with confounding concentrated in a specific frequency band.
+    The relation between x and y is assumued to be nonlinear and specified by the integer beta
+    Attributes:
+        band (list[int]): Frequency band for concentrated confounding (inclusive).
+    """
+    def __init__(self, basis_type: str, beta: NDArray, noise_var: float,  noise_type="uniform"):
+        super().__init__(basis_type, beta, noise_var, noise_type)
+    
+    def get_noise_vars(self, n: int, sizes: list[int]) -> tuple[NDArray, NDArray, NDArray]:
+        """
+        Generates noise terms for the data with different variances.
+
+        Args:
+            n (int): Number of data points.
+            sizes (list[int]): Sizes of the noise arrays (for x, y, u).
+
+        Returns:
+            tuple[NDArray, NDArray, NDArray]: Noise arrays for x, y, u.
+        """
+        a=np.sqrt(3*self.noise_var)     #unifrom on the interval [-a,a]
+        b=np.sqrt(3)
+        c=np.sqrt(3)
+        noises = [np.random.uniform(-(a if i == 2 else (b if i==0 else c)), (a if i == 2 else (b if i==0 else c)), size=(n, size)) for i, size in enumerate(sizes)]
+        
+        return noises
+
+   
+    def generate_data(self, n: int, outlier_points: NDArray) -> tuple[NDArray, NDArray]:
+        """
+        Generates data from processes with x indepent, indentical unifrom distributed with confounding.
+
+        Args:
+            n (int): Number of data points.
+            outlier_points (NDArray): Indicator vector for outlier data points.
+
+        Returns:
+            tuple[NDArray, NDArray]: The generated data (x, y).
+        """ 
+        eu, ex, ey = self.get_noise_vars(n, [1, 1, 1])
+
+        basis = self.get_basis(n)
+
+        x=ex
+        k = self.basis_transform(x, outlier_points, basis, n)
+        
+        max=np.max(x)
+        min=np.min(x)
+        x=(x-min)/(max-min)
+
+        y = functions_nonlinear(x, self.beta[0]) + ey + 10*k
+
+        return x[:,0], y[:,0], 10*k[:,0]
+
 
 def functions_nonlinear(x:NDArray, beta:int):
     """"
     Returns the value of different nonlinear functions evaluated at x where the type can be choosen over the integer beta.
+    1: Quadratic
+    2: Sinfunction
+    3: Sigmoid
+    4: Finite expansion in function basis
+    5: Linear
     """
   
     if beta==1:
