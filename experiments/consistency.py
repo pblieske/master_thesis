@@ -4,7 +4,7 @@ from pygam import LinearGAM, s
 
 import sys
 sys.path.insert(0, '/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_thesis/code/master_thesis')
-from utils_nonlinear import get_results, get_data
+from utils_nonlinear import get_results, get_data, get_parameters
 from synthetic_data import functions_nonlinear
 from robust_deconfounding.utils import get_funcbasis
 
@@ -38,32 +38,35 @@ np.random.seed(SEED)
 random.seed(SEED)
 
 data_args = {
-    "process_type": "blpnl",    # "ou" | "blp" | "blpnl"
+    "process_type": "uniform",    # "ou" | "blp" | "blpnl" | "ounl" | "uniform"
     "basis_type": "cosine",     # "cosine" | "haar"
-    #"fraction": 0.25,           
+    "fraction": 0.25,           
     "beta": np.array([2]),      # the nonlinear function is choosen through beta, see synthetic_data.py
     "band": list(range(0, 50)),  # list(range(0, 50)) | None
-    "noise_type": "normal_uniform"
+    "noise_type": "normal"
 }
 
 method_args = {
-    #"a": 0.7,
-    "method": "torrent_reg",        # "torrent" | "bfs"
+    "a": 0.7,
+    "method": "torrent",        # "torrent" | "bfs"
     "basis_type":"cosine_cont"
 }
 
-m = 200                                         #Number of repetitions for the Monte Carlo
-noise_vars = [0, 1, 4]                          #Noise variance added to f(x)
+m = 200                                     #Number of repetitions for the Monte Carlo
+noise_vars = [0, 1, 4]                      #Variance of the noise added to f(x)
+L_frac=[1, 4, 4]                            #Scaling of L_n by a constant
+num_data = [2 ** k for k in range(4, 9)] + [2**10] + [2**13] # up to k=14                         
 #lmbd=[0, 10**(-8), 10**(-5)]
-L_frac=[1, 4, 4]
-num_data = [2 ** k for k in range(5, 9)] + [2**10] + [2**13] # up to k=14 
+
 
 # ----------------------------------
 # run experiments
 # ----------------------------------
 
 n_x=200     #Resolution of x-axis
-test_points=np.array([(i+10 )/ (n_x+20) for i in range(n_x)])
+int_test=[0.1, 0.9]
+len_test=int_test[1]-int_test[0]
+test_points=np.array([int_test[0]+ i/(n_x)*len_test for i in range(n_x)])
 y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["beta"][0])
 
 for i in range(len(noise_vars)):
@@ -76,15 +79,15 @@ for i in range(len(noise_vars)):
         res["ols"].append([])
         L_temp=max((np.ceil(n**0.5)/L_frac[i]).astype(int),4) #max((np.floor(np.log(n))).astype(int),1) max((np.floor(n**(1/2)/4)).astype(int),1)
         basis=get_funcbasis(x=test_points, L=L_temp, type=method_args["basis_type"])
-        n_con=min((2*n**(-0.5)), 1)
+        #n_con=min((2*n**(-0.5)), 1)
         print("number of coefficients: ", L_temp)
-        print("number of confounded frequencies: ", n_con)
+        #print("number of confounded frequencies: ", n_con)
 
         for _ in range(m):
-            data_values = get_data(n, **data_args, noise_var=noise_vars[i], fraction=n_con)
+            data_values = get_data(n, **data_args, noise_var=noise_vars[i]) #, fraction=n_con)
             data_values.pop('u') 
             outlier_points=data_values.pop('outlier_points')
-            estimates_decor = get_results(**data_values, **method_args, L=L_temp, a=1-n_con*1.25)
+            estimates_decor = get_results(**data_values, **method_args, L=L_temp) # a=1-n_con*1.25)
             y_est=basis @ estimates_decor["estimate"]
             y_est=np.ndarray((n_x, 1), buffer=y_est)
             """ 
@@ -97,8 +100,12 @@ for i in range(len(noise_vars)):
             gam = LinearGAM(s(0)).gridsearch(x, y)
             y_bench=gam.predict(test_points)
            
+            """
             res["DecoR"][-1].append(1/np.sqrt(n_x)*np.linalg.norm(y_true-y_est, ord=2))
             res["ols"][-1].append(1/np.sqrt(n_x)*np.linalg.norm(y_true-y_bench, ord=2))
+            """
+            res["DecoR"][-1].append(1/n_x*len_test*np.linalg.norm(y_true-y_est, ord=1))
+            res["ols"][-1].append(1/n_x*len_test*np.linalg.norm(y_true-y_bench, ord=1))
 
     #Save the results using a pickle file
     res["DecoR"], res["ols"] = np.array(res["DecoR"]), np.array(res["ols"])

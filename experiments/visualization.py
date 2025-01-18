@@ -17,7 +17,7 @@ For this we simulated only one draw for a fixed number of observations n, for Mo
 
 colors, ibm_cb = plot_settings()
 
-SEED = 9
+SEED = 2
 np.random.seed(SEED)
 random.seed(SEED)
 
@@ -26,7 +26,7 @@ data_args = {
     "basis_type": "cosine",     # "cosine" | "haar"
     "fraction": 0.25,
     "noise_type": "normal",
-    "noise_var": 1,
+    "noise_var": 4,
     "beta": np.array([2]),
     "band": list(range(0, 50)),  # list(range(0, 50)) | None
 }
@@ -49,7 +49,7 @@ print("number of observations:", n)
 n_x=200     #Resolution of x-axis
 test_points=np.array([i / n_x for i in range(n_x)])
 y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["beta"][0])
-L=4 #max(np.floor(1/4*n**(1/2)).astype(int),4)    #Number of coefficients used
+L=max(np.floor(1/4*n**(1/2)).astype(int),4)    #Number of coefficients used
 print("number of coefficients:", L)
 
 #Compute the basis and generate the data
@@ -85,6 +85,7 @@ else:
 
 #Compute the L^2-error
 print("$L^2$-error: ", 1/np.sqrt(n_x)*np.linalg.norm(y_true-y_est, ord=2))
+print("$L^1$-error: ", 1/n_x*np.linalg.norm(y_true-y_est, ord=1))
 
 # ----------------------------------
 # plotting

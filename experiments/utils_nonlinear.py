@@ -4,7 +4,7 @@ from numpy.typing import NDArray
 import statsmodels.api as sm
 import pandas as pd
 import seaborn as sns
-import pylab
+import pylab, json
 import matplotlib.pyplot as plt
 
 
@@ -69,7 +69,7 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int|NDArray
     """
 
     #Compute the basis
-    if isinstance(L, int):
+    if isinstance(L, (int, np.int64)):
         R=get_funcbasis(x=x, L=L, type=basis_type)
         n=len(x)
     else:
@@ -268,7 +268,7 @@ def get_conf(x:NDArray, estimate:NDArray, inliers: list, transformed: NDArray, a
     xn=transformed["xn"]
     yn=transformed["yn"]
 
-    if isinstance(L, int):
+    if isinstance(L, (int, np.int64)):
         n=xn.shape[0] 
         basis=get_funcbasis(x=x, L=L, type=basis_type)
         L_tot=L
@@ -358,3 +358,18 @@ def check_eigen(x:NDArray, S: list, G:list, lmbd=0, K=np.array([0])) -> dict:
     max=np.max(sp.linalg.svdvals(x_V.T)) if len(V)!=0 else 0 #np.max(np.sqrt(np.linalg.eigvals(x_V.T @ x_V))) if len(V)!=0 else 0 
     #Check the eigenvalue condition
     return {'condition': max/min<= 1/np.sqrt(2), 'fraction': max/min}
+
+def get_parameters()->dict:
+    with open('config.json', 'r') as file:
+        config = json.load(file)
+
+    #assign the values
+    global data_args, method_args, m, noise_vars, L_frac, num_data
+    data_args = config["data_args"]
+    method_args = config["method_args"] 
+    m = config["m"]   
+    noise_vars= config["noise_vars"]     
+    L_frac=config["L_frac"]
+    num_data=config["num_data"]        
+
+    return config

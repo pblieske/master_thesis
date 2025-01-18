@@ -481,11 +481,12 @@ class UniformNonlinearDataGenerator(BaseDataGenerator):
         Returns:
             tuple[NDArray, NDArray, NDArray]: Noise arrays for x, y, u.
         """
-        a=np.sqrt(3*self.noise_var)     #unifrom on the interval [-a,a]
-        b=np.sqrt(3)
-        c=np.sqrt(3)
-        noises = [np.random.uniform(-(a if i == 2 else (b if i==0 else c)), (a if i == 2 else (b if i==0 else c)), size=(n, size)) for i, size in enumerate(sizes)]
-        
+
+        noise_u=np.random.uniform(0, 1, size=(n,1)) 
+        noise_x= np.random.uniform(0, 1, size=(n,1))
+        noise_y = np.random.normal(0, np.sqrt(self.noise_var), size=(n, 1))
+        noises=[noise_u, noise_x, noise_y]
+
         return noises
 
    
@@ -505,15 +506,60 @@ class UniformNonlinearDataGenerator(BaseDataGenerator):
         basis = self.get_basis(n)
 
         x=ex
-        k = self.basis_transform(x, outlier_points, basis, n)
-        
-        max=np.max(x)
-        min=np.min(x)
-        x=(x-min)/(max-min)
+        k = self.basis_transform(6*x-3, outlier_points, basis, n)
 
         y = functions_nonlinear(x, self.beta[0]) + ey + 10*k
 
         return x[:,0], y[:,0], 10*k[:,0]
+    
+
+class OUReflectedNonlinearDataGenerator(OUNonlinearDataGenerator):
+    def __init__(self, basis_type: str, beta: NDArray, noise_var: float, noise_type="normal"):
+        super().__init__(basis_type, beta, noise_var, noise_type)
+
+    def generate_data(self, n: int, outlier_points: NDArray):
+        """
+        Generates data from discretized Ornstein-Uhlenbeck processes with confounding.
+
+        Args:
+            n (int): Number of data points.
+            outlier_points (NDArray): Indicator vector for outlier data points.
+
+        Returns:
+            tuple[NDArray, NDArray]: The generated data (x, y).
+        """
+        AR_object1, AR_object2 = self.get_ar(n)
+
+        eu, ex, ey = self.get_noise_vars(n, [1, 1, 1])
+
+        u = AR_object1.generate_sample(nsample=2 * n)[n:2 * n].reshape(-1, 1) + eu
+        u=self.reflect(u)
+        
+        basis = self.get_basis(n)
+        k = self.basis_transform(u, outlier_points, basis, n)
+
+        x = AR_object2.generate_sample(nsample=2 * n)[n:2 * n].reshape(-1, 1)  + 2*k + ex
+        x=self.refelct(x)  
+
+        y = functions_nonlinear(x, self.beta[0]) + ey + 10*k
+
+        return  x[:,0], y[:,0], 10*k[:,0]
+    
+    def reflect(self, x:NDArray)->NDArray:
+        """
+        Reflects the proccess x on the boundaries 0, 1.
+        Args:
+            x (NDArray): Process to reflect
+        """
+
+        n=len(x)
+        for i in range(0,n):
+            if x[i]>=1:
+                x[i:n]=2-x[i:n]
+            elif x[i]<=0:
+                x[i:n]=-x[i:n]
+        return x
+
 
 
 def functions_nonlinear(x:NDArray, beta:int):

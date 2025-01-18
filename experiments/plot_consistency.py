@@ -18,7 +18,7 @@ colors, ibm_cb = plot_settings()
 #Parameters used to run the experiments
 m = 200                                      #Number of repetitions for the Monte Carlo
 noise_vars = [0, 1, 4]                      
-num_data= num_data = [2 ** k for k in range(5, 9)] + [2**10]  +[2**13]  # up to k=14 
+num_data= num_data = [2 ** k for k in range(4, 9)] + [2**10] +[2**13]  # up to k=14 
 
 # ----------------------------------
 # Load data and plotting
@@ -29,38 +29,41 @@ num_data= num_data = [2 ** k for k in range(5, 9)] + [2**10]  +[2**13]  # up to 
 #y=0.2*(x)**(-1/4)*np.log((x)**(1/4))+(x)**(-1/4)
 #plt.plot(x, y, color='0.6', linestyle='-')
 
-seperate_axis=True
+seperate_axis=False
+
 if seperate_axis==False:
     plt.hlines(0, num_data[0], num_data[-1], colors='black', linestyles='dashed')
     for i in range(len(noise_vars)):
         with open(path+'noise='+str(noise_vars[i])+'.pkl', 'rb') as fp:
             res = pickle.load(fp)
-        plot_results_2yaxis(res, num_data, m, colors=colors[i], first=(i==1))
+        plot_results(res, num_data, m, colors=colors[i])
 else:
     ax1 = plt.subplot()
     ax2 = ax1.twinx()
     ax1.hlines(0, num_data[0], num_data[-1], colors='black', linestyles='dashed')
+
     for i in range(len(noise_vars)):
         with open(path+'noise='+str(noise_vars[i])+'.pkl', 'rb') as fp:
             res = pickle.load(fp)
 
-        values = np.concatenate([np.expand_dims(res["DecoR"], 2)], axis=2).ravel()
+        values_decor = np.sqrt(0.8)*np.concatenate([np.expand_dims(res["DecoR"], 2)], axis=2).ravel()
         time = np.repeat(num_data, m)
 
-        df = pd.DataFrame({"value": values.astype(float),
+        df = pd.DataFrame({"value": values_decor.astype(float),
                         "n": time.astype(float)})
         ax1=sns.lineplot(data=df, x="n", y="value", 
                     marker="X", dashes=False, errorbar=("ci", 95), err_style="band",
                     color=colors[i][1],  legend=False, ax=ax1)
         
-        values = np.concatenate([np.expand_dims(res["ols"], 2)], axis=2).ravel()
-        df = pd.DataFrame({"value": values.astype(float),
+        values_bench = np.sqrt(0.8)*np.concatenate([np.expand_dims(res["ols"], 2)], axis=2).ravel()
+
+        df = pd.DataFrame({"value": values_bench.astype(float),
                         "n": time.astype(float)})
         ax2=sns.lineplot(data=df, x="n", y="value", 
                     marker="o", dashes=False, errorbar=("ci", 95), err_style="band",
                     color=colors[i][0], legend=False, ax=ax2)   
         
-    ax2.set_ylim(55, 67) 
+    ax2.set_ylim(0, 4) 
 
 
 # ----------------------------------
@@ -87,7 +90,7 @@ if seperate_axis:
     ax2.set_ylabel("GAM")
     ax1.set_xlabel("number of data points")
 else:
-    plt.ylabel("$L^2$-error")
+    plt.ylabel("$L^1$-error")
     plt.xlabel("number of data points")
 
 plt.title("Non-Parametric ($L=\infty$)") 

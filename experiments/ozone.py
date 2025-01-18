@@ -85,12 +85,12 @@ X=np.stack((x_norm, temp_norm))
 method_args = {
     "a": 0.95,
     "method": "torrent",        # "torrent" | "bfs"
-    "basis_type": "poly",# basis used for the approximation of f
+    "basis_type": "cosine_cont",# basis used for the approximation of f
 }
 
 bench_mark="spline"         #Benchmark type
 L=6                         #Number of coefficinet for DecoR regression only on ozone levels
-L_adjst=np.array([5, 4])    #Number of coefficients, [ozone, temperature]
+L_adjst=np.array([6, 6])    #Number of coefficients, [ozone, temperature]
 
 #if method_args["method"] in ["torrent_cv", "torrent_reg"]:
 diag=np.concatenate((np.array([0]), np.array([i**2 for i in range(1,L_adjst[0]+1)]), np.array([i**4 for i in range(1,L_adjst[1]+1)])))
@@ -130,7 +130,7 @@ else:
     ci_bench=get_conf(x=test_points, **estimates_fourier, alpha=0.95, basis_type=method_args["basis_type"])
 
 # ----------------------------------
-# A Try to estimate the number of death caused by ozone
+# A try to estimate the number of death caused by ozone
 # ----------------------------------
 
 ind=(x>=60)     #index of observation with ozone lever higher than 60 \mu g/m^3
@@ -190,7 +190,10 @@ plt.grid(linestyle='dotted')
 plt.tight_layout()
 plt.show()
 
-#Plot the selected outliers
+# ----------------------------------
+# Plot the estimated outliers
+# ----------------------------------
+
 inl=estimates_decor_adjst["inliers"]
 out=np.delete(np.arange(0,n), list(inl))
 plt.hist(out,  color=ibm_cb[0], edgecolor='k', alpha=0.6, bins=15)
@@ -200,9 +203,14 @@ plt.title("Histogramm of Excluded Frequencies")
 plt.tight_layout()
 plt.show()
 
-#Plot the influence of temperature on #death
+# ----------------------------------
+# lot the influence of temperature on #death
+# ----------------------------------
+
 y_temp=basis_temp @ estimates_decor_adjst["estimate"]
 test_temp=(test_points)*(t_max-t_min)+t_min
+
+#compute the confidence interval
 ci_adjst=np.stack((y_adjst-ci_adjst_help['qt']*sigma, y_adjst+ci_adjst_help['qt']*sigma)).T
 H=basis_temp[:,(L_adjst[0]+1):(L_adjst[1]+L_adjst[0]+1)]@(ci_adjst_help['H'])[(L_adjst[0]+1):(L_adjst[0]+L_adjst[1]+1), :]
 sigma=ci_adjst_help['sigma']*np.sqrt(np.diag(H@H.T))
@@ -219,7 +227,10 @@ plt.title("Influence of Temperature")
 plt.tight_layout()
 plt.show()
 
-#Comparing the with and without adjustement
+# ----------------------------------
+# Comparing no-/adjustment to temperature
+# ----------------------------------
+
 y_diff=y_est-y_adjst
 plt.plot(test_ozone, y_diff, '-', color=ibm_cb[1], linewidth=1.5)
 plt.fill_between(test_ozone, y1=ci[:, 0]-ci_adjst[:, 0], y2=ci[:, 1]-ci_adjst[:, 1], color=ibm_cb[1], alpha=0.3)
@@ -236,4 +247,3 @@ plt.title("DecoR with/-out Adjustement")
 plt.grid(linestyle='dotted')
 plt.tight_layout()
 plt.show()
-
