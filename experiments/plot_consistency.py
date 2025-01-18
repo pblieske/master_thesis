@@ -1,4 +1,4 @@
-import pickle
+import pickle, json
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
@@ -15,26 +15,26 @@ Attention: File has to be run with the same parameters as consistency.py to esnu
 path="/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_thesis/results/"   #Path to load files from
 colors, ibm_cb = plot_settings()
 
-#Parameters used to run the experiments
-m = 200                                      #Number of repetitions for the Monte Carlo
-noise_vars = [0, 1, 4]                      
-num_data= num_data = [2 ** k for k in range(4, 9)] + [2**10] +[2**13]  # up to k=14 
+path_config="/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_thesis/code/master_thesis/experiments/" #Path for the json file
+exp="1"     #Select the experiment you want to plot
+
+#Read in the parameters from the config.json file
+with open(path_config+'config.json', 'r') as file:
+    config = json.load(file)
+
+config=config["experiment_"+str(exp)]
+m, noise_vars, num_data=  config["m"], np.array(config["noise_vars"]), np.array(config["num_data"])        
 
 # ----------------------------------
 # Load data and plotting
 # ----------------------------------
-
-#Theoritacl convergence speed from Thm 4.2
-#x=np.array([2 ** (k/10) for k in range(60, 131)] ) 
-#y=0.2*(x)**(-1/4)*np.log((x)**(1/4))+(x)**(-1/4)
-#plt.plot(x, y, color='0.6', linestyle='-')
 
 seperate_axis=False
 
 if seperate_axis==False:
     plt.hlines(0, num_data[0], num_data[-1], colors='black', linestyles='dashed')
     for i in range(len(noise_vars)):
-        with open(path+'noise='+str(noise_vars[i])+'.pkl', 'rb') as fp:
+        with open(path+"experiment_" + exp +'noise='+str(noise_vars[i])+'.pkl', 'rb') as fp:
             res = pickle.load(fp)
         plot_results(res, num_data, m, colors=colors[i])
 else:

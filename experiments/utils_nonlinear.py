@@ -359,17 +359,26 @@ def check_eigen(x:NDArray, S: list, G:list, lmbd=0, K=np.array([0])) -> dict:
     #Check the eigenvalue condition
     return {'condition': max/min<= 1/np.sqrt(2), 'fraction': max/min}
 
-def get_parameters()->dict:
-    with open('config.json', 'r') as file:
+def get_parameters(path:str, exp:str)->dict:
+    """
+    Obtains the parameters for the experiment.
+    """
+
+    with open(path+'config.json', 'r') as file:
         config = json.load(file)
+
+    #Select the dictionary
+    dict_name="experiment_"+str(exp)
+    config=config[dict_name]
 
     #assign the values
     global data_args, method_args, m, noise_vars, L_frac, num_data
+
     data_args = config["data_args"]
     method_args = config["method_args"] 
     m = config["m"]   
     noise_vars= config["noise_vars"]     
     L_frac=config["L_frac"]
-    num_data=config["num_data"]        
+    num_data=config["num_data"]    
 
     return config

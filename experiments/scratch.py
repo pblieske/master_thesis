@@ -33,20 +33,20 @@ The "num_data" variable is a list of increasing natural numbers that indicate th
 
 path="/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_thesis/results/"   #Path to save files
 path_config="/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_thesis/code/master_thesis/experiments/" #Path for the json file
-exp="1"     #Select the experiment
+exp="1"
 
 SEED = 1
 np.random.seed(SEED)
 random.seed(SEED)
 
-#Read in the parameters from the config.json file
+#global data_args, method_args, m, noise_vars, L_frac, num_data
+
 with open(path_config+'config.json', 'r') as file:
     config = json.load(file)
 
 config=config["experiment_"+str(exp)]
 data_args, method_args, m, noise_vars, L_frac, num_data= config["data_args"], config["method_args"], config["m"], np.array(config["noise_vars"]), np.array(config["L_frac"]), np.array(config["num_data"])   
-data_args["beta"]=np.array(data_args["beta"])                       
-
+data_args["beta"]=np.array(data_args["beta"])
 
 # ----------------------------------
 # run experiments
@@ -98,6 +98,6 @@ for i in range(len(noise_vars)):
 
     #Save the results using a pickle file
     res["DecoR"], res["ols"] = np.array(res["DecoR"]), np.array(res["ols"])
-    with open(path+"experiment_" + exp +'noise='+str(noise_vars[i])+'.pkl', 'wb') as fp:
+    with open(path+'noise='+str(noise_vars[i])+'.pkl', 'wb') as fp:
         pickle.dump(res, fp)
         print('Results saved successfully to file.')
