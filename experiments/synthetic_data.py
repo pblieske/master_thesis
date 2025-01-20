@@ -532,14 +532,13 @@ class OUReflectedNonlinearDataGenerator(OUNonlinearDataGenerator):
 
         eu, ex, ey = self.get_noise_vars(n, [1, 1, 1])
 
-        u = AR_object1.generate_sample(nsample=2 * n)[n:2 * n].reshape(-1, 1) + eu
-        u=self.reflect(u)
+        u = AR_object1.generate_sample(nsample=2 * n)[n:2 * n].reshape(-1, 1)
+        u = self.reflect(u)
         
         basis = self.get_basis(n)
-        k = self.basis_transform(u, outlier_points, basis, n)
+        k = self.basis_transform(6*u-3, outlier_points, basis, n)
 
-        x = AR_object2.generate_sample(nsample=2 * n)[n:2 * n].reshape(-1, 1)  + 2*k + ex
-        x=self.refelct(x)  
+        x = u
 
         y = functions_nonlinear(x, self.beta[0]) + ey + 10*k
 
@@ -554,13 +553,34 @@ class OUReflectedNonlinearDataGenerator(OUNonlinearDataGenerator):
 
         n=len(x)
         for i in range(0,n):
-            if x[i]>=1:
-                x[i:n]=2-x[i:n]
-            elif x[i]<=0:
-                x[i:n]=-x[i:n]
+            if x[i]>1:
+                x[i:n]=np.concatenate((np.array([(2-x[i])%1]), 2-x[(i+1):n]))
+            elif x[i]<0:
+                x[i:n]=np.concatenate((np.array([-x[i]%1]), -x[(i+1):n]))
         return x
 
+    def get_ar(self, n: int) -> tuple[ArmaProcess, ArmaProcess]:
+        """
+        Generates two discretized Ornstein-Uhlenbeck processes. Note that discretized Ornstein-Uhlenbeck processes are
+        AR processes.
 
+        Args:
+            n (int): Number of data points.
+
+        Returns:
+            tuple[ArmaProcess, ArmaProcess]: Two AR models representing the processes.
+       
+        """
+        ar1 = np.array([1, -0.5/n])
+        ma1=np.array([75/(np.sqrt(n))]) #ma1 = np.array([50/np.sqrt(n)])
+        AR_object1 = ArmaProcess(ar1, ma1)
+
+        ar2 = np.array([1, -0.1])
+        ma2 = np.array([1/3])
+        AR_object2 = ArmaProcess(ar2, ma2)
+
+        return AR_object1, AR_object2
+    
 
 def functions_nonlinear(x:NDArray, beta:int):
     """"

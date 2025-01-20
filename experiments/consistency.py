@@ -33,7 +33,7 @@ The "num_data" variable is a list of increasing natural numbers that indicate th
 
 path="/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_thesis/results/"   #Path to save files
 path_config="/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_thesis/code/master_thesis/experiments/" #Path for the json file
-exp="1"     #Select the experiment
+exp="4"     #Select the experiment
 
 SEED = 1
 np.random.seed(SEED)
@@ -52,8 +52,8 @@ data_args["beta"]=np.array(data_args["beta"])
 # run experiments
 # ----------------------------------
 
-n_x=200     #Resolution of x-axis
-int_test=[0.1, 0.9]
+n_x=200                 #Resolution of x-axis
+int_test=[0.1, 0.9]     #Interval [a,b] on which on compute the L^1-error
 len_test=int_test[1]-int_test[0]
 test_points=np.array([int_test[0]+ i/(n_x)*len_test for i in range(n_x)])
 y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["beta"][0])
@@ -66,17 +66,15 @@ for i in range(len(noise_vars)):
         print("number of data points: ", n)
         res["DecoR"].append([])
         res["ols"].append([])
-        L_temp=max((np.ceil(n**0.5)/L_frac[i]).astype(int),4) #max((np.floor(np.log(n))).astype(int),1) max((np.floor(n**(1/2)/4)).astype(int),1)
+        L_temp=max((np.ceil(n**0.5)/L_frac[i]).astype(int),2)
         basis=get_funcbasis(x=test_points, L=L_temp, type=method_args["basis_type"])
-        #n_con=min((2*n**(-0.5)), 1)
         print("number of coefficients: ", L_temp)
-        #print("number of confounded frequencies: ", n_con)
 
         for _ in range(m):
-            data_values = get_data(n, **data_args, noise_var=noise_vars[i]) #, fraction=n_con)
+            data_values = get_data(n, **data_args, noise_var=noise_vars[i])
             data_values.pop('u') 
             outlier_points=data_values.pop('outlier_points')
-            estimates_decor = get_results(**data_values, **method_args, L=L_temp) # a=1-n_con*1.25)
+            estimates_decor = get_results(**data_values, **method_args, L=L_temp)
             y_est=basis @ estimates_decor["estimate"]
             y_est=np.ndarray((n_x, 1), buffer=y_est)
             """ 
@@ -89,10 +87,6 @@ for i in range(len(noise_vars)):
             gam = LinearGAM(s(0)).gridsearch(x, y)
             y_bench=gam.predict(test_points)
            
-            """
-            res["DecoR"][-1].append(1/np.sqrt(n_x)*np.linalg.norm(y_true-y_est, ord=2))
-            res["ols"][-1].append(1/np.sqrt(n_x)*np.linalg.norm(y_true-y_bench, ord=2))
-            """
             res["DecoR"][-1].append(1/n_x*len_test*np.linalg.norm(y_true-y_est, ord=1))
             res["ols"][-1].append(1/n_x*len_test*np.linalg.norm(y_true-y_bench, ord=1))
 
