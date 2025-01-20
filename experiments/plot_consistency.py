@@ -16,7 +16,7 @@ path="/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_the
 colors, ibm_cb = plot_settings()
 
 path_config="/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_thesis/code/master_thesis/experiments/" #Path for the json file
-exp="4"     #Select the experiment you want to plot
+exp="5"     #Select the experiment you want to plot
 
 #Read in the parameters from the config.json file
 with open(path_config+'config.json', 'r') as file:
@@ -93,7 +93,7 @@ else:
     plt.ylabel("$L^1$-error")
     plt.xlabel("number of data points")
 
-plt.title("Non-Parametric (Unifrom)") 
+plt.title("Sigmoid-function (Reflected Ornstein-Uhlenbeck)") 
 plt.xscale('log')
 plt.xlim(left=num_data[0] - 2)
 plt.legend(handles=get_handles(), bbox_to_anchor=[0.82, 0.4], loc='center')

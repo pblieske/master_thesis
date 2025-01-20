@@ -27,7 +27,7 @@ data_args = {
     "fraction": 0.25,
     "noise_type": "normal",
     "noise_var": 4,
-    "beta": np.array([2]),
+    "beta": np.array([3]),
     "band": list(range(0, 50)),  # list(range(0, 50)) | None
 }
 
@@ -38,7 +38,7 @@ method_args = {
 }
 
 benchmark="spline"
-n = 2**10 # number of observations
+n = 2**13 # number of observations
 print("number of observations:", n)
 
 

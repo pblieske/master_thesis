@@ -32,8 +32,8 @@ The "num_data" variable is a list of increasing natural numbers that indicate th
 """
 
 path="/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_thesis/results/"   #Path to save files
-path_config="/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_thesis/code/master_thesis/experiments/" #Path for the json file
-exp="4"     #Select the experiment
+path_config="/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_thesis/code/master_thesis/experiments/" #Path for the json file where experiment configurations are defined.
+exp="5"     #Select the experiment
 
 SEED = 1
 np.random.seed(SEED)

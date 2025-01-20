@@ -597,7 +597,7 @@ def functions_nonlinear(x:NDArray, beta:int):
     elif beta==2:
         y = 6*np.sin(2*np.pi*x)
     elif beta==3:
-        y=5/(1+np.exp(-16*x+6))-2.5
+        y=20/(1+np.exp(-16*x+6))-10
     elif beta==4:
         y=-1+np.cos(np.pi*x)-3*np.cos(2*np.pi*x)
     elif beta==5:
