@@ -16,7 +16,7 @@ path="/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_the
 colors, ibm_cb = plot_settings()
 
 path_config="/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_thesis/code/master_thesis/experiments/" #Path for the json file
-exp="5"     #Select the experiment you want to plot
+exp="2"     #Select the experiment you want to plot
 
 #Read in the parameters from the config.json file
 with open(path_config+'config.json', 'r') as file:
@@ -43,7 +43,7 @@ else:
     ax1.hlines(0, num_data[0], num_data[-1], colors='black', linestyles='dashed')
 
     for i in range(len(noise_vars)):
-        with open(path+'noise='+str(noise_vars[i])+'.pkl', 'rb') as fp:
+        with open(path+"experiment_" + exp +'noise='+str(noise_vars[i])+'.pkl', 'rb') as fp:
             res = pickle.load(fp)
 
         values_decor = np.sqrt(0.8)*np.concatenate([np.expand_dims(res["DecoR"], 2)], axis=2).ravel()
@@ -63,7 +63,8 @@ else:
                     marker="o", dashes=False, errorbar=("ci", 95), err_style="band",
                     color=colors[i][0], legend=False, ax=ax2)   
         
-    ax2.set_ylim(0, 4) 
+    ax2.set_ylim(10, 14.5) 
+    ax1.set_ylim(-0.1, 2)
 
 
 # ----------------------------------
@@ -93,10 +94,10 @@ else:
     plt.ylabel("$L^1$-error")
     plt.xlabel("number of data points")
 
-plt.title("Sigmoid-function (Reflected Ornstein-Uhlenbeck)") 
+plt.title("Non-parametric (Reflected OU)") 
 plt.xscale('log')
 plt.xlim(left=num_data[0] - 2)
-plt.legend(handles=get_handles(), bbox_to_anchor=[0.82, 0.4], loc='center')
+plt.legend(handles=get_handles(), loc="upper right") # bbox_to_anchor=[0.8, 0.5], loc='center')
 plt.tight_layout()
 
 plt.show()
