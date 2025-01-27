@@ -182,6 +182,7 @@ def get_handles():
     point_4= Line2D([0], [0], label="GAM" , color=ibm_cb[4], linestyle='-')
     return [point_1,  point_2, point_3, point_4]
 
+#Labeling
 plt.xlabel("Ozone ($\mu g/m^3$)")
 plt.ylabel("# Deaths")
 plt.title("Influence of Ozone on Health")
@@ -196,15 +197,16 @@ plt.show()
 
 inl=estimates_decor_adjst["inliers"]
 out=np.delete(np.arange(0,n), list(inl))
-plt.hist(out,  color=ibm_cb[0], edgecolor='k', alpha=0.6, bins=15)
-plt.xlabel("Frequency")
+freq_rem=(out+0.5)/(2*n*24*3600)*10**6        #Conver to mikrohertz
+plt.hist(freq_rem,  color=ibm_cb[0], edgecolor='k', alpha=0.6, bins=15)
+plt.xlabel("Frequency ($\mu Hz$)")
 plt.ylabel("Count")
 plt.title("Histogramm of Excluded Frequencies")
 plt.tight_layout()
 plt.show()
 
 # ----------------------------------
-# lot the influence of temperature on #death
+# Plot the influence of temperature on #death
 # ----------------------------------
 
 y_temp=basis_temp @ estimates_decor_adjst["estimate"]

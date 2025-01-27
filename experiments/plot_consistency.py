@@ -8,7 +8,7 @@ import pandas as pd
 from utils_nonlinear import  plot_results,  plot_settings, plot_results_2yaxis
 
 """
-We plot the results, i.e. L^2-error, obtained from cosistency.py
+We plot the results, i.e. L^1-error, obtained from cosistency.py
 Attention: File has to be run with the same parameters as consistency.py to esnure the correct files are read and are consistent with the plot settings.
 """
 
@@ -94,7 +94,7 @@ else:
     plt.ylabel("$L^1$-error")
     plt.xlabel("number of data points")
 
-plt.title("Non-parametric (Reflected OU)") 
+plt.title("Nonlinear (Reflected OU)") 
 plt.xscale('log')
 plt.xlim(left=num_data[0] - 2)
 plt.legend(handles=get_handles(), loc="upper right") # bbox_to_anchor=[0.8, 0.5], loc='center')

@@ -17,7 +17,7 @@ For this we simulated only one draw for a fixed number of observations n, for Mo
 
 colors, ibm_cb = plot_settings()
 
-SEED = 5
+SEED = 3
 np.random.seed(SEED)
 random.seed(SEED)
 
@@ -27,7 +27,7 @@ data_args = {
     "fraction": 0.25,
     "noise_type": "normal",
     "noise_var": 4,
-    "beta": np.array([3]),
+    "beta": np.array([2]),
     "band": list(range(0, 50)),  # list(range(0, 50)) | None
 }
 
@@ -38,7 +38,7 @@ method_args = {
 }
 
 benchmark="spline"
-n = 2**13 # number of observations
+n = 2**8 # number of observations
 print("number of observations:", n)
 
 
