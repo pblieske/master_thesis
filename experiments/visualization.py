@@ -4,10 +4,8 @@ from pygam import LinearGAM, s
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
-import sys 
-sys.path.insert(0, '/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_thesis/code/master_thesis')
 from robust_deconfounding.utils import get_funcbasis
-from utils_nonlinear import get_results, get_data, plot_settings, get_conf, check_eigen
+from utils_nonlinear import get_results, get_data, plot_settings, get_conf
 from synthetic_data import functions_nonlinear
 
 """
@@ -17,16 +15,16 @@ For this we simulated only one draw for a fixed number of observations n, for Mo
 
 colors, ibm_cb = plot_settings()
 
-SEED = 3
+SEED = 4
 np.random.seed(SEED)
 random.seed(SEED)
 
 data_args = {
-    "process_type": "ourre",    # "ou" | "blp" | "blpnl" | "ounl" | "unifrom" | "ourre"
+    "process_type": "uniform",    # "ou" | "blp" | "blpnl" | "ounl" | "unifrom" | "ourre"
     "basis_type": "cosine",     # "cosine" | "haar"
     "fraction": 0.25,
     "noise_type": "normal",
-    "noise_var": 4,
+    "noise_var": 1,
     "beta": np.array([2]),
     "band": list(range(0, 50)),  # list(range(0, 50)) | None
 }
@@ -34,7 +32,7 @@ data_args = {
 method_args = {
     "a": 0.7,
     "method": "torrent",        # "torrent" | "bfs"
-    "basis_type": "cosine_cont",# basis used for the approximation of f
+    "basis_type": "cosine_cont",# basis used for the approximation of f, corresponding to \psi in the paper
 }
 
 benchmark="spline"
@@ -43,7 +41,7 @@ print("number of observations:", n)
 
 
 # ----------------------------------
-# run experiment
+# run the experiment
 # ----------------------------------
 
 n_x=200     #Resolution of x-axis
@@ -78,12 +76,7 @@ elif benchmark=="spline":
 else:
     raise ValueError("benchmark not implemented")
 
-#Check the eigenvalue condition
-#diag=np.concatenate((np.array([0]), np.array([i**4 for i in range(1,L)])))
-#K=np.diag(diag)
-#print('Eigenvalue condition: ', check_eigen(x=estimates_decor["transformed"]["xn"], S=estimates_decor["inliers"], G=outlier_points, lmbd=0, K=K))
-
-#Compute the L^2-error
+#Compute the L^2-error and L^1-error
 print("$L^2$-error: ", 1/np.sqrt(n_x)*np.linalg.norm(y_true-y_est, ord=2))
 print("$L^1$-error: ", 1/n_x*np.linalg.norm(y_true-y_est, ord=1))
 
@@ -91,19 +84,8 @@ print("$L^1$-error: ", 1/n_x*np.linalg.norm(y_true-y_est, ord=1))
 # plotting
 # ----------------------------------
 
-
-#Plotting X_t and Y_t against t
-"""
-plt.plot(np.arange(n), data_values["x"])
-plt.show()
-plt.plot(np.arange(n), data_values["y"])
-plt.show()
-"""
-
 #Plotting the estimated function
 
-#sub=np.linspace(0, n-1, 2**8).astype(int)
-#plt.plot(data_values['x'][sub],data_values['y'][sub], 'o:w', mec = 'black')
 plt.scatter(x=data_values['x'], y=data_values['y'], marker='o', color='w', edgecolors='black') 
 plt.plot(test_points, y_true, '-', color='black')
 plt.plot(test_points, y_est, '-', color=ibm_cb[1])
@@ -128,13 +110,15 @@ plt.legend(handles=get_handles(), loc="upper right")
 plt.tight_layout()
 plt.show()
 
-
-#Plotting the confounder
+# ----------------------------------
+# Plotting the confounder
+# ----------------------------------
 
 plt.plot(data_values['x'], u, 'o:w', mec=ibm_cb[4] )
 
 def get_handles():
     point_1 = Line2D([0], [0], label='Confounder', marker='o', color='w', mec=ibm_cb[4], ls='')
+
     return [point_1]
 
 plt.xlabel("x")
@@ -176,7 +160,6 @@ for l in range(0, L):
     axs[i, j].set_ylabel('T(Y)')
 
 def get_handles():
-
     point_1 = Line2D([0], [0], label='outliers found', marker='o', color=ibm_cb[1], ls='')
     point_2 = Line2D([0], [0], label='outliers missed', marker='o', color=ibm_cb[4], ls='')
     point_3 = Line2D([0], [0], label="inliers found" , marker='o', mec=ibm_cb[0], color='w')
@@ -186,5 +169,6 @@ def get_handles():
 plt.tight_layout()
 fig.subplots_adjust(top=0.8)
 fig.legend(handles=get_handles(), loc="upper center", bbox_to_anchor=(0.55, 0.9), ncol=3)
-#plt.tight_layout()
+fig.set_size_inches(6.8,5)
+
 plt.show()

@@ -8,11 +8,11 @@ import pandas as pd
 from utils_nonlinear import  plot_results,  plot_settings
 
 """
-We plot the results, i.e. L^1-error, obtained from cosistency.py
-Attention: File has to be run with the same parameters as consistency.py to esnure the correct files are read and are consistent with the plot settings.
+We plot the results, i.e. L^1-error, obtained from experiments_nonlinear.py
+The experiment can be selected by the variable "exp".
 """
 
-exp="uniform"
+exp="reflected_ou"     # "uniform" | "reflected_ou" | "sigmoid"
 
 
 # ----------------------------------
@@ -29,33 +29,24 @@ with open(path+'/config.json', 'r') as file:
     config = json.load(file)
 
 config=config["experiment_"+str(exp)]
-m, noise_vars, num_data=  config["m"], np.array(config["noise_vars"]), np.array(config["num_data"])              
+m, noise_vars, num_data=  config["m"], np.array(config["noise_vars"]), np.array(config["num_data"])   
 
 
 # ----------------------------------
 # Load data and plotting
 # ----------------------------------
 
-seperate_axis=False
-
-if exp!="sigmoid":
-    plt.hlines(0, num_data[0], num_data[-1], colors='black', linestyles='dashed')
-    for i in range(len(noise_vars)):
-        with open(path+"experiment_" + exp +'noise='+str(noise_vars[i])+'.pkl', 'rb') as fp:
-            res = pickle.load(fp)
-        plot_results(res, num_data, m, colors=colors[i])
-else:
+if exp=="sigmoid":  
     ax1 = plt.subplot()
     ax2 = ax1.twinx()
     ax1.hlines(0, num_data[0], num_data[-1], colors='black', linestyles='dashed')
 
     for i in range(len(noise_vars)):
-        with open(path+"experiment_" + exp +'noise='+str(noise_vars[i])+'.pkl', 'rb') as fp:
+        with open(path_results+"experiment_" + exp +'_noise_='+str(noise_vars[i])+'.pkl', 'rb') as fp:
             res = pickle.load(fp)
 
         values_decor = np.concatenate([np.expand_dims(res["DecoR"], 2)], axis=2).ravel()
         time = np.repeat(num_data, m)
-
         df = pd.DataFrame({"value": values_decor.astype(float),
                         "n": time.astype(float)})
         ax1=sns.lineplot(data=df, x="n", y="value", 
@@ -63,19 +54,23 @@ else:
                     color=colors[i][1],  legend=False, ax=ax1)
         
         values_bench = np.concatenate([np.expand_dims(res["ols"], 2)], axis=2).ravel()
-
         df = pd.DataFrame({"value": values_bench.astype(float),
                         "n": time.astype(float)})
         ax2=sns.lineplot(data=df, x="n", y="value", 
                     marker="o", dashes=False, errorbar=("ci", 95), err_style="band",
-                    color=colors[i][0], legend=False, ax=ax2)   
-        
+                    color=colors[i][0], legend=False, ax=ax2)  
     ax2.set_ylim(-0.1, 20) 
     ax1.set_ylim(-0.1, 4) 
-
+        
+else:
+    plt.hlines(0, num_data[0], num_data[-1], colors='black', linestyles='dashed')
+    for i in range(len(noise_vars)):
+        with open(path_results+"experiment_" + exp +'_noise_='+str(noise_vars[i])+'.pkl', 'rb') as fp:
+            res = pickle.load(fp)
+        plot_results(res, num_data, m, colors=colors[i])
 
 # ----------------------------------
-# plotting
+# Set labels, legend and title
 # ----------------------------------
 
 titles = {"uniform": "Nonlinear (Uniform)", "reflected_ou": "Nonlinear (Reflected OU)", "sigmoid": "Sigmoid function ($L^1$-error)"}

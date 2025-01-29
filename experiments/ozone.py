@@ -129,6 +129,7 @@ else:
     y_bench=basis @ estimates_fourier["estimate"]
     ci_bench=get_conf(x=test_points, **estimates_fourier, alpha=0.95, basis_type=method_args["basis_type"])
 
+"""
 # ----------------------------------
 # A try to estimate the number of death caused by ozone
 # ----------------------------------
@@ -151,7 +152,7 @@ ci_lim=get_conf(x=np.stack((np.repeat(x_lim, n_high), t_high)), **estimates_deco
 #Compute the mean per year
 num_deaths={"mean": sum(y_caused)/5, "lower bound": sum(ci_pred[:,0] -ci_lim[:,1])/5, "upper bound": sum(ci_pred[:,1] -ci_lim[:,0])/5}
 print("Number of deaths caused per year trough a ozone levels over 60 mg/m^2: " , num_deaths)
-
+"""
 
 # ----------------------------------
 # plotting

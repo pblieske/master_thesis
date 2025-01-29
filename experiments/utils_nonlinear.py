@@ -8,9 +8,6 @@ import pylab, json
 import matplotlib.pyplot as plt
 
 
-import sys
-sys.path.insert(0, '/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_thesis/code/master_thesis')
-
 from robust_deconfounding.robust_regression import Torrent, BFS, Torrent_reg
 from robust_deconfounding.decor import DecoR
 from robust_deconfounding.utils import cosine_basis, haarMatrix, get_funcbasis, get_funcbasis_multivariate
