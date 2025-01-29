@@ -29,6 +29,6 @@ Below we point to the experiment scripts that were used to generate the results 
 To run the experiments:
 
 ```bash
-python experiments/experiments.py
+python experiments/consistency.py
 
 ``` 
