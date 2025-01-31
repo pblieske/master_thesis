@@ -20,7 +20,7 @@ np.random.seed(SEED)
 random.seed(SEED)
 
 data_args = {
-    "process_type": "uniform",    # "ou" | "blp" | "blpnl" | "ounl" | "unifrom" | "ourre"
+    "process_type": "oure",    # "ou" | "blp" | "blpnl" | "ounl" | "unifrom" | "ourre"
     "basis_type": "cosine",     # "cosine" | "haar"
     "fraction": 0.25,
     "noise_type": "normal",

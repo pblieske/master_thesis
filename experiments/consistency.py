@@ -81,15 +81,15 @@ for i in range(len(noise_vars)):
         print("number of data points: ", n)
         res["DecoR"].append([])
         res["ols"].append([])
-        L_temp=max((np.ceil(n**0.5)/L_frac[i]).astype(int),2)
-        basis=get_funcbasis(x=test_points, L=L_temp, type=method_args["basis_type"])
-        print("number of coefficients: ", L_temp)
+        L=max((np.ceil(n**0.5)/L_frac[i]).astype(int),2)
+        basis=get_funcbasis(x=test_points, L=L, type=method_args["basis_type"])
+        print("number of coefficients: ", L)
 
         for _ in range(m):
             data_values = get_data(n, **data_args, noise_var=noise_vars[i])
             data_values.pop('u') 
             outlier_points=data_values.pop('outlier_points')
-            estimates_decor = get_results(**data_values, **method_args, L=L_temp)
+            estimates_decor = get_results(**data_values, **method_args, L=L)
             y_est=basis @ estimates_decor["estimate"]
             y_est=np.ndarray((n_x, 1), buffer=y_est)
 

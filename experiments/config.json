@@ -22,7 +22,7 @@
 
     "experiment_reflected_ou": {
         "data_args": {
-            "process_type": "ourre",   
+            "process_type": "oure",   
             "basis_type": "cosine",    
             "fraction": 0.25,           
             "beta": [2],     

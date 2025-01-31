@@ -1,80 +1,98 @@
+import random, os, pickle
 import numpy as np
-import random
 import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
-from matplotlib.colors import ListedColormap
-from matplotlib import cm
 from matplotlib.colors import LinearSegmentedColormap
 
-from utils_nonlinear import get_results, plot_results, get_data, plot_settings
+from utils_nonlinear import get_results, get_data, plot_settings
 from synthetic_data import functions_nonlinear
+from robust_deconfounding.utils import get_funcbasis
 
 
 """
-    We perform a grid search varing the number of coefficients and the regularization parameter \lambda. 
-    Note that in this example, we do not use any sort of cross-validation to choose lambda, but keep it fixed throughout all iterations.
+    We compute the L^1-error varing the number of coefficients and the regularization parameter \lambda. 
+    For the regularization the smoothness penalty is used.
+    To plot the data from an experiment which was already run, set the "run_exp" variable to False.
 """
 
-colors, ibm_cb = plot_settings()
+# ----------------------------------
+# Parameters varied in the thesis
+# ----------------------------------
 
-SEED = 5
+run_exp=True        # Set to True for running the whole experiment and False to plot an experiment which was already run
+noise_vars = 4      # variance of the noise
+n = 2 ** 8          # number of observations
+
+# ----------------------------------
+# Parameters kept constant
+# ----------------------------------
+
+SEED = 1
 np.random.seed(SEED)
 random.seed(SEED)
 
 data_args = {
-    "process_type": "blpnl",       # "ou" | "blp" | "blpnl"
+    "process_type": "uniform",  # "uniform" | "oure"
     "basis_type": "cosine",     # "cosine" | "haar"
-    "fraction": 0.3,
-    "beta": np.array([2]),
+    "fraction": 0.25,           # fraction of frequencies that are confounded
+    "beta": np.array([2]),      
     "band": list(range(0, 50))  # list(range(0, 50)) | None
 }
 
 method_args = {
-    "a": 0.65,
-    "method": "torrent_reg",        # "torrent" | "bfs"
+    "a": 0.7,                       # number of frequencies to remove
+    "method": "torrent_reg",        # "torrent" | "torrent_reg"
+    "basis_type": "cosine_cont",    # "cosine_cont" | "cosine_disc" | "poly"
 }
 
+Lmbd_min=10**(-8)       # smallest regularization parameter lambda to be considered
+Lmbd_max=10**(1)        # largest regularization paramter lambda to be considered
+n_lmbd=60               # number of lambda to test
+L_max=60                # largest number of basis functions to consider
+m=200                   # Number of Monte Carlo samples to draw
 
-noise_vars =  0.5
-n = 2 ** 10 # number of observations
-print("number of observations:", n)
+colors, ibm_cb = plot_settings()                                        # Import color settings for plotting 
+path_results=os.path.join(os.path.dirname(__file__), "results/")        # Path to the results
+
 
 # ----------------------------------
-# run experiments
+# Run the experiment
 # ----------------------------------
-n_x=200
+
+n_x=200                 # resolution of x-axis
 test_points=np.array([i / n_x for i in range(0, n_x)])
-y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["beta"][0])
-m=200       #Number of Monte Carlo samples drwan
+y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["beta"][0])   # Compute ture underlying function
 
-#Choose the grid
-Lmbd_min=-2
-Lmbd_max=0
-L_max=50
-L=np.array(range(1, L_max))                              #Number of coefficients used
-Lmbd=np.array([np.exp(1)**(i/2) for i in range(Lmbd_min*20, Lmbd_max*20)])     #Regularization parameters
+#Initialize the grid
+L=np.array(range(1, L_max))                                                                                             # grid of number of coefficients
+Lmbd=np.array([np.exp(i/n_lmbd*(np.log(Lmbd_max)-np.log(Lmbd_min))+np.log(Lmbd_min)) for i in range(0, n_lmbd)])        # grid of regularization paramters
 
-#Initialize matrix to save results
+#Initialize the matrix to save results
 err =np.zeros(shape = [L.size, Lmbd.size]) 
 
-for __ in range(0,m):#Get data
+#Running the Monte Carlo simulation
+for __ in range(0,m):
     data_values = get_data(n, **data_args, noise_var=noise_vars)
     data_values.pop('u')
     for l in L:
-        #Compute the basis
-        basis_tmp = [np.cos(np.pi * test_points * k ) for k in range(0, l)] 
-        basis = np.vstack(basis_tmp).T
-        diag=np.array([i**4 for i in range(0,l)])
+        # Compute the basis and regularization matrix K
+        basis=get_funcbasis(x=test_points, L=l, type=method_args["basis_type"])
+        diag=np.concatenate(([0], np.array([ i**4 for i in range(0,l)])))
         K=np.diag(diag)
         for j in range(0, Lmbd.size):
-            #Estimate the function f
+            #Estimate the function f by DecoR using l basis functions and the regularization parameter Lmbd[j]
             estimates_decor = get_results(**data_values, **method_args, L=l, K=K, lmbd=Lmbd[j])
             y_est=basis @ estimates_decor["estimate"]
             y_est=np.ndarray((n_x, 1), buffer=y_est)
-            #Compute the L^2-error
-            err[l-1, j]=err[l-1, j]+ 1/(m*np.sqrt(n_x))*np.linalg.norm(y_true-y_est, ord=2)
+            #Compute the L^1-error
+            err[l-1, j]=err[l-1, j]+ 1/(m*n_x)*np.linalg.norm(y_true-y_est, ord=1)
     if __ % 10 ==0:
      print("Number of samples drawn: " + str(__))
+
+#Saving the results
+with open(path_results+"girdsearch_n=" + str(n) +'_noise='+str(noise_vars)+'.pkl', 'wb') as fp:
+    pickle.dump(err, fp)
+    print('Results saved successfully to file.')
+
 
 # ----------------------------------
 # plotting
@@ -82,20 +100,13 @@ for __ in range(0,m):#Get data
 
 # Create a custom colormap
 custom_cmap = LinearSegmentedColormap.from_list("custom_cmap", ibm_cb[0:5])  # Create custom colormap
+X, Y = np.meshgrid(Lmbd, L)
+plt.pcolormesh(X, Y, err, cmap=custom_cmap, shading='nearest')
 
-# Adjust color limits
-vmin = err.min().min()  # Minimum value in the dataset
-vmax = err.max().max()  # Maximum value in the dataset
-
-
-#magmaBig = cm.get_cmap('magma', 512)
-#newcmp =ListedColormap(magmaBig(np.linspace(0, 0.75, 384)))
-plt.imshow(err, cmap=custom_cmap, vmin=vmin, vmax=vmax)
-#plt.imshow(err, aspect='0.6', cmap=newcmp)
-# Add colorbar 
+# Add colorbar and labeling
+plt.xscale('log')
 plt.colorbar() 
-plt.title(r'$L^2$-error') 
-plt.xlabel(r'$\log(\lambda)$')
-plt.xticks(np.arange(0, Lmbd_max*20-Lmbd_min*20, step=10), labels=[str(5*i+Lmbd_min*10) for i in range(0, 2*(Lmbd_max-Lmbd_min))])
-plt.ylabel(r'L', rotation=0)
+plt.title('$L^1$-error') 
+plt.xlabel('$\lambda$')
+plt.ylabel('L')
 plt.show()

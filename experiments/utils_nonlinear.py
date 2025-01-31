@@ -160,7 +160,7 @@ def get_data(n: int, process_type: str, basis_type: str, fraction: float, beta: 
         generator = OUNonlinearDataGenerator(basis_type=basis_type, beta=beta, noise_var=noise_var, noise_type=noise_type)
     elif process_type=="uniform":
         generator =  UniformNonlinearDataGenerator(basis_type=basis_type, beta=beta, noise_var=noise_var)
-    elif process_type=="ourre":
+    elif process_type=="oure":
         generator= OUReflectedNonlinearDataGenerator(basis_type=basis_type, beta=beta, noise_var=noise_var, noise_type=noise_type)
     else:
         raise ValueError("process_type not implemented")
