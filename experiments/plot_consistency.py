@@ -12,7 +12,7 @@ We plot the results, i.e. L^1-error, obtained from experiments_nonlinear.py
 The experiment can be selected by the variable "exp".
 """
 
-exp="reflected_ou"     # "uniform" | "reflected_ou" | "sigmoid"
+exp="uniform"     # "uniform" | "reflected_ou" | "sigmoid"
 
 
 # ----------------------------------

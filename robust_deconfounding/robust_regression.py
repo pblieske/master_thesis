@@ -202,10 +202,12 @@ class Torrent_reg(BaseRobustRegression):
         self.lmbd=lmbd
 
     def fit(self, x: NDArray, y: NDArray) -> Self:
-        """Fit model using an iterative process to determine inliers and refit the model.
-            lambda: the regularization parameter
-            K:      positive semi-definite matrix for the penalty
-            """
+
+        """
+        Fit model using an iterative process to determine inliers and refit the model.
+        lambda: the regularization parameter
+        K:      positive semi-definite matrix for the penalty
+        """
 
         n = len(y)
         y = y.reshape(n, -1)
@@ -245,15 +247,17 @@ class Torrent_reg(BaseRobustRegression):
     
     
     def cv(self, x: NDArray, y: NDArray, Lmbd: NDArray, k=10) -> dict:
+
         """
             Estimates the prediction error using a cross-validtion like method.
             Lmbd:   regularization parameters to test
             k:      number of folds
-            Returns a dictionary with the estimated prediction error and the set S of stable inliers.
+            Returns a dictionary with the estimated prediction error "pred_err" and the set "S" of stable inliers across different regularization paramters.
             """
-        n=len(y)
-        n_lmbd=len(Lmbd)
-        err_cv=np.zeros(n_lmbd)
+        
+        n=len(y)                    #number of data points
+        n_lmbd=len(Lmbd)            #number of regularization parameters to test
+        err_cv=np.zeros(n_lmbd)     #allocate memory for the estimated prediction error
 
         #Allocate memory
         estimates=[]   
@@ -277,16 +281,18 @@ class Torrent_reg(BaseRobustRegression):
         n_S=len(S)
         partition_S=np.random.permutation(n_S)
         test_fold_size=n_S//k
+
         for i in range(0, n_lmbd):
             S_i={inlinier for inlinier in estimates[i].inliers}
-            S_i_C=S_i.difference(S)
-            n_train=len(S_i_C)
-            train_fold_size=n_train//k
+            S_i_C=S_i.difference(S)     #indicies in S_i\S
+            n_train=len(S_i_C)          #number of observations in S_i\S
+            train_fold_size=n_train//k 
             partition_S_C=np.random.permutation(n_train)
             err=0
+
             for j in range(0,k):
-                test_indx=[list(S)[i] for i in partition_S[j*test_fold_size:(j+1)*test_fold_size]]
-                train_indx=np.concatenate((np.delete(list(S), partition_S[j*test_fold_size:(j+1)*test_fold_size]), np.delete(list(S_i_C), partition_S_C[j*train_fold_size:(j+1)*train_fold_size])))
+                test_indx=[list(S)[i] for i in partition_S[j*test_fold_size:(j+1)*test_fold_size]]      #index of observations for testing, 
+                train_indx=np.concatenate((np.delete(list(S), partition_S[j*test_fold_size:(j+1)*test_fold_size]), np.delete(list(S_i_C), partition_S_C[j*train_fold_size:(j+1)*train_fold_size])))     #index of observations for training
                 X_train=x[train_indx]
                 Y_train=y[train_indx]
                 B=X_train.T @ Y_train
@@ -294,23 +300,15 @@ class Torrent_reg(BaseRobustRegression):
                 coef=sp.linalg.solve(A, B)
                 err_add = np.linalg.norm(y[test_indx] - x[test_indx] @ coef, ord=2)**2
                 err=err+1/n_S*err_add
+
             err_cv[i]=np.sqrt(err)
+    
     
         return  {"pred_err": err_cv, "S": S}
 
-
+"""
 class Torrent_cv(BaseRobustRegression):
-    """Torrent algorithm for regression with robustness to outliers.
 
-    Extends the base regression to implement an iterative process of fitting and refining inliers.
-
-    Torrent_cv performes a cross-validation step after each estimation of the inlinier set the find the best regularization parameter lambda for the next iteration.
-
-    Attributes:
-        a (float): Proportion of data considered as inliers.
-        max_iter (int): Maximum number of iterations.
-        predicted_inliers (list): List to track inliers over iterations.
-    """
 
     def __init__(self, a: float, fit_intercept: bool = False, max_iter: int = 100, K=np.array([0]), lmbd=np.array(0)):
         super().__init__(fit_intercept)
@@ -324,11 +322,6 @@ class Torrent_cv(BaseRobustRegression):
 
 
     def fit(self, x: NDArray, y: NDArray) -> Self:
-        """Fit model using an iterative process to determine inliers and refit the model.
-            lambda: set of regularization parameters over which the cross-valdiation is performed
-                    provid only a one-dimensional vector to keep it fixed
-            K:      positive semi-definite matrix for the penalty
-            """
 
         n = len(y)
         y = y.reshape(n, -1)
@@ -367,13 +360,13 @@ class Torrent_cv(BaseRobustRegression):
                break
    
         return self
-    
+""" 
 
 
 """
     simple help function to perform the cross-validation step
 """    
-
+"""
 def cross_validation(x, y, Lmbd, K, a) -> float:
     k=10        #Number of folds
     n=len(y)
@@ -398,3 +391,4 @@ def cross_validation(x, y, Lmbd, K, a) -> float:
 
     indx_cv=np.argmin(err_cv)
     return Lmbd[indx_cv]
+"""

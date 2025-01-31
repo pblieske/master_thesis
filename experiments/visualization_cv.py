@@ -4,9 +4,6 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 import scipy as sp
 
-import sys
-sys.path.insert(0, '/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_thesis/code/master_thesis')
-
 from robust_deconfounding.utils import cosine_basis
 from utils_nonlinear import get_data, plot_settings
 from synthetic_data import functions_nonlinear
