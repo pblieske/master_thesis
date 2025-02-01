@@ -83,29 +83,40 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int|NDArray
             algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=lmbd)
         elif method =="torrent_cv":
             robust_algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=0)
-            algo = DecoR(algo=robust_algo, basis=basis)
-            algo.fit(x=x, y=y)
-            trans=algo.get_transformed
-            P_n=trans["xn"]
-            y_n=trans["yn"]
-            #Get CV values
-            k=10    #Number of folds
-            cv=robust_algo.cv(x=P_n, y=y_n, Lmbd=lmbd, k=k)
+            cv=robust_algo.cv(x=R, y=y, Lmbd=lmbd)
             err_cv=cv["pred_err"]
-            S=cv["S"]
             lmbd_cv=lmbd[np.argmin(err_cv)]
-            #Set the algorithm to Torrent with the selected lmbd_cv
             algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=lmbd_cv)
+        elif method =="torrent_cv_se":
+            n_lmbd=len(lmbd)
+            robust_algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=0)
+            cv=robust_algo.cv(x=R, y=y, Lmbd=lmbd)
+            err_cv=cv["pred_err"]
+            # Find the index of the minimal estimated error
+            indx_min=np.argmin(err_cv)
+            lmbd_cv=lmbd[indx_min]
+            # Compute the variance
+            estimates_decor = get_results(x=x, y=y, basis=basis, method="torrent_reg", basis_type=basis_type, a=a, L=L, lmbd=lmbd[indx_min], K=K)
+            conf=conf_help(**estimates_decor, L=L, alpha=0.95)
+            sigma=conf["sigma"]
+            try:
+                indx_se=max(np.array(range(indx_min))[np.array(err_cv[0:indx_min]>=err_cv[indx_min]+sigma)])
+            except:
+                indx_se=int(np.ceil(indx_min/2))
+            lmbd_se=lmbd[indx_se]
+            algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=lmbd_se)
         else:
             raise ValueError("Invalid method")
 
         algo = DecoR(algo, basis)
         algo.fit(R, y)
 
+        """
         if method =="torrent_cv":
             return {"estimate": algo.estimate, "inliers": algo.inliniers, "transformed": algo.get_transformed, "S":S}
         else:
-            return {"estimate": algo.estimate, "inliers": algo.inliniers, "transformed": algo.get_transformed}
+        """
+        return {"estimate": algo.estimate, "inliers": algo.inliniers, "transformed": algo.get_transformed}
         
     #Running benchamrk methods
     elif method == "ols":
@@ -301,21 +312,29 @@ def conf_help(estimate:NDArray, inliers: list, transformed: NDArray, alpha=0.95,
     return{'sigma': sigma, 'H':H , 'qt': qt}
 
 
-def check_eigen(x:NDArray, S: list, G:list, lmbd=0, K=np.array([0])) -> dict:
+def check_eigen(P:NDArray, S: list, G:list, lmbd=0, K=np.array([0])) -> dict:
     """
     Checks if the eigenvalue condition from theorem 4.2 holds.
-    S: estimated set of inliers from decoR
-    G: true inliers
-    lmbd: regualrization parameter
-    K: regualrization matrix
+    Arguments:
+        x
+        S: estimated set of inliers from decoR
+        G: true inliers
+        lmbd: regualrization parameter
+        K: regualrization matrix
+    Returns:
+        condition: Boolean indicating if the condition holds
+        fraction: fraction on the LHS of the condition which has to be smaller than 1/sqrt(2)
     """
-    n=x.shape[0]
-    x_S=x[list(S), :]
+
+    n=P.shape[0]
+    P_S=P[list(S), :]
     G_C=set(np.arange(0,n))-G
     V=S.symmetric_difference(set(G_C))
-    x_V=x[list(V), :]
+    P_V=P[list(V), :]
+
     #Compute eigenvalues
-    min=np.min(np.sqrt(np.linalg.eigvals(x_S.T @ x_S + lmbd*K)))
-    max=np.max(sp.linalg.svdvals(x_V.T)) if len(V)!=0 else 0 #np.max(np.sqrt(np.linalg.eigvals(x_V.T @ x_V))) if len(V)!=0 else 0 
-    #Check the eigenvalue condition
+    min=np.min(np.sqrt(np.linalg.eigvals(P_S.T @ P_S + lmbd*K)))
+    max=np.max(sp.linalg.svdvals(P_V.T)) if len(V)!=0 else 0 
+
+    #Check the eigenvalue condition and return fraction
     return {'condition': max/min<= 1/np.sqrt(2), 'fraction': max/min}

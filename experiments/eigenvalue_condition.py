@@ -1,80 +1,89 @@
 import numpy as np
-import random
+import random, os, pickle
 import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
-import sys
-
-sys.path.insert(0, '/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_thesis/code/master_thesis')
-from robust_deconfounding.utils import get_funcbasis
-from utils_nonlinear import get_results, get_data, plot_settings, get_conf, check_eigen
+from utils_nonlinear import get_results, get_data, plot_settings, check_eigen
 
 """
-We provide a visualization of a fitted curve using the cosine approximation.
-For this we simulated only one draw for a fixed number of observations n, for Monte Carlo simulations look at consistency.py.
+    We check the eigenvalue condition of the consistency theorem numerical.
+    For this, we use a Monte-Carlo simulation and plot the disribution afterwards using in a histogramm.
 """
 
-colors, ibm_cb = plot_settings()
+run_exp=True        # Set to True for running the whole experiment and False to plot an experiment which was already run
+n = 2 ** 8          # number of observations 
+noise_var= 4        # variance of the noise
+
+
+# ----------------------------------
+# Parameters
+# ----------------------------------
+
+m=1000                                                # number of Monte-Carlos drawn  
+L=max(np.floor(1/(1 if noise_var==0 else 5)**n**0.5).astype(int),1)     # number of coefficients used
+
+data_args = {
+    "process_type": "uniform",      # "uniform" | "oure"
+    "basis_type": "cosine",         # "cosine" | "haar"
+    "fraction": 0.25,               # fraction of frequencies that are confounded
+    "beta": np.array([2]),
+    "band": list(range(0, 50))      # list(range(0, 50)) | None
+}
+
+method_args = {
+    "a": 0.7,                       # number of frequencies to remove
+    "method": "torrent",            # "torrent" | "torrent_reg"
+    "basis_type": "cosine_cont",    # "cosine_cont" | "cosine_disc" | "poly"
+}
+
+T=np.full(m, np.nan)                # Allocate memory the save the results
+colors, ibm_cb = plot_settings()    # import color setting for plotting
+path_results=os.path.join(os.path.dirname(__file__), "results/")    # Path to the results
+
+
+# ----------------------------------
+# run experiment
+# ----------------------------------
 
 SEED = 1
 np.random.seed(SEED)
 random.seed(SEED)
 
-n = 2 ** 12      # number of observations
-m=1000          
-L=max(np.floor(1/4*n**(1/2)).astype(int),1)    #Number of coefficients used
+if run_exp:
+    for i in range(m):
+        #Generate the data and run DecoR
+        data_values = get_data(n, **data_args, noise_var=noise_var)
+        u=data_values.pop("u")
+        outlier_points=data_values.pop("outlier_points")
+        estimates_decor = get_results(**data_values, **method_args, L=L)
+        #Check the eigenvalue condition
+        T[i]=check_eigen(P=estimates_decor["transformed"]["xn"], S=estimates_decor["inliers"], G=outlier_points)["fraction"]
 
+    # Save the results
+    with open(path_results+"eignevalue_cond_sigma="+str(noise_var)+"_n_" + str(n)+'.pkl', 'wb') as fp:
+        pickle.dump(T, fp)
+        print('Results saved successfully to file.')
+else:
+    # Loading the file with the saved results
+    with open(path_results+"eignevalue_cond_sigma="+str(noise_var)+"_n_" + str(n)+'.pkl', 'rb') as fp:
+        T = pickle.load(fp)
 
-data_args = {
-    "process_type": "blpnl",    # "ou" | "blp" | "blpnl" |ounl
-    "basis_type": "cosine",     # "cosine" | "haar"
-    "fraction": min((n**(-0.5)), 1),
-    "noise_type": "normal",
-    "beta": np.array([2]),
-    "band": list(range(0, 50)),  # list(range(0, 50)) | None
-    "noise_var": 1,
-}
-
-method_args = {
-    "a": 1-data_args["fraction"]*1.25,
-    "method": "torrent",        # "torrent" | "bfs"
-    "basis_type": "cosine_cont",# basis used for the approximation of f
-}
-
-print("number of observations:", n)
-print("number of coefficients:", L)
-T=np.full(m, np.nan)
 
 # ----------------------------------
-# run experiment
-# ----------------------------------
-for i in range(m):
-    #Generate the data and run DecoR
-    data_values = get_data(n, **data_args)
-    u=data_values.pop("u")
-    outlier_points=data_values.pop("outlier_points")  
-    diag=np.concatenate((np.array([0]), np.array([i**4 for i in range(1, L)])))
-    K=np.diag(diag)
-    lmbd=0
-    estimates_decor = get_results(**data_values, **method_args, L=L, lmbd=lmbd, K=K)
-    #Check the eigenvalue condition
-    T[i]=check_eigen(x=estimates_decor["transformed"]["xn"], S=estimates_decor["inliers"], G=outlier_points, lmbd=lmbd, K=K)["fraction"]
-
-# ----------------------------------
-# plotting
+# Plotting the histogramm
 # ----------------------------------
 
-n_bin=20
-max=np.max(T)
+n_bin=20        # number of bins
+max=np.max(T)   
 min=np.min(T)
-delta=(max-min)/n_bin
-x_0=1/np.sqrt(2)-np.ceil((1/np.sqrt(2)-min)/delta)*delta
-bins=np.array([i*delta+x_0 for i in range(-1,n_bin+1)])
+delta=(max-min)/n_bin                                       # width of bin
+x_0=1/np.sqrt(2)-np.ceil((1/np.sqrt(2)-min)/delta)*delta    # strating value for the first bin
+bins=np.array([i*delta+x_0 for i in range(-1,n_bin+1)])     # grid for the histogramm
 
+#Labeling
 plt.hist(T, bins=bins, color=ibm_cb[0], edgecolor='k', alpha=0.6)
 plt.axvline(1/np.sqrt(2), color=ibm_cb[2])
 plt.xlabel("fraction")
 plt.ylabel("count")
-plt.title("$n="+ str(n) + "$ and $ c_n/n=" + str(data_args["fraction"]) + "$")
-plt.annotate('$1/\sqrt{2}$', xy=(1/np.sqrt(2), 0), xytext=(1/np.sqrt(2)-0.5, -30), color=ibm_cb[2], arrowprops={'arrowstyle': '-'})
+plt.title("Eigenvalue Condition: " + "$n="+ str(n) + "$ and $ \sigma_{\eta}^2=" + str(noise_var) + "$")
+plt.text(1/np.sqrt(2)-0.3, 400,"$1/\sqrt{2}$", color=ibm_cb[2], rotation=90)
 plt.tight_layout()
 plt.show()

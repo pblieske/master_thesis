@@ -23,7 +23,7 @@ from robust_deconfounding.utils import get_funcbasis
 # Parameters varied in the thesis
 # ----------------------------------
 
-run_exp=True       # Set to True for running the whole experiment and False to plot an experiment which was already run
+run_exp=False       # Set to True for running the whole experiment and False to plot an experiment which was already run
 noise_vars = 0      # variance of the noise
 n = 2 ** 8          # number of observations
 
@@ -109,7 +109,7 @@ else:
 
 custom_cmap = LinearSegmentedColormap.from_list("custom_cmap", ibm_cb[0:5])  # Create custom colormap
 X, Y = np.meshgrid(Lmbd, L)
-plt.pcolormesh(X, Y, err, cmap=custom_cmap, shading='nearest')
+plt.pcolormesh(X, Y, err, cmap=custom_cmap, shading='nearest', linewidth=0, rasterized=False)
 
 # Add colorbar and labeling
 plt.xscale('log')
@@ -117,4 +117,5 @@ plt.colorbar()
 plt.title('$L^1$-error') 
 plt.xlabel('$\lambda$')
 plt.ylabel('L')
+plt.tight_layout()
 plt.show()

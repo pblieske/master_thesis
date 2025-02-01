@@ -1,104 +1,120 @@
 import numpy as np
-import random
+import random, os, pickle
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
-import seaborn as sns
-import pandas as pd
 
-from utils_nonlinear import get_results, get_data, plot_settings
+from utils_nonlinear import get_results, get_data, plot_settings, plot_results
 from synthetic_data import functions_nonlinear
+from robust_deconfounding.utils import get_funcbasis
 
 """
     We test the cross-validation method. For this end, we do the regularization mainly over the parameter lambda 
-    and choose the number of coefficients L of the oder of the number of observations n.
-    Note that the script can take up to 3 hours to run for m=100.
+    and keep the number of coefficients L constant. We compare it to the unregularized torrent with L of order n^(1/2).
+    Note that the script can take up to 3 hours to run for m=200, therefore the results are saved.
+    To rerun the experiment, set the "run_exp" variable to True.
 """
 
-colors, ibm_cb = plot_settings()
+run_exp=True            # Set to True for running the whole experiment and False to plot an experiment which was already run
 
-SEED = 5
-np.random.seed(SEED)
-random.seed(SEED)
+
+# ----------------------------------
+# Set the parameters
+# ----------------------------------
+
+Lmbd_min=10**(-8)       # smallest regularization parameter lambda to be considered
+Lmbd_max=10**(1)        # largest regularization paramter lambda to be considered
+n_lmbd=100              # number of lambda to test
+L_cv=30                 # number of coefficient for the reuglarized torrent
+m=10                    # Number of Monte Carlo samples to draw
+                                                                           
+Lmbd=np.array([np.exp(i/n_lmbd*(np.log(Lmbd_max)-np.log(Lmbd_min))+np.log(Lmbd_min)) for i in range(0, n_lmbd)])        # grid of regularization paramters   
+noise_vars = [0, 1, 4]                 # Variance of the noise
+num_data = [32, 64, 128, 256, 1024, 4096, 8192]    # number of observations n
 
 data_args = {
-    "process_type": "blpnl",    # "ou" | "blp" | "blpnl"
-    "basis_type": "cosine",     # "cosine" | "haar"
-    "fraction": 0.3,
-    "beta": np.array([2]),
-    "band": list(range(0, 50))  # list(range(0, 50)) | None
+    "process_type": "uniform",      # "uniform" | "oure"
+    "basis_type": "cosine",         # "cosine" | "haar"
+    "fraction": 0.25,               # fraction of frequencies that are confounded
+    "beta": np.array([2]),      
+    "band": list(range(0, 50))      # list(range(0, 50)) | None
 }
 
 method_args = {
-    "a": 0.65,
-    "method": "torrent",        # "torrent" | "bfs"
+    "a": 0.7,                       # number of frequencies to remove
+    "method": "torrent_reg",        # "torrent" | "torrent_reg"
+    "basis_type": "cosine_cont",    # "cosine_cont" | "cosine_disc" | "poly"
 }
 
-m = 100  #Number of repetitions for the Monte Carlo
-noise_vars = [0, 0.5, 1]
-num_data = [2 ** k for k in range(6, 13)]      # (6,13)
-Lmbd=np.array([10**(i/10) for i in range(-100, 10)])
+colors, ibm_cb = plot_settings()                                    # import colors for plotting
+path_results=os.path.join(os.path.dirname(__file__), "results/")    # Path to the results
+
 
 # ----------------------------------
 # run experiments
 # ----------------------------------
+
+SEED = 1
+np.random.seed(SEED)
+random.seed(SEED)
+
+L_frac=np.array([2, 2, 2]) 
 n_x=200     #Resolution of x-axis
 test_points = np.array([i / n_x for i in range(0, n_x)])
 y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["beta"][0])
 
+# Compute the basis and regularization matrix K for the smoothness penalty
+basis_cv=get_funcbasis(x=test_points, L=L_cv, type=method_args["basis_type"])
+diag=np.concatenate((np.array([0]), np.array([i**4 for i in range(1,L_cv+1)])))
+K=np.diag(diag)
+
 for i in range(len(noise_vars)):
     print("Noise Variance: ", noise_vars[i])
-    res = {"torrent": [], "cv": []}
+    res = {"DecoR": [], "ols": []}
 
-    for n in num_data:
-        print("number of data points: ", n)
-        res["torrent"].append([])
-        res["cv"].append([])
-        #Get number of coefficients L
-        L_temp=max(np.floor(n**(1/2)).astype(int),1)      
-        basis_tmp = [np.cos(np.pi * test_points * k ) for k in range(L_temp)]
-        basis = np.vstack(basis_tmp).T
-        print("number of coefficients: ", L_temp)
-        #Construct smothness penalty
-        diag=np.concatenate((np.array([0]), np.array([i**4 for i in range(1,L_temp)])))
-        K=np.diag(diag)
-        #Run Monte Carlo simulation
-        for _ in range(m):
-            data_values = get_data(n, **data_args, noise_var=noise_vars[i])
-            data_values.pop('u', 'basis')
+    if run_exp:
+        for n in num_data:
+            res["DecoR"].append([])
+            res["ols"].append([])
 
-            estimates_tor = get_results(**data_values, a=method_args["a"], method="torrent", L=L_temp, lmbd=0, K=K)
-            estimates_cv = get_results(**data_values, a=method_args["a"], method="torrent_cv", L=L_temp, lmbd=Lmbd, K=K)
-            y_tor=basis @ estimates_tor["estimate"]
-            y_tor=np.ndarray((n_x, 1), buffer=y_tor)
-            y_cv= basis @ estimates_cv["estimate"]
-            y_cv=np.ndarray((n_x, 1), buffer=y_cv)
+            #Get number of coefficients L and construct matirx K for the smothness penalty
+            L=max(np.floor(1/L_frac[i]*n**(1/2)).astype(int),2)      
+            basis_tor=get_funcbasis(x=test_points, L=L, type=method_args["basis_type"])
+            print("number of data points: ", n)
+            print("number of coefficients: ", L)
 
-            res["torrent"][-1].append(1/np.sqrt(n_x)*np.linalg.norm(y_true-y_tor, ord=2))
-            res["cv"][-1].append(1/np.sqrt(n_x)*np.linalg.norm(y_true-y_cv, ord=2))
-            
-    res["torrent"], res["cv"] = np.array(res["torrent"]), np.array(res["cv"])
+            #Run Monte Carlo simulation
+            for _ in range(m):
+                # Get the data
+                data_values = get_data(n, **data_args, noise_var=noise_vars[i])
+                data_values.pop('u', 'basis')
+                # Compute the estimator of DecoR and the regulaized DecoR
+                estimates_tor = get_results(**data_values, a=method_args["a"], method="torrent", basis_type=method_args["basis_type"], L=L)
+                estimates_cv = get_results(**data_values, a=method_args["a"], method="torrent_cv_se", basis_type=method_args["basis_type"], L=L_cv, lmbd=Lmbd, K=K)
+                y_tor=basis_tor @ estimates_tor["estimate"]
+                y_tor=np.ndarray((n_x, 1), buffer=y_tor)
+                y_cv= basis_cv @ estimates_cv["estimate"]
+                y_cv=np.ndarray((n_x, 1), buffer=y_cv)
 
-    #Plotting using seaborn
-    values = np.concatenate([np.expand_dims(res["torrent"], 2),
-                             np.expand_dims(res["cv"], 2)], axis=2).ravel()
-    time = np.repeat(num_data, m * 2)
-    method = np.tile(["Torrent", "CV"], len(values) // 2)
-    df = pd.DataFrame({"value": values.astype(float),
-                       "n": time.astype(float),
-                       "method": method})
-    sns.lineplot(data=df, x="n", y="value", hue="method", style="method",
-                 markers=["o", "X"], dashes=False, errorbar=("ci", 95), err_style="band",
-                 palette=colors[i], legend=True)
+                res["ols"][-1].append(1/n_x*np.linalg.norm(y_true-y_tor, ord=1))
+                res["DecoR"][-1].append(1/n_x*np.linalg.norm(y_true-y_cv, ord=1))
+
+        #Saving the results to a pickle file
+        res["DecoR"], res["ols"] = np.array(res["DecoR"]), np.array(res["ols"])
+        with open(path_results+"experiment_cv_noise_="+str(noise_vars[i])+'.pkl', 'wb') as fp:
+            pickle.dump(res, fp)
+            print('Results saved successfully to file.')
+
+    else:
+        # Loading the file with the saved results
+        with open(path_results+"experiment_cv_noise_="+str(noise_vars[i])+'.pkl', 'rb') as fp:
+            res = pickle.load(fp)
+    
+    plot_results(res, num_data, m, colors=colors[i])
 
 
 # ----------------------------------
 # plotting
 # ----------------------------------
-
-titles = {"blp": "Band-Limited", "ou": "Ornstein-Uhlenbeck", "blpnl" : "Nonlinear: Band-Limited"}
-titles_basis = {"cosine": "", "haar": ", Haar basis"}
-titles_dim = {1: "", 2: ", 2-dimensional"}
-
 
 def get_handles():
     point_1 = Line2D([0], [0], label='Torrent', marker='o',
@@ -113,14 +129,15 @@ def get_handles():
                      color=ibm_cb[2], linestyle='-')
     return [point_1, point_2, point_3, point_4, point_5]
 
-
+#Labeling
 plt.xlabel("number of data points")
-plt.ylabel("L^2 error")
+plt.ylabel("$L^1$-error")
 plt.title("Regularization with Cross-Validation")
 plt.xscale('log')
 plt.xlim(left=num_data[0] - 2)
+plt.ylim(-0.1, 2)
 plt.hlines(0, num_data[0], num_data[-1], colors='black', linestyles='dashed')
-plt.legend(handles=get_handles(), loc="lower left")
+plt.legend(handles=get_handles(), loc="upper right")
 plt.tight_layout()
 
 plt.show()

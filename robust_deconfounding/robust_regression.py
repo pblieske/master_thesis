@@ -233,7 +233,7 @@ class Torrent_reg(BaseRobustRegression):
             Lmbd:   regularization parameters to test
             k:      number of folds
             Returns a dictionary with the estimated prediction error "pred_err" and the set "S" of stable inliers across different regularization paramters.
-            """
+        """
         
         n=len(y)                    #number of data points
         n_lmbd=len(Lmbd)            #number of regularization parameters to test
@@ -278,97 +278,8 @@ class Torrent_reg(BaseRobustRegression):
                 B=X_train.T @ Y_train
                 A=X_train.T @ X_train + Lmbd[i]*self.K 
                 coef=sp.linalg.solve(A, B)
-                err_add = np.linalg.norm(y[test_indx] - x[test_indx] @ coef, ord=2)**2
-                err=err+1/n_S*err_add
-
-            err_cv[i]=np.sqrt(err)
-    
+                err=err+1/n_S*np.linalg.norm(y[test_indx] - x[test_indx] @ coef, ord=1)
+                
+            err_cv[i]=err
 
         return  {"pred_err": err_cv, "S": S}
-
-"""
-class Torrent_cv(BaseRobustRegression):
-
-
-    def __init__(self, a: float, fit_intercept: bool = False, max_iter: int = 100, K=np.array([0]), lmbd=np.array(0)):
-        super().__init__(fit_intercept)
-        if not 0 < a < 1:
-            raise ValueError("'a' must be in the range (0, 1).")
-        self.a = a
-        self.max_iter = max_iter
-        self.predicted_inliers = []
-        self.K=K
-        self.lmbd=lmbd
-
-
-    def fit(self, x: NDArray, y: NDArray) -> Self:
-
-        n = len(y)
-        y = y.reshape(n, -1)
-
-        self._validate_inputs(x, y)
-        if self.fit_intercept:
-            x = self._add_intercept(x)
-
-        an = int(self.a * n)
-        if an == 0:
-            raise ValueError("'a' is too small. Increase 'a' or the number of data points .")
-
-        self.inliers = list(range(n))
-        self.predicted_inliers.append(self.inliers)
-        lambda_cv=self.lmbd[0]
-        err_old=np.inf
-
-        for __ in range(self.max_iter):
-            X_temp=x[self.inliers]
-            Y_temp=y[self.inliers]
-            B=X_temp.T @ Y_temp
-            A=X_temp.T @ X_temp + lambda_cv*self.K 
-            
-            coef_new=sp.linalg.solve(A, B)
-            err = np.linalg.norm(y - x @ coef_new, axis=1)
-            inliers_new = np.argpartition(err, an)[:an]
-            err_new=np.linalg.norm(err[inliers_new], ord=2)
-
-            if err_new <= err_old:
-                err_old=err_new
-                self.coef=coef_new
-                self.inliers = inliers_new
-                self.predicted_inliers.append(self.inliers)
-                lambda_cv=cross_validation(x[self.inliers], y[self.inliers], Lmbd=self.lmbd, K=self.K, a=self.a)    
-            else:
-               break
-   
-        return self
-""" 
-
-
-"""
-    simple help function to perform the cross-validation step
-"""    
-"""
-def cross_validation(x, y, Lmbd, K, a) -> float:
-    k=10        #Number of folds
-    n=len(y)
-    fold_size=n//k
-    n_lmbd=len(Lmbd)
-    partition=np.random.permutation(n)
-    err_cv=np.zeros(n_lmbd)
-    an_fold = int(a * fold_size)
-
-    for i in range(0, n_lmbd):
-        for j in range(0,k):
-            test_indx=partition[j*fold_size:(j+1)*fold_size]
-            X_train=np.delete(x, test_indx, axis=0)
-            Y_train=np.delete(x, test_indx, axis=0)
-            B=X_train.T @ Y_train
-            A=X_train.T @ X_train + Lmbd[i]*K 
-            coef=sp.linalg.solve(A, B)
-            err = np.linalg.norm(y[test_indx] - x[test_indx] @ coef, axis=1)
-            #inliers_test = np.argpartition(err, an_fold)[:an_fold]
-            err=np.linalg.norm(err, ord=2)**2
-            err_cv[i]=err_cv[i]+1/fold_size*err
-
-    indx_cv=np.argmin(err_cv)
-    return Lmbd[indx_cv]
-"""
