@@ -12,15 +12,21 @@ from robust_deconfounding.utils import get_funcbasis
     We compute the L^1-error varing the number of coefficients and the regularization parameter \lambda. 
     For the regularization the smoothness penalty is used.
     To plot the data from an experiment which was already run, set the "run_exp" variable to False.
+    The experiments were aleardy run with the following paramter configurations:
+    - nois_vars=0, n=2**6
+    - nois_vars=0, n=2**8
+    - nois_vars=4, n=2**6
+    - nois_vars=4, n=2**8
 """
 
 # ----------------------------------
 # Parameters varied in the thesis
 # ----------------------------------
 
-run_exp=True        # Set to True for running the whole experiment and False to plot an experiment which was already run
-noise_vars = 4      # variance of the noise
+run_exp=True       # Set to True for running the whole experiment and False to plot an experiment which was already run
+noise_vars = 0      # variance of the noise
 n = 2 ** 8          # number of observations
+
 
 # ----------------------------------
 # Parameters kept constant
@@ -31,11 +37,11 @@ np.random.seed(SEED)
 random.seed(SEED)
 
 data_args = {
-    "process_type": "uniform",  # "uniform" | "oure"
-    "basis_type": "cosine",     # "cosine" | "haar"
-    "fraction": 0.25,           # fraction of frequencies that are confounded
+    "process_type": "uniform",      # "uniform" | "oure"
+    "basis_type": "cosine",         # "cosine" | "haar"
+    "fraction": 0.25,               # fraction of frequencies that are confounded
     "beta": np.array([2]),      
-    "band": list(range(0, 50))  # list(range(0, 50)) | None
+    "band": list(range(0, 50))      # list(range(0, 50)) | None
 }
 
 method_args = {
@@ -62,43 +68,45 @@ n_x=200                 # resolution of x-axis
 test_points=np.array([i / n_x for i in range(0, n_x)])
 y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["beta"][0])   # Compute ture underlying function
 
-#Initialize the grid
+# Initialize grid and matrix to save results
 L=np.array(range(1, L_max))                                                                                             # grid of number of coefficients
 Lmbd=np.array([np.exp(i/n_lmbd*(np.log(Lmbd_max)-np.log(Lmbd_min))+np.log(Lmbd_min)) for i in range(0, n_lmbd)])        # grid of regularization paramters
+err =np.zeros(shape = [L.size, Lmbd.size])                                                                              # matrix the save the error
 
-#Initialize the matrix to save results
-err =np.zeros(shape = [L.size, Lmbd.size]) 
+if run_exp:
+    # Running the Monte Carlo simulation
+    for __ in range(0,m):
+        data_values = get_data(n, **data_args, noise_var=noise_vars)
+        data_values.pop('u')
+        for l in L:
+            # Compute the basis and regularization matrix K
+            basis=get_funcbasis(x=test_points, L=l, type=method_args["basis_type"])
+            diag=np.concatenate(([0], np.array([ i**4 for i in range(0,l)])))
+            K=np.diag(diag)
+            for j in range(0, Lmbd.size):
+                # Estimate the function f by DecoR using l basis functions and the regularization parameter Lmbd[j]
+                estimates_decor = get_results(**data_values, **method_args, L=l, K=K, lmbd=Lmbd[j])
+                y_est=basis @ estimates_decor["estimate"]
+                y_est=np.ndarray((n_x, 1), buffer=y_est)
+                # Compute the L^1-error
+                err[l-1, j]=err[l-1, j]+ 1/(m*n_x)*np.linalg.norm(y_true-y_est, ord=1)
+        if __ % 10 ==0:
+            print("Number of samples drawn: " + str(__))
 
-#Running the Monte Carlo simulation
-for __ in range(0,m):
-    data_values = get_data(n, **data_args, noise_var=noise_vars)
-    data_values.pop('u')
-    for l in L:
-        # Compute the basis and regularization matrix K
-        basis=get_funcbasis(x=test_points, L=l, type=method_args["basis_type"])
-        diag=np.concatenate(([0], np.array([ i**4 for i in range(0,l)])))
-        K=np.diag(diag)
-        for j in range(0, Lmbd.size):
-            #Estimate the function f by DecoR using l basis functions and the regularization parameter Lmbd[j]
-            estimates_decor = get_results(**data_values, **method_args, L=l, K=K, lmbd=Lmbd[j])
-            y_est=basis @ estimates_decor["estimate"]
-            y_est=np.ndarray((n_x, 1), buffer=y_est)
-            #Compute the L^1-error
-            err[l-1, j]=err[l-1, j]+ 1/(m*n_x)*np.linalg.norm(y_true-y_est, ord=1)
-    if __ % 10 ==0:
-     print("Number of samples drawn: " + str(__))
+    # Saving the results
+    with open(path_results+"girdsearch_n=" + str(n) +'_noise='+str(noise_vars)+'.pkl', 'wb') as fp:
+        pickle.dump(err, fp)
+        print('Results saved successfully to file.')
 
-#Saving the results
-with open(path_results+"girdsearch_n=" + str(n) +'_noise='+str(noise_vars)+'.pkl', 'wb') as fp:
-    pickle.dump(err, fp)
-    print('Results saved successfully to file.')
-
+else:
+    # Loading the file with the saved results
+    with open(path_results+"girdsearch_n=" + str(n) +'_noise='+str(noise_vars)+'.pkl', 'rb') as fp:
+        err = pickle.load(fp)
 
 # ----------------------------------
 # plotting
 # ----------------------------------
 
-# Create a custom colormap
 custom_cmap = LinearSegmentedColormap.from_list("custom_cmap", ibm_cb[0:5])  # Create custom colormap
 X, Y = np.meshgrid(Lmbd, L)
 plt.pcolormesh(X, Y, err, cmap=custom_cmap, shading='nearest')
