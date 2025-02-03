@@ -5,7 +5,6 @@ from matplotlib.lines import Line2D
 from tqdm import tqdm
 from utils_nonlinear import get_results, get_data, get_conf, plot_settings
 from synthetic_data import functions_nonlinear
-from robust_deconfounding.utils import get_funcbasis
 
 """
     We run a short simulation to test how the confidence intervals proposed in the thesis performs, in particualr we want to investigate the coverage.
