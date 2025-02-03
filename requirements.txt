@@ -7,3 +7,4 @@ seaborn
 setuptools
 scikit-learn
 pyGAM
+tqdm

@@ -224,7 +224,7 @@ def plot_results(res: dict, num_data: list, m: int, colors) -> None:
                  palette=[colors[0], colors[1]], legend=True)
     
 
-def get_conf(x:NDArray, estimate:NDArray, inliers: list, transformed: NDArray, alpha=0.95, L=0, basis_type="cosine_cont", small=False, lmbd=0, K=np.diag(np.array([0]))) -> NDArray:
+def get_conf(x:NDArray, estimate:NDArray, inliers: list, transformed: NDArray, alpha=0.95, L=0, basis_type="cosine_cont", w=0, lmbd=0, K=np.diag(np.array([0]))) -> NDArray:
     """
         Returns a confidence interval for the estimated f evaluated at x.
         Caution: We use all points to estimate the variance (not only the inliers) to avoid a underestimation and 
@@ -234,7 +234,7 @@ def get_conf(x:NDArray, estimate:NDArray, inliers: list, transformed: NDArray, a
             estimate: estimated coefficients
             inliers: estimated inliers from DecoR
             alpha: level for the confidence interval
-            small: boolean, when set to True, only the estimated inliers are used to estimate the variance
+            w: weight to take into acount the variance, estiamted using only the inliers : (1-w)*variance_large+w*variance_small
         Output:
             ci=[ci_l, ci_u]: the lower and upper bound for the confidence interval
     """
@@ -242,38 +242,43 @@ def get_conf(x:NDArray, estimate:NDArray, inliers: list, transformed: NDArray, a
     xn=transformed["xn"]
     yn=transformed["yn"]
 
-    if small:
-        xn=xn[list(inliers)]
-        yn=yn[list(inliers)]
+    xn_inl=xn[list(inliers)]
+    yn_inl=yn[list(inliers)]
   
     if isinstance(L, (int, np.int64)):
-        n=xn.shape[0] 
         basis=get_funcbasis(x=x, L=L, type=basis_type)
         L_tot=L
     else:
         basis=get_funcbasis_multivariate(x=x, L=L, type=basis_type)
-        n=xn.shape[0]
         L_tot=np.sum(L)+1
+
+    n=xn.shape[0] 
+    n_inl=xn_inl.shape[0]
 
     #Estimate the variance
     r=yn- xn@estimate.T
-    n=xn.shape[0]
     df=n-L_tot
     sigma_2=np.sum(np.square(r), axis=0)/df 
 
+    r_inl=yn_inl-xn_inl@estimate.T
+    df_inl=n_inl-L_tot
+    sigma_2_inl=np.sum(np.square(r_inl), axis=0)/df_inl
+
     #Compute the linear estimator
-    if small==False:
-        xn=xn[list(inliers)]
-        yn=yn[list(inliers)]
-        
+    xn=xn[list(inliers)]
+    yn=yn[list(inliers)]
+
     H_help=np.linalg.solve(xn.T @ xn + lmbd*K, xn.T)
     H=basis @ H_help
     sigma=np.sqrt(sigma_2 * np.diag(H @ H.T))
+    sigma_inl=np.sqrt(sigma_2_inl * np.diag(H @ H.T))
 
     #Compute the confidence interval
     qt=sp.stats.t.ppf((1-alpha)/2, df)
-    ci_u=basis@estimate.T - qt*sigma
-    ci_l=basis@estimate.T + qt*sigma
+    qt_inl=sp.stats.t.ppf((1-alpha)/2, df_inl)
+
+    ci_u=basis@estimate.T - (1-w)*qt*sigma - w * qt_inl*sigma_inl
+    ci_l=basis@estimate.T + (1-w)*qt*sigma + w * qt_inl*sigma_inl
     ci=np.stack((ci_l, ci_u), axis=-1)
 
     return ci
