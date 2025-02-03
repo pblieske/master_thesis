@@ -224,7 +224,7 @@ def plot_results(res: dict, num_data: list, m: int, colors) -> None:
                  palette=[colors[0], colors[1]], legend=True)
     
 
-def get_conf(x:NDArray, estimate:NDArray, inliers: list, transformed: NDArray, alpha=0.95, lmbd=0, K=np.diag(np.array([0])), L=0, basis_type="cosine_cont") -> NDArray:
+def get_conf(x:NDArray, estimate:NDArray, inliers: list, transformed: NDArray, alpha=0.95, L=0, basis_type="cosine_cont", small=False, lmbd=0, K=np.diag(np.array([0]))) -> NDArray:
     """
         Returns a confidence interval for the estimated f evaluated at x.
         Caution: We use all points to estimate the variance (not only the inliers) to avoid a underestimation and 
@@ -234,6 +234,7 @@ def get_conf(x:NDArray, estimate:NDArray, inliers: list, transformed: NDArray, a
             estimate: estimated coefficients
             inliers: estimated inliers from DecoR
             alpha: level for the confidence interval
+            small: boolean, when set to True, only the estimated inliers are used to estimate the variance
         Output:
             ci=[ci_l, ci_u]: the lower and upper bound for the confidence interval
     """
@@ -241,6 +242,10 @@ def get_conf(x:NDArray, estimate:NDArray, inliers: list, transformed: NDArray, a
     xn=transformed["xn"]
     yn=transformed["yn"]
 
+    if small:
+        xn=xn[list(inliers)]
+        yn=yn[list(inliers)]
+  
     if isinstance(L, (int, np.int64)):
         n=xn.shape[0] 
         basis=get_funcbasis(x=x, L=L, type=basis_type)
@@ -257,8 +262,10 @@ def get_conf(x:NDArray, estimate:NDArray, inliers: list, transformed: NDArray, a
     sigma_2=np.sum(np.square(r), axis=0)/df 
 
     #Compute the linear estimator
-    xn=xn[list(inliers)]
-    yn=yn[list(inliers)]
+    if small==False:
+        xn=xn[list(inliers)]
+        yn=yn[list(inliers)]
+        
     H_help=np.linalg.solve(xn.T @ xn + lmbd*K, xn.T)
     H=basis @ H_help
     sigma=np.sqrt(sigma_2 * np.diag(H @ H.T))

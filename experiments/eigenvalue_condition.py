@@ -8,16 +8,16 @@ from utils_nonlinear import get_results, get_data, plot_settings, check_eigen
     For this, we use a Monte-Carlo simulation and plot the disribution afterwards using in a histogramm.
 """
 
-run_exp=True        # Set to True for running the whole experiment and False to plot an experiment which was already run
-n = 2 ** 8          # number of observations 
-noise_var= 4        # variance of the noise
+run_exp=False        # Set to True for running the whole experiment and False to plot an experiment which was already run
+n = 2 ** 10          # number of observations 
+noise_var= 0        # variance of the noise
 
 
 # ----------------------------------
 # Parameters
 # ----------------------------------
 
-m=1000                                                # number of Monte-Carlos drawn  
+m=1000      # number of Monte-Carlos drawn  
 L=max(np.floor(1/(1 if noise_var==0 else 5)**n**0.5).astype(int),1)     # number of coefficients used
 
 data_args = {
@@ -84,6 +84,6 @@ plt.axvline(1/np.sqrt(2), color=ibm_cb[2])
 plt.xlabel("fraction")
 plt.ylabel("count")
 plt.title("Eigenvalue Condition: " + "$n="+ str(n) + "$ and $ \sigma_{\eta}^2=" + str(noise_var) + "$")
-plt.text(1/np.sqrt(2)-0.3, 400,"$1/\sqrt{2}$", color=ibm_cb[2], rotation=90)
+plt.text(1/np.sqrt(2)+0.1, 400,"$1/\sqrt{2}$", color=ibm_cb[2], rotation=90, fontdict={'fontsize': 12, 'fontweight': 'bold'})
 plt.tight_layout()
 plt.show()

@@ -14,7 +14,7 @@ from robust_deconfounding.utils import get_funcbasis
     To rerun the experiment, set the "run_exp" variable to True.
 """
 
-run_exp=True            # Set to True for running the whole experiment and False to plot an experiment which was already run
+run_exp=False            # Set to True for running the whole experiment and False to plot an experiment which was already run
 
 
 # ----------------------------------
@@ -58,7 +58,7 @@ np.random.seed(SEED)
 random.seed(SEED)
 
 L_frac=np.array([2, 2, 2]) 
-n_x=200     #Resolution of x-axis
+n_x=200                         #Resolution of x-axis
 test_points = np.array([i / n_x for i in range(0, n_x)])
 y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["beta"][0])
 
