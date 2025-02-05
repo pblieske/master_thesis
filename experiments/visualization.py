@@ -20,8 +20,8 @@ np.random.seed(SEED)
 random.seed(SEED)
 
 data_args = {
-    "process_type": "oure",    # "ou" | "blp" | "blpnl" | "ounl" | "unifrom" | "ourre"
-    "basis_type": "cosine",     # "cosine" | "haar"
+    "process_type": "oure",    #  "blpnl" | "ounl" | "unifrom" | "oure"
+    "basis_type": "cosine",    # "cosine" | "haar"
     "fraction": 0.25,
     "noise_type": "normal",
     "noise_var": 1,
@@ -35,8 +35,8 @@ method_args = {
     "basis_type": "cosine_cont",# basis used for the approximation of f, corresponding to \psi in the paper
 }
 
-benchmark="spline"
-n = 2**8 # number of observations
+benchmark="spline"  # "spline" | "ols"
+n = 2**8            # number of observations
 print("number of observations:", n)
 
 
@@ -44,7 +44,7 @@ print("number of observations:", n)
 # run the experiment
 # ----------------------------------
 
-n_x=200     #Resolution of x-axis
+n_x=200     # Resolution of x-axis
 test_points=np.array([i / n_x for i in range(n_x)])
 y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["beta"][0])
 L=max(np.floor(1/4*n**(1/2)).astype(int),2)    #Number of coefficients used
@@ -84,8 +84,7 @@ print("$L^1$-error: ", 1/n_x*np.linalg.norm(y_true-y_est, ord=1))
 # plotting
 # ----------------------------------
 
-#Plotting the estimated function
-
+# Plotting the estimated function
 plt.scatter(x=data_values['x'], y=data_values['y'], marker='o', color='w', edgecolors='black') 
 plt.plot(test_points, y_true, '-', color='black')
 plt.plot(test_points, y_est, '-', color=ibm_cb[1])
@@ -94,6 +93,7 @@ plt.plot(test_points, y_bench, color=ibm_cb[4])
 plt.fill_between(test_points, y1=ci[:, 0], y2=ci[:, 1], color=ibm_cb[1], alpha=0.1)
 plt.fill_between(test_points, y1=ci_bench[:, 0], y2=ci_bench[:, 1], color=ibm_cb[4], alpha=0.1)
 
+# Labeling
 def get_handles():
     point_1 = Line2D([0], [0], label='Observations', marker='o', mec='black', color='w')
     point_2 = Line2D([0], [0], label='Truth', markeredgecolor='w', color='black', linestyle='-')
@@ -137,7 +137,7 @@ trans=estimates_decor["transformed"]
 P_n=trans["xn"]
 y_n=trans["yn"]
 
-#Get the sets of outliers
+# Get the sets of outliers
 inliniers=set(estimates_decor["inliers"])
 true_outliers=outlier_points
 detected_outliers=true_outliers.difference(inliniers)
@@ -147,6 +147,7 @@ true_intliniers=inliniers.difference(true_outliers)
 m_plots=np.ceil(L/2).astype(int)
 fig, axs = plt.subplots(m_plots, 2)
 
+# Plotting the transformed sample against P(i, :)
 for l in range(0, L):
     i=np.floor(l/2).astype(int)
     j=np.mod(l,2)
@@ -159,6 +160,7 @@ for l in range(0, L):
     axs[i, j].set_xlabel('$P(' + str(l) + ', : )$')
     axs[i, j].set_ylabel('T(Y)')
 
+# Labels
 def get_handles():
     point_1 = Line2D([0], [0], label='outliers found', marker='o', color=ibm_cb[1], ls='')
     point_2 = Line2D([0], [0], label='outliers missed', marker='o', color=ibm_cb[4], ls='')

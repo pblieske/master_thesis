@@ -88,7 +88,6 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int|NDArray
             lmbd_cv=lmbd[np.argmin(err_cv)]
             algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=lmbd_cv)
         elif method =="torrent_cv_se":
-            n_lmbd=len(lmbd)
             robust_algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=0)
             cv=robust_algo.cv(x=R, y=y, Lmbd=lmbd)
             err_cv=cv["pred_err"]
@@ -98,11 +97,11 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int|NDArray
             # Compute the variance
             estimates_decor = get_results(x=x, y=y, basis=basis, method="torrent_reg", basis_type=basis_type, a=a, L=L, lmbd=lmbd[indx_min], K=K)
             conf=conf_help(**estimates_decor, L=L, alpha=0.95)
-            sigma=conf["sigma"]
+            sigma=conf["sigma"]/2
             try:
                 indx_se=max(np.array(range(indx_min))[np.array(err_cv[0:indx_min]>=err_cv[indx_min]+sigma)])
             except:
-                indx_se=int(np.ceil(indx_min/2))
+                indx_se=0 #int(np.ceil(indx_min/4))
             lmbd_se=lmbd[indx_se]
             algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=lmbd_se)
         else:
@@ -118,7 +117,7 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int|NDArray
         """
         return {"estimate": algo.estimate, "inliers": algo.inliniers, "transformed": algo.get_transformed}
         
-    #Running benchamrk methods
+    # Benchamrk methods
     elif method == "ols":
         xn = basis.T @ R / n
         yn = basis.T @ y / n
@@ -235,7 +234,7 @@ def get_conf(x:NDArray, estimate:NDArray, inliers: list, transformed: NDArray, a
             inliers: estimated inliers from DecoR
             alpha: level for the confidence interval
             w: weight to take into acount the variance, estiamted using only the inliers : (1-w)*variance_large+w*variance_small
-        Output:
+        Returns:
             ci=[ci_l, ci_u]: the lower and upper bound for the confidence interval
     """
 
@@ -294,7 +293,7 @@ def conf_help(estimate:NDArray, inliers: list, transformed: NDArray, alpha=0.95,
             estimate: estimated coefficients
             inliers: estimated inliers from DecoR
             alpha: level for the confidence interval
-        Output:
+        Returns:
             H: Hat matrix for the coefficients beta
             sigma: estimated variance
             qt: (1-alpha)/2- quantile of the student-t distributions 

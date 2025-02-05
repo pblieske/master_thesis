@@ -1,5 +1,6 @@
 import os, random, pickle, json
 import numpy as np
+from tqdm import tqdm
 from pygam import LinearGAM, s
 from utils_nonlinear import get_results, get_data
 from synthetic_data import functions_nonlinear
@@ -75,20 +76,25 @@ y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["b
 
 for i in range(len(noise_vars)):
     print("Noise Variance: ", noise_vars[i])
-    res = {"DecoR": [], "ols": []}       
+    res = {"DecoR": [], "ols": []}
 
     for n in num_data:
-        print("number of data points: ", n)
         res["DecoR"].append([])
         res["ols"].append([])
         L=max((np.ceil(n**0.5)/L_frac[i]).astype(int),2)
         basis=get_funcbasis(x=test_points, L=L, type=method_args["basis_type"])
+
+        print("number of data points: ", n)
         print("number of coefficients: ", L)
 
-        for _ in range(m):
+        for _ in tqdm(range(m)):
+
+            # Get the data
             data_values = get_data(n, **data_args, noise_var=noise_vars[i])
             data_values.pop('u') 
             outlier_points=data_values.pop('outlier_points')
+
+            # Fit DecoR
             estimates_decor = get_results(**data_values, **method_args, L=L)
             y_est=basis @ estimates_decor["estimate"]
             y_est=np.ndarray((n_x, 1), buffer=y_est)
@@ -98,10 +104,10 @@ for i in range(len(noise_vars)):
             y_bench= basis @ estimates_fourrier["estimate"]
             y_bench=np.ndarray((n_x, 1), buffer=y_bench)
             """
-
+            # Fit the benchmark model
             x=np.reshape(data_values["x"], (-1,1))
             y=data_values["y"]
-            gam = LinearGAM(s(0)).gridsearch(x, y)
+            gam = LinearGAM(s(0)).gridsearch(x, y, progress=False)
             y_bench=gam.predict(test_points)
            
             res["DecoR"][-1].append(1/n_x*len_test*np.linalg.norm(y_true-y_est, ord=1))

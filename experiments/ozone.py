@@ -1,37 +1,38 @@
-import sys
-sys.path.insert(0, '/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_thesis/code/master_thesis')
-
+import os
 from robust_deconfounding import DecoR
 from robust_deconfounding.robust_regression import Torrent
 from robust_deconfounding.utils import cosine_basis, get_funcbasis, get_funcbasis_multivariate
 from utils_nonlinear import get_results, plot_settings, get_conf, conf_help
 
-
-from pygam import GAM, s, intercept, te
+from pygam import GAM, s, intercept
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import Ridge
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
 """
-    We apply our methods to the ozon dataset.
+    We apply the nonlinear extension of DecoR to the ozon dataset to estimate the influence of the daily ozone level (X_t) onto the number of deaths (Y_t).
+    For this, we use a delay of the effect of one day and include as a second covariate the daily mean temperature to adjust for heatwaves. The effects
+    are asumed to be additive. We compare it with the estimation from:
+    "Time series regression studies in environmental epidemiology"
+    Authors: Bhaskaran, Krishnan and Gasparrini, Antonio and Hajat, Shakoor and Smeeth, Liam and Armstrong, Ben
+    url: https://academic.oup.com/ije/article/42/4/1187/657875
 """
 
-colors, ibm_cb = plot_settings()
+path_data=os.path.join(os.path.dirname(__file__), "data/")      # Path of data
+colors, ibm_cb = plot_settings()                                # Colors for plotting      
+
 
 # ----------------------------------
 # Read the data
 # ----------------------------------
 
-df = pd.read_stata('/mnt/c/Users/piobl/Documents/msc_applied_mathematics/4_semester/master_thesis/data_environmental_epidemology/ije-2012-10-0989-File003.dta')
-n=df.shape[0]
-x=np.array(df.loc[ : , "ozone"])
+df = pd.read_stata(path_data+"ozone.dta")
+n=df.shape[0]                               #number of samples
+x=np.array(df.loc[ : , "ozone"])            
 y=np.array(df.loc[: , "numdeaths"])
 u=np.array(df.loc[:, "temperature"])
 date=np.array(df.loc[:, "date"])
-#print("Corelation temperature and ozone: " + str(np.corrcoef(x,u)))
-#print("Corelation temperature and numdeaths: " + str(np.corrcoef(y,u)))
 
 
 # ----------------------------------
@@ -92,13 +93,13 @@ bench_mark="spline"         #Benchmark type
 L=6                         #Number of coefficinet for DecoR regression only on ozone levels
 L_adjst=np.array([6, 6])    #Number of coefficients, [ozone, temperature]
 
-#if method_args["method"] in ["torrent_cv", "torrent_reg"]:
+# If method_args["method"] in ["torrent_cv", "torrent_reg"]:
 diag=np.concatenate((np.array([0]), np.array([i**2 for i in range(1,L_adjst[0]+1)]), np.array([i**4 for i in range(1,L_adjst[1]+1)])))
 K=np.diag(diag)
 Lmbd=np.array([10**(i/40) for i in range(-300, 80)])
 n_x=200     #Resolution of x-axis
 
-#Compute matrices to obtain estimations of y
+# Compute matrices to obtain estimations of y
 test_points=np.linspace(0, 1, num=n_x)
 test_points_adjst=np.stack((test_points, np.repeat(0, n_x)))
 test_points_adjst_temp=np.stack((np.repeat(0, n_x), test_points))
@@ -106,12 +107,12 @@ basis=get_funcbasis(x=test_points, L=L, type=method_args["basis_type"])
 basis_adjst=get_funcbasis_multivariate(x=test_points_adjst, L=L_adjst, type=method_args["basis_type"])
 basis_temp=get_funcbasis_multivariate(x=test_points_adjst_temp, L=L_adjst, type=method_args["basis_type"])
 
-#Fit DecoR without adjustement for the temperature
+# Fit DecoR without adjustement for the temperature
 estimates_decor=get_results(x=x_norm, y=y, **method_args, basis=cosine_basis(n-1), L=L, K=K, lmbd=0.001)
 y_est=basis @ estimates_decor["estimate"]
 ci=get_conf(x=test_points, **estimates_decor, L=L, alpha=0.95, basis_type=method_args["basis_type"])
 
-#Fit DecoR with adjustement for the temperature
+# Fit DecoR with adjustement for the temperature
 estimates_decor_adjst=get_results(x=X, y=y, **method_args, basis=cosine_basis(n-1), L=L_adjst, K=K, lmbd=10**(-4))
 y_adjst=basis_adjst @ estimates_decor_adjst["estimate"]
 ci_adjst_help=conf_help(**estimates_decor_adjst, L=L_adjst, alpha=0.95)
@@ -119,7 +120,7 @@ H=basis_adjst[:,1:(L_adjst[0]+1)]@(ci_adjst_help['H'])[1:(L_adjst[0]+1), :]
 sigma=ci_adjst_help['sigma']*np.sqrt(np.diag(H@H.T))
 ci_adjst=np.stack((y_adjst-ci_adjst_help['qt']*sigma, y_adjst+ci_adjst_help['qt']*sigma)).T
 
-#Fit benchmark for comparison and to make the confounding visable    
+# Fit benchmark for comparison and to make the confounding visable    
 if bench_mark=="spline":
     gam = GAM(s(0)+intercept, lam=5).fit(np.reshape(X.T, (-1,2)), y) #, lam=Lmbd) 
     y_bench=gam.predict(test_points_adjst.T)
@@ -229,6 +230,7 @@ plt.xlabel("temperature ($C^\circ$)")
 plt.title("Influence of Temperature")
 plt.tight_layout()
 plt.show()
+
 
 # ----------------------------------
 # Comparing no-/adjustment to temperature
