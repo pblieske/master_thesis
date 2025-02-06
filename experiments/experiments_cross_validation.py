@@ -16,7 +16,7 @@ from robust_deconfounding.utils import get_funcbasis
     To rerun the experiment, set the "run_exp" variable to True.
 """
 
-run_exp=False            # Set to True for running the whole experiment and False to plot an experiment which was already run
+run_exp=True            # Set to True for running the whole experiment and False to plot an experiment which was already run
 
 
 # ----------------------------------
@@ -27,14 +27,14 @@ Lmbd_min=10**(-8)       # smallest regularization parameter lambda to be conside
 Lmbd_max=10**(1)        # largest regularization paramter lambda to be considered
 n_lmbd=100              # number of lambda to test
 L_cv=30                 # number of coefficient for the reuglarized torrent
-m=100                    # Number of Monte Carlo samples to draw
+m=10                    # Number of Monte Carlo samples to draw
                                                                            
 Lmbd=np.concatenate((np.array([0]),np.array([np.exp(i/n_lmbd*(np.log(Lmbd_max)-np.log(Lmbd_min))+np.log(Lmbd_min)) for i in range(0, n_lmbd)])))        # grid of regularization paramters   
 noise_vars = [0, 1, 4]                       # Variance of the noise
 num_data = [ 64, 128, 256, 1024, 8192]       # number of observations n
 
 data_args = {
-    "process_type": "oure",         # "uniform" | "oure"
+    "process_type": "blpnl",         # "uniform" | "oure"
     "basis_type": "cosine",         # "cosine" | "haar"
     "fraction": 0.25,               # fraction of frequencies that are confounded
     "beta": np.array([2]),      
@@ -134,13 +134,13 @@ for i in range(len(noise_vars)):
            
         # Saving the results to a pickle file
         res["DecoR"], res["ols"] = np.array(res["DecoR"]), np.array(res["ols"])
-        with open(path_results+"experiment_cv_noise_="+str(noise_vars[i])+'.pkl', 'wb') as fp:
+        with open(path_results+"experiment_cv_blp_noise_="+str(noise_vars[i])+'.pkl', 'wb') as fp:
             pickle.dump(res, fp)
             print('Results saved successfully to file.')
 
     else:
         # Loading the file with the saved results
-        with open(path_results+"experiment_cv_noise_="+str(noise_vars[i])+'.pkl', 'rb') as fp:
+        with open(path_results+"experiment_cv_blp_noise_="+str(noise_vars[i])+'.pkl', 'rb') as fp:
             res = pickle.load(fp)
     
     # Plotting the results

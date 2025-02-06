@@ -12,7 +12,7 @@ We plot the results, i.e. L^1-error, obtained from experiments_nonlinear.py
 The experiment can be selected by the variable "exp".
 """
 
-exp="uniform"     # "uniform" | "reflected_ou" | "sigmoid"
+exp="poly"     # "uniform" | "reflected_ou" | "sigmoid" | "poly"
 
 
 # ----------------------------------
@@ -36,7 +36,8 @@ m, noise_vars, num_data=  config["m"], np.array(config["noise_vars"]), np.array(
 # Load data and plotting
 # ----------------------------------
 
-if exp=="sigmoid":  
+if exp=="sigmoid" or exp=="poly":  
+    # Plot the two methods on to y-axis
     ax1 = plt.subplot()
     ax2 = ax1.twinx()
     ax1.hlines(0, num_data[0], num_data[-1], colors='black', linestyles='dashed')
@@ -69,11 +70,12 @@ else:
             res = pickle.load(fp)
         plot_results(res, num_data, m, colors=colors[i])
 
+
 # ----------------------------------
 # Set labels, legend and title
 # ----------------------------------
 
-titles = {"uniform": "Nonlinear (Uniform)", "reflected_ou": "Nonlinear (Reflected OU)", "sigmoid": "Sigmoid function ($L^1$-error)"}
+titles = {"uniform": "Nonlinear (Uniform)", "reflected_ou": "Nonlinear (Reflected OU)", "sigmoid": "Sigmoid function ($L^1$-error)", "poly": "Polynom Basis ($L^1$-error) "}
 
 def get_handles():
     point_1 = Line2D([0], [0], label='GAM', marker='o',
@@ -88,7 +90,7 @@ def get_handles():
                      color=ibm_cb[2], linestyle='-')
     return [point_1, point_2, point_3, point_4, point_5]
 
-if exp=="sigmoid":
+if exp=="sigmoid" or exp=="poly":
     ax1.set_ylabel("DecoR")
     ax2.set_ylabel("GAM")
 else:
@@ -98,7 +100,7 @@ plt.xlabel("number of data points")
 plt.title(titles[exp]) 
 plt.xscale('log')
 plt.xlim(left=num_data[0] - 2)
-plt.legend(handles=get_handles(), loc="upper right")
+plt.legend(handles=get_handles(), loc="center right")
 plt.tight_layout()
 
 plt.show()

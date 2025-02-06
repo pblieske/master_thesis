@@ -2,7 +2,7 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 
-from robust_deconfounding.utils import cosine_basis, get_funcbasis
+from robust_deconfounding.utils import  get_funcbasis
 from utils_nonlinear import get_data, plot_settings, conf_help, get_results
 from synthetic_data import functions_nonlinear
 from robust_deconfounding.robust_regression import Torrent_reg
@@ -10,7 +10,7 @@ from robust_deconfounding.decor import DecoR
 
 
 """
-    A visual example of cross-validation on the transformed data.
+    A visual example of cross-validation regularization paths on the transformed data.
 """
 
 SEED = 9

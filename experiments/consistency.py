@@ -41,7 +41,7 @@ The "num_data" variable is a list of increasing natural numbers that indicate th
 """
 
 
-exp="sigmoid"     # "uniform" | "reflected_ou" | "sigmoid"
+exp="poly"     # "uniform" | "reflected_ou" | "sigmoid" | "poly"
 
 
 # ----------------------------------
