@@ -12,7 +12,7 @@ We plot the results, i.e. L^1-error, obtained from experiments_nonlinear.py
 The experiment can be selected by the variable "exp".
 """
 
-exp="poly"     # "uniform" | "reflected_ou" | "sigmoid" | "poly"
+exp="sigmoid"     # "uniform" | "reflected_ou" | "sigmoid" | "poly"
 
 
 # ----------------------------------
@@ -60,8 +60,8 @@ if exp=="sigmoid" or exp=="poly":
         ax2=sns.lineplot(data=df, x="n", y="value", 
                     marker="o", dashes=False, errorbar=("ci", 95), err_style="band",
                     color=colors[i][0], legend=False, ax=ax2)  
-    ax2.set_ylim(-0.1, 20) 
-    ax1.set_ylim(-0.1, 4) 
+    ax2.set_ylim(-0.1, 27) 
+    ax1.set_ylim(-0.1, 7) 
         
 else:
     plt.hlines(0, num_data[0], num_data[-1], colors='black', linestyles='dashed')

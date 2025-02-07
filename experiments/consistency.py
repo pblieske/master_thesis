@@ -69,7 +69,7 @@ data_args["beta"]=np.array(data_args["beta"])
 # ----------------------------------
 
 n_x=200                 #Resolution of x-axis
-int_test=[0.1, 0.9]     #Interval [a,b] on which on compute the L^1-error
+int_test=[0, 1]     #Interval [a,b] on which on compute the L^1-error
 len_test=int_test[1]-int_test[0]
 test_points=np.array([int_test[0]+ i/(n_x)*len_test for i in range(n_x)])
 y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["beta"][0])
@@ -99,11 +99,6 @@ for i in range(len(noise_vars)):
             y_est=basis @ estimates_decor["estimate"]
             y_est=np.ndarray((n_x, 1), buffer=y_est)
 
-            """ 
-            estimates_fourrier= get_results(**data_values, method="ols", L=L_temp, a=0, outlier_points=outlier_points, basis_type=method_args["basis_type"])
-            y_bench= basis @ estimates_fourrier["estimate"]
-            y_bench=np.ndarray((n_x, 1), buffer=y_bench)
-            """
             # Fit the benchmark model
             x=np.reshape(data_values["x"], (-1,1))
             y=data_values["y"]
@@ -115,6 +110,6 @@ for i in range(len(noise_vars)):
 
     #Save the results using a pickle file
     res["DecoR"], res["ols"] = np.array(res["DecoR"]), np.array(res["ols"])
-    with open(path_results+"experiment_" + exp +'_noise_='+str(noise_vars[i])+'.pkl', 'wb') as fp:
+    with open(path_results+"experiment_new_" + exp +'_noise_='+str(noise_vars[i])+'.pkl', 'wb') as fp:
         pickle.dump(res, fp)
         print('Results saved successfully to file.')
