@@ -103,6 +103,17 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int|NDArray
                 indx_se=0 #int(np.ceil(indx_min/4))
             lmbd_se=lmbd[indx_se]
             algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=lmbd_se)
+        elif method =="torrent_cv2":
+            n_lmbd=len(lmbd)
+            err_cv=np.full([n_lmbd], np.nan)
+            #Perform cross-validation
+            for i in range(n_lmbd):
+                robust_algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=lmbd[i])
+                err_cv[i]=robust_algo.cv2(x=R, y=y)
+            # Find the index of the minimal estimated error
+            indx_min=np.argmin(err_cv)
+            lmbd_cv=lmbd[indx_min]
+            algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=lmbd_cv)
         else:
             raise ValueError("Invalid method")
 
@@ -351,7 +362,7 @@ def check_eigen(P:NDArray, S: list, G:list, lmbd=0, K=np.array([0])) -> dict:
 
 
 
-def bootstrap(x_test:NDArray, transformed:NDArray, estimate:NDArray, a: float, L: int|NDArray, basis_type:str, M=500) -> NDArray:
+def bootstrap(x_test:NDArray, transformed:NDArray,  a: float, L: int|NDArray, basis_type:str, M=500) -> NDArray:
     """
         Bootstrap!
     """
@@ -413,5 +424,3 @@ def double_bootstrap(x_test:NDArray, transformed:NDArray, estimate:NDArray, a: f
         actual_alpha[i, :]=np.sum(cov[:,(n_alpha-1-i),:], axis=0)/M
 
     return {'nominal': nominal_alpha, 'actual': actual_alpha}
-
-

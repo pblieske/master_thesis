@@ -16,7 +16,7 @@ from robust_deconfounding.utils import get_funcbasis
     To rerun the experiment, set the "run_exp" variable to True.
 """
 
-run_exp=True            # Set to True for running the whole experiment and False to plot an experiment which was already run
+run_exp=False            # Set to True for running the whole experiment and False to plot an experiment which was already run
 
 
 # ----------------------------------
@@ -77,7 +77,7 @@ def get_err(i, n, y_true, basis_tor, basis_cv, method_args, noise_var, L, L_cv, 
 
     # Compute the estimator of DecoR and the regulaized DecoR
     estimates_tor = get_results(**data_values, a=method_args["a"], method="torrent", basis_type=method_args["basis_type"], L=L)
-    estimates_cv = get_results(**data_values, a=method_args["a"], method="torrent_cv_se", basis_type=method_args["basis_type"], L=L_cv, lmbd=Lmbd, K=K)
+    estimates_cv = get_results(**data_values, a=method_args["a"], method="torrent_cv2", basis_type=method_args["basis_type"], L=L_cv, lmbd=Lmbd, K=K)
     y_tor=basis_tor @ estimates_tor["estimate"]
     y_tor=np.ndarray((n_x, 1), buffer=y_tor)
     y_cv= basis_cv @ estimates_cv["estimate"]

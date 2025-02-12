@@ -8,11 +8,14 @@ from utils_nonlinear import get_results, get_data, get_conf, bootstrap, plot_set
 from synthetic_data import functions_nonlinear
 
 """
-    We run a short simulation to test how the confidence intervals proposed in the thesis performs, in particualr we want to investigate the coverage.
-    The experiment can take several minutes to run, therefore the values are alread saved. To rerun the experiment, set the "run_exp" variable to True.
+    We run a simulation study to test how the confidence intervals proposed in the thesis performs, in particualr we want to investigate the coverage.
+    There are 4 methods test, the two analytical version using the all obersvations or only the estimated inliers of the transfromed sample, bootstraping and double bootstraping.
+    The experiment can take several hours to run, therefore the values are alread saved. To rerun the experiment, set the "run_exp" variable to True.
+    The underlying true function can be selected over the variable "f".
 """
 
-run_exp=True         # Set to True for running the whole experiment and False to plot an experiment which was already run
+f="sine"            # "sine" | "sigmoid", the underlying true function
+run_exp=False       # Set to True for running the whole experiment and False to plot an experiment which was already run
 
 
 # ----------------------------------
@@ -21,14 +24,14 @@ run_exp=True         # Set to True for running the whole experiment and False to
 
 test_points=np.array([0.1, 0.5, 0.9])                           # points for which the results are plotted
 alpha=np.array([0.7, 0.8, 0.85, 0.9, 0.925, 0.95, 0.975, 0.99]) # covergae to comute the confidence intervals 
-noise_vars = 1          # Variance of the noise
-n = 2**10               # number of observations n
+noise_vars = 1                                                  # Variance of the noise
+n = 2**10                                                       # number of observations n
 
 data_args = {
     "process_type": "uniform",      # "uniform" | "oure"
     "basis_type": "cosine",         # "cosine" | "haar"
     "fraction": 0.25,               # fraction of frequencies that are confounded
-    "beta": np.array([3]),      
+    "beta": np.array([2 if f=="sine" else 3]),      
     "band": list(range(0, 50))      # list(range(0, 50)) | None
 }
 
@@ -53,8 +56,8 @@ random.seed(SEED)
 # run experiments or load results
 # ----------------------------------
 
-n_x=len(test_points)    # number of test points
-n_alpha=len(alpha)      # number of coverage levels to be considered
+n_x=len(test_points)            # number of test points
+n_alpha=len(alpha)              # number of coverage levels to be considered
 y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["beta"][0])   # underlying true functions value
 basis=get_funcbasis(x=test_points, L=L, type=method_args['basis_type'])                     # basis expansion for the test points
 # Initialize storage for the obtained coverage levels
@@ -78,7 +81,7 @@ if run_exp:
         # Perform double bootstraping to estimate the acutal coverage levels
         cov_double=double_bootstrap(x_test=test_points, transformed=estimates_decor["transformed"], estimate=estimates_decor["estimate"], a=method_args["a"], L=L, basis_type=method_args["basis_type"], M=M, B=B)
         # Boostrapping
-        boot=bootstrap(x_test=test_points, transformed=estimates_decor["transformed"], estimate=estimates_decor["estimate"], a=method_args["a"], L=L, basis_type=method_args["basis_type"], M=B)
+        boot=bootstrap(x_test=test_points, transformed=estimates_decor["transformed"], a=method_args["a"], L=L, basis_type=method_args["basis_type"], M=B)
         n_double=len(cov_double['nominal'])
 
         for i in range(n_alpha):
@@ -103,18 +106,18 @@ if run_exp:
             T_db[i,_,:]=(ci_db[:,1]>=y_true[:,0]) & (y_true[:,0]>=ci_db[:,0])
             T_l[i,_,:]=(ci_l[:,1]>=y_true[:,0]) & (y_true[:,0]>=ci_l[:,0])
 
-    # Compute the coverage
+    # Compute the actual estimated coverage
     for i in range(n_alpha):
          cov_l[i, :], cov_b[i,:], cov_db[i,:], cov_h[i,:]=np.sum(T_l[i, :, :], axis=0)/m, np.sum(T_b[i, :, :], axis=0)/m, np.sum(T_db[i, :, :], axis=0)/m, np.sum(T_h[i,:,:], axis=0)/m
 
     #Save the results using a pickle file
-    with open(path_results+"confidence_interval_2_" + '_noise_='+str(noise_vars)+  '.pkl', 'wb') as fp:
+    with open(path_results+"confidence_interval_" + str(data_args["beta"])+ '.pkl', 'wb') as fp:
             cov={'cov_l': cov_l, 'cov_b': cov_b, 'cov_db': cov_db, 'cov_h': cov_h}
             pickle.dump(cov, fp)
 
 else:
     # Loading the file with the saved results
-    with open(path_results+"confidence_interval_2_" + '_noise_='+str(noise_vars)+  '.pkl', 'rb') as fp:
+    with open(path_results+"confidence_interval_" + str(data_args["beta"])+'.pkl', 'rb') as fp:
         cov = pickle.load(fp)
         cov_l, cov_b, cov_db, cov_h= cov['cov_l'], cov['cov_b'], cov['cov_db'], cov['cov_h']
 
