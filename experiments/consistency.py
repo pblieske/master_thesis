@@ -68,8 +68,8 @@ data_args["beta"]=np.array(data_args["beta"])
 # run experiments
 # ----------------------------------
 
-n_x=200                 #Resolution of x-axis
-int_test=[0, 1]     #Interval [a,b] on which on compute the L^1-error
+n_x=200                 # Resolution of x-axis
+int_test=[0, 1]         # Interval [a,b] on which on compute the L^1-error
 len_test=int_test[1]-int_test[0]
 test_points=np.array([int_test[0]+ i/(n_x)*len_test for i in range(n_x)])
 y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["beta"][0])

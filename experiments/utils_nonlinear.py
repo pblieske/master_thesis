@@ -4,8 +4,7 @@ from numpy.typing import NDArray
 import statsmodels.api as sm
 import pandas as pd
 import seaborn as sns
-import pylab, json
-import matplotlib.pyplot as plt
+import pylab, random
 
 
 from robust_deconfounding.robust_regression import Torrent, BFS, Torrent_reg
@@ -349,3 +348,70 @@ def check_eigen(P:NDArray, S: list, G:list, lmbd=0, K=np.array([0])) -> dict:
 
     #Check the eigenvalue condition and return fraction
     return {'condition': max/min<= 1/np.sqrt(2), 'fraction': max/min}
+
+
+
+def bootstrap(x_test:NDArray, transformed:NDArray, estimate:NDArray, a: float, L: int|NDArray, basis_type:str, M=500) -> NDArray:
+    """
+        Bootstrap!
+    """
+
+    xn=transformed["xn"]
+    yn=transformed["yn"]
+    n=xn.shape[0]
+    basis=get_funcbasis(x=x_test, L=L, type=basis_type)
+    boot= np.full([M, len(x_test)], np.nan)
+
+    for _ in range(M):
+        ind=np.random.choice(np.arange(n), size=n, replace=True)
+        R, y=xn[ind,:], yn[ind]
+        algo = Torrent_reg(a=a, fit_intercept=False, lmbd=0, K=np.array([0]))
+        algo.fit(R, y)
+        boot[_, :]=basis @ algo.coef
+    
+    boot=np.sort(boot, axis=0)
+
+    return boot
+
+
+def double_bootstrap(x_test:NDArray, transformed:NDArray, estimate:NDArray, a: float, L: int|NDArray, basis_type:str, M=100, B=200) -> dict:
+    """
+        Returns the esimtated coverage using double bootstraping.
+    """
+
+    xn=transformed["xn"]
+    yn=transformed["yn"]
+    M=int(2*np.ceil(M/2))    #Make sure that M is even to keep it simple
+    n=xn.shape[0]
+    n_alpha=int(B/2)
+
+    basis=get_funcbasis(x=x_test, L=L, type=basis_type)
+    y_est=basis @ estimate
+    nominal_alpha=np.array([2*i / B for i in range(int(B/2))])
+    cov=np.full([M, int(B/2), len(x_test)], np.nan)
+
+    for i in range(M):
+        ind=np.random.choice(np.arange(n), size=n, replace=True)
+        R, y=xn[ind,:], yn[ind]
+        algo1 = Torrent_reg(a=a, fit_intercept=False, lmbd=0, K=np.array([0]))
+        algo1.fit(R, y)
+        y_1=basis@ algo1.coef
+
+        boot_double=np.full([B, len(x_test)], np.nan)
+        for j in range(B):
+            ind_double=np.random.choice(np.arange(n), size=n, replace=True)
+            R_double, y_double = R[ind_double,:], y[ind_double]
+            algo = Torrent_reg(a=a, fit_intercept=False, lmbd=0, K=np.array([0]))
+            algo.fit(R_double, y_double)
+            boot_double[j, :]=basis @ algo.coef
+
+        boot_double=np.sort(boot_double, axis=0)
+        cov[i,:, :]=(2*y_1-boot_double[range(B-1,int(B/2)-1, -1),:]<= np.repeat([y_est],  int(B/2), axis=0)) &  (np.repeat([y_est],  int(B/2), axis=0) <= 2*y_1-boot_double[0:int(B/2), :])
+
+    actual_alpha=np.full([n_alpha, len(x_test)], np.nan)
+    for i in range(n_alpha):
+        actual_alpha[i, :]=np.sum(cov[:,(n_alpha-1-i),:], axis=0)/M
+
+    return {'nominal': nominal_alpha, 'actual': actual_alpha}
+
+

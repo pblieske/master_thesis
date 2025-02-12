@@ -283,3 +283,29 @@ class Torrent_reg(BaseRobustRegression):
             err_cv[i]=err
 
         return  {"pred_err": err_cv, "S": S}
+    
+    
+    def cv2(self, x: NDArray, y: NDArray, k=10) -> float:
+
+        """
+            Estimates the prediction error using cross validation. Since outliers are contained in the test set, we negelect the a largest residuals.
+            k: The number of folds
+            Returns the estimated generalization error.
+        """
+        
+        n=len(y)            # number of data points
+        err=0               # allocate memory for the estimated prediction error
+        fold_size=n//k      # cardinality of the folds
+        ak = int(self.a * fold_size)
+
+        for j in range(k):
+            partition=np.random.permutation(np.arange(n))
+            ind=[i for i in partition[j*fold_size:(j+1)*fold_size]] 
+            X_train, Y_train=x[-ind], y[-ind]
+            X_test, Y_test=x[ind], y[ind]
+            coef=self.fit(X_train, Y_train).coef
+            r = np.linalg.norm(Y_test - X_test @ coef, axis=1)
+            inliers = np.argpartition(err, ak)[:ak]
+            err=err+np.linalg.norm(r[inliers], ord=1)/(k*fold_size)
+
+        return  err
