@@ -82,13 +82,13 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int|NDArray
             algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=lmbd)
         elif method =="torrent_cv":
             robust_algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=0)
-            cv=robust_algo.cv(x=basis.T @ R/n, y =basis.T @ y/n, Lmbd=lmbd)
+            cv=robust_algo.cv(x=R, y=y, Lmbd=lmbd)
             err_cv=cv["pred_err"]
             lmbd_cv=lmbd[np.argmin(err_cv)]
             algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=lmbd_cv)
         elif method =="torrent_cv_se":
             robust_algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=0)
-            cv=robust_algo.cv(x=basis.T @ R/n, y=basis.T @ y/n, Lmbd=lmbd)
+            cv=robust_algo.cv(x=R, y=y, Lmbd=lmbd)
             err_cv=cv["pred_err"]
             # Find the index of the minimal estimated error
             indx_min=np.argmin(err_cv)
@@ -96,7 +96,7 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int|NDArray
             # Compute the variance
             estimates_decor = get_results(x=x, y=y, basis=basis, method="torrent_reg", basis_type=basis_type, a=a, L=L, lmbd=lmbd[indx_min], K=K)
             conf=conf_help(**estimates_decor, L=L, alpha=0.95)
-            sigma=conf["sigma"]/10
+            sigma=conf["sigma"]/2
             try:
                 indx_se=max(np.array(range(indx_min))[np.array(err_cv[0:indx_min]>=err_cv[indx_min]+sigma)])
             except:
@@ -109,10 +109,11 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int|NDArray
             #Perform cross-validation
             for i in range(n_lmbd):
                 robust_algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=lmbd[i])
-                err_cv[i]=robust_algo.cv2(x=basis.T @ R/n, y =basis.T @ y/n, k=5)
+                err_cv[i]=robust_algo.cv2(x=R, y=y)
             # Find the index of the minimal estimated error
             indx_min=np.argmin(err_cv)
             lmbd_cv=lmbd[indx_min]
+            print(lmbd_cv)
             algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=lmbd_cv)
         else:
             raise ValueError("Invalid method")

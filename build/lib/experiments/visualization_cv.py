@@ -29,7 +29,7 @@ L=30                    # number of coefficient for the reuglarized torrent
                                                                            
 Lmbd=np.array([np.exp(i/n_lmbd*(np.log(Lmbd_max)-np.log(Lmbd_min))+np.log(Lmbd_min)) for i in range(0, n_lmbd)])        # grid of regularization paramters   
 noise_vars = 4          # Variance of the noise
-n = 2**10                # number of observations n
+n = 2**8                # number of observations n
 
 data_args = {
     "process_type": "uniform",      # "uniform" | "oure"
@@ -68,26 +68,13 @@ outlier_points=data_values.pop('outlier_points')
 diag=np.concatenate((np.array([0]), np.array([i**4 for i in range(1,L+1)])))
 K=np.diag(diag)
 R=get_funcbasis(x=data_values["x"], L=L, type=method_args["basis_type"])
-xn = data_values["basis"].T @ R / n
-yn = data_values["basis"].T @ data_values['y'] / n
+
 #Perform the Cross-Validation
-
-err_cv=np.full([n_lmbd], float(0))
-
-for i in range(n_lmbd):
-    for j in range(100):
-        robust_algo = Torrent_reg(a=method_args['a'], fit_intercept=False, K=K, lmbd=Lmbd[i])
-        err=robust_algo.cv2(x=xn, y=yn)/100
-        err_cv[i]+=err
-
-"""
 robust_algo = Torrent_reg(a=method_args["a"], fit_intercept=False, K=K, lmbd=0)
-cv=robust_algo.cv(x=xn, y=yn, Lmbd=Lmbd)
+cv=robust_algo.cv(x=R, y=data_values["y"], Lmbd=Lmbd)
 err_cv=cv["pred_err"]
-"""
 indx_min=np.argmin(err_cv)
 lmbd_cv=Lmbd[indx_min]
-
 
 #Estimate the variance
 sigma=np.zeros((n_lmbd,1))
@@ -95,7 +82,7 @@ for i in range(n_lmbd):
     estimates_decor = get_results( **data_values, **method_args, L=L, lmbd=Lmbd[i], K=K)
     conf=conf_help(**estimates_decor, L=L, alpha=0.95, K=K)
     sigma[i]=conf["sigma"]
-sigma=sigma[:,0]/10
+sigma=sigma[:,0]/2
 
 try:
     indx_se=max(np.array(range(indx_min))[np.array(err_cv[0:indx_min]>=err_cv[indx_min]+sigma[indx_min])])

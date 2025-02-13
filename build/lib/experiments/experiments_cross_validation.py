@@ -16,7 +16,7 @@ from robust_deconfounding.utils import get_funcbasis
     To rerun the experiment, set the "run_exp" variable to True.
 """
 
-run_exp=True           # Set to True for running the whole experiment and False to plot an experiment which was already run
+run_exp=True            # Set to True for running the whole experiment and False to plot an experiment which was already run
 
 
 # ----------------------------------
@@ -27,14 +27,14 @@ Lmbd_min=10**(-8)       # smallest regularization parameter lambda to be conside
 Lmbd_max=10**(1)        # largest regularization paramter lambda to be considered
 n_lmbd=100              # number of lambda to test
 L_cv=30                 # number of coefficient for the reuglarized torrent
-m=20                    # Number of Monte Carlo samples to draw
+m=10                    # Number of Monte Carlo samples to draw
                                                                            
 Lmbd=np.array([np.exp(i/n_lmbd*(np.log(Lmbd_max)-np.log(Lmbd_min))+np.log(Lmbd_min)) for i in range(0, n_lmbd)])      # grid of regularization paramters   
 noise_vars = [0, 1, 4]                       # Variance of the noise
 num_data = [ 64, 128, 256, 1024] #, 8192]       # number of observations n
 
 data_args = {
-    "process_type": "uniform",      # "uniform" | "oure"
+    "process_type": "blpnl",         # "uniform" | "oure"
     "basis_type": "cosine",         # "cosine" | "haar"
     "fraction": 0.25,               # fraction of frequencies that are confounded
     "beta": np.array([2]),      
@@ -106,11 +106,11 @@ for i in range(len(noise_vars)):
 
             # Run DecoR and DecoR with cross validation for m random sample
             err=pool.starmap(get_err, ((j , n,  y_true, basis_tor, basis_cv, method_args, noise_vars[i], L, L_cv, Lmbd, K) for j in range(m)))
+
             # Add results to the list
             err = np.array(err).reshape(-1, 2)
-            for j in range(m):
-                res["ols"][-1].append(err[j, 0])
-                res["DecoR"][-1].append(err[j, 1])
+            res["ols"][-1].append(err[:, 0])
+            res["DecoR"][-1].append(err[:, 1])
 
             """
             # Run Monte Carlo simulation
@@ -171,7 +171,7 @@ plt.ylabel("$L^1$-error")
 plt.title("Regularization using Cross-Validation")
 plt.xscale('log')
 plt.xlim(left=num_data[0] - 2)
-plt.ylim(-0.1, 10)
+plt.ylim(-0.1, 2)
 plt.hlines(0, num_data[0], num_data[-1], colors='black', linestyles='dashed')
 plt.legend(handles=get_handles(), loc="upper right")
 plt.tight_layout()
