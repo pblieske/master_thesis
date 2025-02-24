@@ -20,7 +20,7 @@ from matplotlib.lines import Line2D
 """
 
 path_data=os.path.join(os.path.dirname(__file__), "data/")      # Path of data
-colors, ibm_cb = plot_settings()                                # Colors for plotting      
+colors, ibm_cb = plot_settings()                                # Colors for plotting     
 
 
 # ----------------------------------

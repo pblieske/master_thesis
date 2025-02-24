@@ -12,7 +12,7 @@ We plot the results, i.e. L^1-error, obtained from experiments_nonlinear.py
 The experiment can be selected by the variable "exp".
 """
 
-exp="sigmoid"     # "uniform" | "reflected_ou" | "sigmoid" | "poly"
+exp="uniform"     # "uniform" | "reflected_ou" | "sigmoid" | "poly"
 
 
 # ----------------------------------
@@ -68,6 +68,7 @@ else:
     for i in range(len(noise_vars)):
         with open(path_results+"experiment_" + exp +'_noise_='+str(noise_vars[i])+'.pkl', 'rb') as fp:
             res = pickle.load(fp)
+        print(res)
         plot_results(res, num_data, m, colors=colors[i])
 
 

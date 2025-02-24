@@ -109,11 +109,23 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int|NDArray
             #Perform cross-validation
             for i in range(n_lmbd):
                 robust_algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=lmbd[i])
-                err_cv[i]=robust_algo.cv2(x=basis.T @ R/n, y =basis.T @ y/n, k=5)
+                err_cv[i]=robust_algo.cv2(x=basis.T @ R/n, y =basis.T @ y/n, k=20)
             # Find the index of the minimal estimated error
             indx_min=np.argmin(err_cv)
             lmbd_cv=lmbd[indx_min]
             algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=lmbd_cv)
+        elif method == "torrent_boot":
+            n_lmbd=len(lmbd)
+            err_inl, err_cap=np.full([n_lmbd], np.nan), np.full([n_lmbd], np.nan)
+            #Perform cross-validation
+            for i in range(n_lmbd):
+                robust_algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=lmbd[i])
+                err_cv[i]=robust_algo.cv2(x=basis.T @ R/n, y =basis.T @ y/n, k=20)
+            # Find the index of the minimal estimated error
+            indx_min=np.argmin(err_cv)
+            lmbd_cv=lmbd[indx_min]
+            algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=lmbd_cv)
+
         else:
             raise ValueError("Invalid method")
 
@@ -332,6 +344,63 @@ def conf_help(estimate:NDArray, inliers: list, transformed: NDArray, alpha=0.95,
 
     return{'sigma': sigma, 'H':H , 'qt': qt}
 
+def conf_clip(x:NDArray, estimate:NDArray, transformed: NDArray, a: float, inliers: list, alpha=0.95, L=0, basis_type="cosine_cont", lmbd=0, K=np.diag(np.array([0]))) -> NDArray:
+    """
+        Returns a confidence interval for the estimated f evaluated at x.
+        Caution: We use all points to estimate the variance (not only the inliers) to avoid a underestimation and 
+                to countersteer the fact we only get an interval for \hat{f}
+        Arguements:
+            x: Points where confidence interval should be evaluated
+            estimate: estimated coefficients
+            inliers: estimated inliers from DecoR
+            alpha: level for the confidence interval
+            w: weight to take into acount the variance, estiamted using only the inliers : (1-w)*variance_large+w*variance_small
+        Returns:
+            ci=[ci_l, ci_u]: the lower and upper bound for the confidence interval
+    """
+
+    xn=transformed["xn"]
+    yn=transformed["yn"]
+  
+    if isinstance(L, (int, np.int64)):
+        basis=get_funcbasis(x=x, L=L, type=basis_type)
+        L_tot=L
+    else:
+        basis=get_funcbasis_multivariate(x=x, L=L, type=basis_type)
+        L_tot=np.sum(L)+1
+
+    n=xn.shape[0] 
+    an = int(a * n)
+
+    #Estimate the variance
+    r=yn- xn@estimate.T
+    df=n-L_tot
+    r = np.abs(yn - xn@ estimate.T)
+    # Compute error using hard thersholding
+    """
+    m=np.sort(r)[an]
+
+    r_cap=np.minimum(r, np.full([n], m))
+    sigma_2=np.sum(np.square(r_cap), axis=0)/df 
+    print(sigma_2)
+    """
+    sigma_2=(np.sort(r)[int(n/2)]*1.4826)**2
+    print(sigma_2)
+    H_help=np.linalg.solve(xn.T @ xn + lmbd*K, xn.T)
+    H=basis @ H_help
+    sigma=np.sqrt(sigma_2 * np.diag(H @ H.T))
+
+    #Compute the confidence interval
+    qt=sp.stats.t.ppf((1-alpha)/2, an-L_tot) #*np.sqrt(np.pi/2)*np.e/(4*n)
+
+    #qt=sp.stats.norm.ppf((1-alpha)/2, loc=0, scale=1)
+
+    ci_u=basis@estimate.T - qt*sigma
+    ci_l=basis@estimate.T + qt*sigma
+    ci=np.stack((ci_l, ci_u), axis=-1)
+
+    return ci
+
 
 def check_eigen(P:NDArray, S: list, G:list, lmbd=0, K=np.array([0])) -> dict:
     """
@@ -424,3 +493,51 @@ def double_bootstrap(x_test:NDArray, transformed:NDArray, estimate:NDArray, a: f
         actual_alpha[i, :]=np.sum(cov[:,(n_alpha-1-i),:], axis=0)/M
 
     return {'nominal': nominal_alpha, 'actual': actual_alpha}
+
+
+def err_boot( transformed:NDArray, a: float, lmbd=0, K=np.array([0]), B=100) -> dict:
+    """
+    Estimate the prediction error on the transformed smaple using a out-of bootstrap estimation.
+    Arguemnts:
+        transformed: transformed sample
+        a: number of outliers to remove
+        lmbd: regularization parameter
+        K: regualrization matrix
+        B: number of bootstrap samples to draw
+    Returns:
+        err_inl: out-of bootstrap estimation using the a smallest residuals
+        err_cap: out-of bootstrap estimation clipping the residuals at the c-a largest value
+        err_m: out of bootstrap estimation using the median residual
+    """
+
+    xn=transformed["xn"]
+    yn=transformed["yn"]
+    n=xn.shape[0]
+    err_inl, err_cap, err_m=np.full([B], np.nan), np.full([B], np.nan), np.full([B], np.nan)
+
+    for _ in range(B):
+        # Draw sample with replacement
+        ind=np.random.choice(np.arange(n), size=n, replace=True)
+        R_train, y_train=xn[ind,:], yn[ind]
+        R_test, y_test=xn[-ind, :], yn[-ind].reshape(-1, 1)
+        l=len(y_test)
+        al=int(l*a)
+
+        # Fit regularized Torrent
+        algo = Torrent_reg(a=a, fit_intercept=False, lmbd=lmbd, K=K)
+        algo.fit(R_train, y_train)
+        r = np.linalg.norm(y_test - (R_test @ algo.coef).reshape(-1,1), axis=1)
+
+        # Compute error using hard thersholding
+        m=np.sort(r)[al]
+        r_cap=np.minimum(r, np.full([l], m))
+        err_cap[_]=np.linalg.norm(r_cap, ord=1)/(B*l)
+
+        # Compute error neglecating the largests residuals
+        inliers = np.argpartition(r, al)[:al]
+        err_inl[_]= np.linalg.norm(r[inliers], ord=1)/(B*al)
+
+        # Compute the median error
+        err_m[_]=np.sort(r)[int(n/2)]/B
+
+    return {'err_inl': err_inl, 'err_cap': err_cap, 'err_m': err_m}
