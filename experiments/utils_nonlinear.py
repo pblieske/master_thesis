@@ -538,6 +538,6 @@ def err_boot( transformed:NDArray, a: float, lmbd=0, K=np.array([0]), B=100) -> 
         err_inl[_]= np.linalg.norm(r[inliers], ord=1)/(B*al)
 
         # Compute the median error
-        err_m[_]=np.sort(r)[int(n/2)]/B
+        err_m[_]=np.sort(r)[int(l/2)]/B
 
     return {'err_inl': err_inl, 'err_cap': err_cap, 'err_m': err_m}

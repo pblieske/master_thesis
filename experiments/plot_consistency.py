@@ -8,8 +8,8 @@ import pandas as pd
 from utils_nonlinear import  plot_results,  plot_settings
 
 """
-We plot the results, i.e. L^1-error, obtained from experiments_nonlinear.py
-The experiment can be selected by the variable "exp".
+    We plot the results, i.e. L^1-error, obtained from experiments_nonlinear.py
+    The experiment can be selected by the variable "exp".
 """
 
 exp="uniform"     # "uniform" | "reflected_ou" | "sigmoid" | "poly"

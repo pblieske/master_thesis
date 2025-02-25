@@ -9,8 +9,8 @@ from utils_nonlinear import get_results, get_data, plot_settings, get_conf, boot
 from synthetic_data import functions_nonlinear
 
 """
-We provide a visualization of a fitted curve using the cosine approximation.
-For this we simulated only one draw for a fixed number of observations n, for Monte Carlo simulations look at consistency.py.
+    We provide a visualization of a fitted curve using the cosine approximation.
+    For this we simulated only one draw for a fixed number of observations n, for Monte Carlo simulations look at consistency.py.
 """
 
 colors, ibm_cb = plot_settings()

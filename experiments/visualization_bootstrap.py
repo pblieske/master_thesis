@@ -11,7 +11,7 @@ from synthetic_data import functions_nonlinear
     The three methods are clipping, taking the smallest share and take the median of the residuals.
 """
 
-SEED = 9
+SEED = 1
 np.random.seed(SEED)
 random.seed(SEED)
 
@@ -20,7 +20,7 @@ random.seed(SEED)
 # Parameter
 # ----------------------------------
 
-B=200                   # Number of bootsrap samples to draw
+B=500                   # Number of bootsrap samples to draw
 Lmbd_min=10**(-8)       # smallest regularization parameter lambda to be considered
 Lmbd_max=10**(1)        # largest regularization paramter lambda to be considered
 n_lmbd=200              # number of lambda to test
@@ -113,17 +113,17 @@ axs[1].set_xscale('log')
 # Plot the median
 axs[2].plot(Lmbd, err_m_m)
 axs[2].fill_between(Lmbd, y1=err_m_m-err_m_sd, y2=err_m_m+err_m_sd, color=ibm_cb[1], alpha=0.1)
-axs[2].axvline(x=lmbd_inl, linestyle="dashed", color=ibm_cb[2])
-axs[2].text(lmbd_m, 0.5*min(err_m_m)+0.5*max(err_m_m), "$\lambda_{min}$", color=ibm_cb[2], rotation=90)
+axs[2].axvline(x=lmbd_m, linestyle="dashed", color=ibm_cb[2])
+axs[2].text(lmbd_m/4, 0.5*min(err_m_m)+0.5*max(err_m_m), "$\lambda_{min}$", color=ibm_cb[2], rotation=90)
 axs[2].set_xscale('log')
 
 #Labeling
 axs[0].set_xlabel("$\lambda$")
 axs[1].set_xlabel("$\lambda$")
 axs[2].set_xlabel("$\lambda$")
-axs[0].set_ylabel("Estimated Prediction Error")
+axs[0].set_ylabel("Estimated Generalization Error")
 axs[0].set_title("Clipping")
-axs[1].set_title("Inliers")
+axs[1].set_title("Omitting")
 axs[2].set_title("Median")
 plt.tight_layout()
 plt.show()
