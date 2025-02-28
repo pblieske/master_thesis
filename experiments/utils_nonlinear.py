@@ -80,6 +80,9 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int|NDArray
             algo = BFS(a=a, fit_intercept=False)
         elif method == "torrent_reg":
             algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=lmbd)
+        else:
+            raise ValueError("Invalid method")
+        """
         elif method =="torrent_cv":
             robust_algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=0)
             cv=robust_algo.cv(x=basis.T @ R/n, y =basis.T @ y/n, Lmbd=lmbd)
@@ -125,9 +128,7 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int|NDArray
             indx_min=np.argmin(err_cv)
             lmbd_cv=lmbd[indx_min]
             algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=lmbd_cv)
-
-        else:
-            raise ValueError("Invalid method")
+        """
 
         algo = DecoR(algo, basis)
         algo.fit(R, y)
@@ -185,17 +186,19 @@ def get_data(n: int, process_type: str, basis_type: str, fraction: float, beta: 
     if process_type == "ou":
         generator = OUDataGenerator(basis_type=basis_type, beta=beta, noise_var=noise_var)
     elif process_type == "blp":
-        generator = BLPDataGenerator(basis_type=basis_type, beta=beta, noise_var=noise_var, band=band)
-    elif process_type=="blpnl":
-        generator = BLPNonlinearDataGenerator(basis_type=basis_type, beta=beta, noise_var=noise_var, band=band, noise_type=noise_type)
-    elif process_type=="ounl":
-        generator = OUNonlinearDataGenerator(basis_type=basis_type, beta=beta, noise_var=noise_var, noise_type=noise_type)
+        generator = BLPDataGenerator(basis_type=basis_type, beta=beta, noise_var=noise_var, band=band)   
     elif process_type=="uniform":
         generator =  UniformNonlinearDataGenerator(basis_type=basis_type, beta=beta, noise_var=noise_var)
     elif process_type=="oure":
         generator= OUReflectedNonlinearDataGenerator(basis_type=basis_type, beta=beta, noise_var=noise_var, noise_type=noise_type)
     else:
         raise ValueError("process_type not implemented")
+    """
+    elif process_type=="blpnl":
+        generator = BLPNonlinearDataGenerator(basis_type=basis_type, beta=beta, noise_var=noise_var, band=band, noise_type=noise_type)
+    elif process_type=="ounl":
+        generator = OUNonlinearDataGenerator(basis_type=basis_type, beta=beta, noise_var=noise_var, noise_type=noise_type)
+    """
 
     if basis_type == "cosine":
         basis = cosine_basis(n)
