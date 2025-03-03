@@ -14,9 +14,8 @@ from synthetic_data import functions_nonlinear
     The underlying true function can be selected over the variable "f".
 """
 
-f="sine"            # "sine" | "sigmoid", the underlying true function
 run_exp=False       # Set to True for running the whole experiment and False to plot an experiment which was already run
-
+f="sine"            # "sine" | "sigmoid", the underlying true function
 
 # ----------------------------------
 # Parameters

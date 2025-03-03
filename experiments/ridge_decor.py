@@ -17,7 +17,7 @@ from robust_deconfounding.utils import get_funcbasis
     To rerun the experiment, set the "run_exp" variable to True.
 """
 
-run_exp=False          # Set to True for running the whole experiment and False to plot an experiment which was already run
+run_exp=False           # Set to True for running the whole experiment and False to plot an experiment which was already run
 
 
 # ----------------------------------

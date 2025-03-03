@@ -8,6 +8,3 @@ setuptools
 scikit-learn
 pygam
 tqdm
-multiprocessing
-os
-pickle
