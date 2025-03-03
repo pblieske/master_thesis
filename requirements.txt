@@ -6,5 +6,8 @@ pandas
 seaborn
 setuptools
 scikit-learn
-pyGAM
+pygam
 tqdm
+multiprocessing
+os
+pickle

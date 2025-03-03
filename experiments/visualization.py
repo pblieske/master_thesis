@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
 from robust_deconfounding.utils import get_funcbasis
-from utils_nonlinear import get_results, get_data, plot_settings, get_conf, bootstrap, conf_clip
+from utils_nonlinear import get_results, get_data, plot_settings, get_conf, conf_clip
 from synthetic_data import functions_nonlinear
 
 """

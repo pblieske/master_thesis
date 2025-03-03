@@ -73,11 +73,16 @@ yn = data_values["basis"].T @ data_values['y'] / n
 # Associate memory
 err_cap, err_inl, err_m=np.full([n_lmbd, B], float(0)), np.full([n_lmbd, B], float(0)) ,np.full([n_lmbd, B], float(0))
 estimates_decor = get_results( **data_values, **method_args, L=L, lmbd=0, K=K)
+basis=get_funcbasis(x=test_points, L=L, type=method_args["basis_type"])
+err_true=np.full([n_lmbd], np.nan)
 
 # Draw B boostrap samples
 for i in range(n_lmbd):
     boot=err_boot(transformed=estimates_decor['transformed'], a=method_args['a'], lmbd=Lmbd[i], K=K, B=B)
     err_cap[i,:], err_inl[i,:], err_m[i,:]=boot["err_cap"], boot["err_inl"], boot["err_m"]
+    estimate_decor= get_results(**data_values, **method_args, L=L, K=K, lmbd=Lmbd[i])
+    y_est=np.ndarray((n_x,1), buffer=basis @ estimates_decor["estimate"])
+    err_true=1/n_x*np.linalg.norm(y_true-y_est, ord=1)
 
 # Compute the average estimated error
 err_cap_m, err_inl_m, err_m_m=np.mean(err_cap, axis=1), np.mean(err_inl, axis=1), np.mean(err_m, axis=1)
@@ -89,6 +94,7 @@ err_cap_sd, err_inl_sd, err_m_sd=np.linalg.norm(err_cap-np.repeat(err_cap_m.resh
 indx_cap, indx_inl, indx_m=np.argmin(err_cap_m), np.argmin(err_inl_m), np.argmin(err_m_m)
 lmbd_cap, lmbd_inl, lmbd_m=Lmbd[indx_cap], Lmbd[indx_inl], Lmbd[indx_m]
 lmbd_cap_1sd, lmbd_inl_1sd, lmbd_m_1sd=Lmbd[min(np.arange(indx_cap,n_lmbd)[err_cap_m[indx_cap:n_lmbd]>err_cap_m[indx_cap]+err_cap_sd[indx_cap]])], Lmbd[min(np.arange(indx_inl,n_lmbd)[err_inl_m[indx_inl:n_lmbd]>err_inl_m[indx_inl]+err_inl_sd[indx_inl]])], Lmbd[min(np.arange(indx_m,n_lmbd)[err_m_m[indx_m:n_lmbd]>err_m_m[indx_m]+err_m_sd[indx_m]])]
+
 
 # ----------------------------------
 # plotting
@@ -122,6 +128,10 @@ axs[2].text(lmbd_m/4, 0.5*min(err_m_m)+0.5*max(err_m_m), "$\lambda_{min}$", colo
 axs[2].axvline(x=lmbd_m_1sd, linestyle="dashed", color=ibm_cb[3])
 axs[2].text(lmbd_m_1sd/4, 0.5*min(err_m_m)+0.5*max(err_m_m), "$\lambda_{1sd}$", color=ibm_cb[3], rotation=90)
 axs[2].set_xscale('log')
+
+# Plot the true error
+for i in range(3):
+    axs[i].plot(Lmbd, err_true, color='black')
 
 #Labeling
 axs[0].set_xlabel("$\lambda$")
