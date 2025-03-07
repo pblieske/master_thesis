@@ -91,6 +91,7 @@ def get_funcbasis(x:NDArray, L:int, type="cosine_cont", intercept=True)->NDArray
         raise ValueError("Invalid basis type")
     return basis
 
+
 def get_funcbasis_multivariate(x:NDArray, L:NDArray, type="cosine_cont")->NDArray:
     """
     Returns the first L basis vectors evaluated at x_1, x_2, ....

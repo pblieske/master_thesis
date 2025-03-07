@@ -8,12 +8,14 @@
 
 Master's Thesis write by Pio Blieske at the Seminar of Statistics at ETH Zürich under the supervision of Jonas Peters and Felix Schur. The repository was originally forked from https://github.com/fschur/robust_deconfounding.
 
+
 ## Abstract
 
 Put abstract here.
 
 
 ## Reproducing the results
+
 For full support of all scripts in the repository, for instance to reproduce the experiments, further dependencies need
 to be installed. 
 To do so, please run in the main directory of this repository 

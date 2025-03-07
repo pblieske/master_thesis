@@ -10,7 +10,7 @@ import pylab, random
 from robust_deconfounding.robust_regression import Torrent, BFS, Torrent_reg
 from robust_deconfounding.decor import DecoR
 from robust_deconfounding.utils import cosine_basis, haarMatrix, get_funcbasis, get_funcbasis_multivariate
-from experiments.synthetic_data import BLPDataGenerator, OUDataGenerator, BLPNonlinearDataGenerator, OUNonlinearDataGenerator, UniformNonlinearDataGenerator, OUReflectedNonlinearDataGenerator
+from experiments.synthetic_data import BLPDataGenerator, OUDataGenerator, UniformNonlinearDataGenerator, OUReflectedNonlinearDataGenerator
 
 def plot_settings():
     """

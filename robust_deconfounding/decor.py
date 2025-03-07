@@ -56,6 +56,6 @@ class DecoR:
     
     @property
     def get_transformed(self) -> NDArray:
-        """Get the estimated inliniers from the regression model."""
+        """Get the the transformed sample from the regression model."""
         return {"xn": self.xn, "yn": self.yn}
     
