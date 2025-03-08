@@ -2,7 +2,6 @@ import numpy as np
 import scipy as sp
 from numpy.typing import NDArray
 from statsmodels.tsa.arima_process import ArmaProcess
-
 from robust_deconfounding.utils import cosine_basis, haarMatrix
 
 
@@ -10,12 +9,13 @@ class BaseDataGenerator:
     def __init__(self, basis_type: str, beta: NDArray, noise_var: float, noise_type="normal") -> None:
         """
         Base class for generating data for deconfounding experiments.
-
         Attributes:
             basis_type (str): Type of basis to use for transformation ("cosine", "haar", or None).
             beta (NDArray): True causal coefficient vector for the linear relationship.
             noise_var (float): Variance of the noise added to the data.
+            noise_type (str): Type of noise added to outcome and covariate
         """
+
         if basis_type not in ["cosine", "haar", None]:
             raise ValueError("basis not implemented")
         self.basis_type = basis_type
@@ -26,16 +26,15 @@ class BaseDataGenerator:
     def get_noise_vars(self, n: int, sizes: list[int]) -> tuple[NDArray, NDArray, NDArray]:
         """
         Generates noise terms for the data with different variances.
-
         Args:
             n (int): Number of data points.
             sizes (list[int]): Sizes of the noise arrays (for x, y, u).
-
         Returns:
             tuple[NDArray, NDArray, NDArray]: Noise arrays for x, y, u.
         """
+
         if self.noise_type=="uniform":
-            a=np.sqrt(3*self.noise_var)     #unifrom on the interval [-a,a]
+            a=np.sqrt(3*self.noise_var)     # unifrom on the interval [-a,a]
             b=np.sqrt(3/10)
             c=np.sqrt(3)
             noises = [np.random.uniform(-(a if i == 2 else (b if i==0 else c)), (a if i == 2 else (b if i==0 else c)), size=(n, size)) for i, size in enumerate(sizes)]
@@ -44,8 +43,6 @@ class BaseDataGenerator:
             c=np.sqrt(3/10)
             noise_u = np.random.normal(0, 1, size=(n, 1))
             noise_x = np.random.normal(0, 1, size=(n, 1))
-            #noise_u=np.random.uniform(-b, b, size=(n,1)) 
-            #noise_x= np.random.uniform(-c, c, size=(n,1))
             noise_y = np.random.normal(0, np.sqrt(self.noise_var), size=(n, 1))
             noises=[noise_u, noise_x, noise_y]
         elif self.noise_type=="normal_uniform":
@@ -63,10 +60,8 @@ class BaseDataGenerator:
     def get_basis(self, n: int):
         """
         Returns the chosen basis for data transformation.
-
         Args:
             n (int): Number of data points.
-
         Returns:
             NDArray: Basis matrix.
         """
@@ -81,16 +76,15 @@ class BaseDataGenerator:
     def basis_transform(u: NDArray, outlier_points: NDArray, basis: NDArray, n: int) -> NDArray:
         """
         Returns a version of 'u' that is sparse in 'basis'.
-
         Args:
             u (NDArray): The data to be transformed.
             outlier_points (NDArray): Indicator vector for outlier data points.
             basis (NDArray): The basis matrix for transformation (or None for Fourier transform).
             n (int): Number of data points.
-
         Returns:
             NDArray: Transformed data.
         """
+
         if basis is None:
             un = sp.fft.fft(u.T, norm="forward").T
             k = sp.fft.ifft(un * outlier_points, norm="forward")
@@ -119,14 +113,13 @@ class OUDataGenerator(BaseDataGenerator):
     def generate_data(self, n: int, outlier_points: NDArray):
         """
         Generates data from discretized Ornstein-Uhlenbeck processes with confounding.
-
         Args:
             n (int): Number of data points.
             outlier_points (NDArray): Indicator vector for outlier data points.
-
         Returns:
             tuple[NDArray, NDArray]: The generated data (x, y).
         """
+
         AR_object1, AR_object2 = self.get_ar(n)
 
         eu, ex, ey = self.get_noise_vars(n, [1, 1, 1])
@@ -146,11 +139,9 @@ class OUDataGenerator(BaseDataGenerator):
     def generate_data_2_dim(self, n: int, outlier_points: NDArray) -> tuple[NDArray, NDArray]:
         """
         Generates 2-dimensional data from discretized Ornstein-Uhlenbeck processes with confounding.
-
         Args:
             n (int): Number of data points.
             outlier_points (NDArray): Indicator vector for outlier data points.
-
         Returns:
             tuple[NDArray, NDArray]: The generated data (x, y).
         """
@@ -176,10 +167,8 @@ class OUDataGenerator(BaseDataGenerator):
         """
         Generates two discretized Ornstein-Uhlenbeck processes. Note that discretized Ornstein-Uhlenbeck processes are
         AR processes.
-
         Args:
             n (int): Number of data points.
-
         Returns:
             tuple[ArmaProcess, ArmaProcess]: Two AR models representing the processes.
         """
@@ -462,10 +451,8 @@ class OUNonlinearDataGenerator(BaseDataGenerator):
     
 class UniformNonlinearDataGenerator(BaseDataGenerator):
     """
-    Generates data with confounding concentrated in a specific frequency band.
+    Generates data based on a i.i.d. uniform distribtuion with confounding concentrated in a specific frequency band.
     The relation between x and y is assumued to be nonlinear and specified by the integer beta
-    Attributes:
-        band (list[int]): Frequency band for concentrated confounding (inclusive).
     """
     def __init__(self, basis_type: str, beta: NDArray, noise_var: float,  noise_type="uniform"):
         super().__init__(basis_type, beta, noise_var, noise_type)
@@ -514,20 +501,24 @@ class UniformNonlinearDataGenerator(BaseDataGenerator):
     
 
 class OUReflectedNonlinearDataGenerator(OUNonlinearDataGenerator):
+    """
+    Generates data based on a reflected Ornstein-Uhlenbeck process with confounding concentrated in a specific frequency band.
+    The relation between x and y is assumued to be nonlinear and specified by the integer beta
+    """
+
     def __init__(self, basis_type: str, beta: NDArray, noise_var: float, noise_type="normal"):
         super().__init__(basis_type, beta, noise_var, noise_type)
 
     def generate_data(self, n: int, outlier_points: NDArray):
         """
         Generates data from discretized Ornstein-Uhlenbeck processes with confounding.
-
         Args:
             n (int): Number of data points.
             outlier_points (NDArray): Indicator vector for outlier data points.
-
         Returns:
             tuple[NDArray, NDArray]: The generated data (x, y).
         """
+
         AR_object1, AR_object2 = self.get_ar(n)
 
         eu, ex, ey = self.get_noise_vars(n, [1, 1, 1])
@@ -563,16 +554,14 @@ class OUReflectedNonlinearDataGenerator(OUNonlinearDataGenerator):
         """
         Generates two discretized Ornstein-Uhlenbeck processes. Note that discretized Ornstein-Uhlenbeck processes are
         AR processes.
-
         Args:
             n (int): Number of data points.
-
         Returns:
             tuple[ArmaProcess, ArmaProcess]: Two AR models representing the processes.
-       
         """
+
         ar1 = np.array([1, -0.5/n])
-        ma1=np.array([75/(np.sqrt(n))]) #ma1 = np.array([50/np.sqrt(n)])
+        ma1=np.array([75/(np.sqrt(n))])
         AR_object1 = ArmaProcess(ar1, ma1)
 
         ar2 = np.array([1, -0.1])
@@ -584,12 +573,12 @@ class OUReflectedNonlinearDataGenerator(OUNonlinearDataGenerator):
 
 def functions_nonlinear(x:NDArray, beta:int):
     """"
-    Returns the value of different nonlinear functions evaluated at x where the type can be choosen over the integer beta.
-    1: Quadratic
-    2: Sinfunction
-    3: Sigmoid
-    4: Finite expansion in function basis
-    5: Linear
+    Returns the value of different nonlinear functions evaluated at x where the type can be choosen over the integer beta:
+        1: Quadratic
+        2: Sinfunction
+        3: Sigmoid
+        4: Finite expansion in function basis
+        5: Linear
     """
   
     if beta==1:
