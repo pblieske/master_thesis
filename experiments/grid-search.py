@@ -1,6 +1,7 @@
 import random, os, pickle
 import numpy as np
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 from matplotlib.colors import LinearSegmentedColormap
 
 from utils_nonlinear import get_results, get_data, plot_settings
@@ -9,27 +10,30 @@ from robust_deconfounding.utils import get_funcbasis
 
 
 """
-    We compute the L^1-error varing the number of coefficients and the regularization parameter \lambda. 
+    We compute the L^1-error varing the number of coefficients L and the regularization parameter \lambda. 
     For the regularization the smoothness penalty is used.
-    To plot the data from an experiment which was already run, set the "run_exp" variable to False.
-    The experiments were aleardy run with the following paramter configurations:
+    To plot the data from an experiment which was already run, set the "run_exp" variable to "False", to rerun the experiment to "True".
+    The experiments have aleardy been run with the following paramter configurations:
     - nois_vars=0, n=2**6
     - nois_vars=0, n=2**8
     - nois_vars=4, n=2**6
     - nois_vars=4, n=2**8
 """
 
-# ----------------------------------
-# Parameters varied in the thesis
-# ----------------------------------
 
 run_exp=False       # Set to True for running the whole experiment and False to plot an experiment which was already run
-noise_vars = 0      # variance of the noise
+
+
+# ----------------------------------
+# parameters varied in the thesis
+# ----------------------------------
+
+noise_vars = 1      # variance of the noise
 n = 2 ** 8          # number of observations
 
 
 # ----------------------------------
-# Parameters kept constant
+# parameters kept constant
 # ----------------------------------
 
 SEED = 1
@@ -75,7 +79,7 @@ err =np.zeros(shape = [L.size, Lmbd.size])                                      
 
 if run_exp:
     # Running the Monte Carlo simulation
-    for __ in range(0,m):
+    for __ in tqdm(range(0,m)):
         data_values = get_data(n, **data_args, noise_var=noise_vars)
         data_values.pop('u')
         for l in L:
@@ -83,15 +87,16 @@ if run_exp:
             basis=get_funcbasis(x=test_points, L=l, type=method_args["basis_type"])
             diag=np.concatenate(([0], np.array([ i**4 for i in range(0,l)])))
             K=np.diag(diag)
+
             for j in range(0, Lmbd.size):
                 # Estimate the function f by DecoR using l basis functions and the regularization parameter Lmbd[j]
                 estimates_decor = get_results(**data_values, **method_args, L=l, K=K, lmbd=Lmbd[j])
                 y_est=basis @ estimates_decor["estimate"]
                 y_est=np.ndarray((n_x, 1), buffer=y_est)
+
                 # Compute the L^1-error
                 err[l-1, j]=err[l-1, j]+ 1/(m*n_x)*np.linalg.norm(y_true-y_est, ord=1)
-        if __ % 10 ==0:
-            print("Number of samples drawn: " + str(__))
+
 
     # Saving the results
     with open(path_results+"girdsearch_n=" + str(n) +'_noise='+str(noise_vars)+'.pkl', 'wb') as fp:
@@ -102,6 +107,7 @@ else:
     # Loading the file with the saved results
     with open(path_results+"girdsearch_n=" + str(n) +'_noise='+str(noise_vars)+'.pkl', 'rb') as fp:
         err = pickle.load(fp)
+
 
 # ----------------------------------
 # plotting
