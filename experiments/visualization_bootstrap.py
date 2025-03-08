@@ -41,9 +41,6 @@ method_args = {
 
 colors, ibm_cb = plot_settings()    # import colors for plotting
 
-print("number of observations:", n)
-print("number of coefficients:", L)
-
 
 # ----------------------------------
 # Run the experiment
@@ -57,12 +54,12 @@ n_x=200
 test_points=np.array([i / n_x for i in range(0, n_x)])
 y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["beta"][0])
 
-#Get the data
+# Get the data
 data_values = get_data(n, **data_args, noise_var=noise_vars)
 u=data_values.pop('u')
 outlier_points=data_values.pop('outlier_points')
 
-#Set up the smothness penalty
+# Set up the smothness penalty
 diag=np.concatenate((np.array([0]), np.array([i**4 for i in range(1,L+1)])))
 K=np.diag(diag)
 R=get_funcbasis(x=data_values["x"], L=L, type=method_args["basis_type"])
@@ -93,6 +90,7 @@ err_sd=np.array([np.linalg.norm(err_cap-np.repeat(err_est[0].reshape(-1,1), B, a
 indx_cap, indx_inl, indx_m=np.argmin(err_est[0]), np.argmin(err_est[1]), np.argmin(err_est[2])
 lmbd_min=np.array([Lmbd[indx_cap], Lmbd[indx_inl], Lmbd[indx_m]])
 lmbd_se=np.array([Lmbd[min(np.arange(indx_cap,n_lmbd)[err_est[0][indx_cap:n_lmbd]>err_est[0][indx_cap]+err_sd[0][indx_cap]])], Lmbd[min(np.arange(indx_inl,n_lmbd)[err_est[1][indx_inl:n_lmbd]>err_est[1][indx_inl]+err_sd[1][indx_inl]])], Lmbd[min(np.arange(indx_m,n_lmbd)[err_est[2][indx_m:n_lmbd]>err_est[2][indx_m]+err_sd[2][indx_m]])]])
+
 
 # ----------------------------------
 # plotting

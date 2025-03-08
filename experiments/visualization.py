@@ -5,39 +5,39 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
 from robust_deconfounding.utils import get_funcbasis
-from utils_nonlinear import get_results, get_data, plot_settings, get_conf, conf_clip
+from utils_nonlinear import get_results, get_data, plot_settings, get_conf
 from synthetic_data import functions_nonlinear
 
 """
     We provide a visualization of the nonlinear extensions of DecoR using the cosine approximation.
     For this, we plot the fitted curve, outlier and the fit by Torrent on the transformed sample.
-    For this, we draw only one sample with a fixed number of observations n. For a Monte Carlo simulation, look at the script consistency.py.
+    We draw only one sample with a fixed number of observations n. For a Monte Carlo simulation, look at the script consistency.py.
 """
 
 colors, ibm_cb = plot_settings()
 
-SEED = 1
+SEED = 4
 np.random.seed(SEED)
 random.seed(SEED)
 
 data_args = {
-    "process_type": "oure",    # "uniform" | "oure"
-    "basis_type": "cosine",    # "cosine" | "haar"
-    "fraction": 0.25,
-    "noise_type": "normal",
-    "noise_var": 1,
+    "process_type": "uniform",      # "uniform" | "oure"
+    "basis_type": "cosine",         # "cosine" | "haar"
+    "fraction": 0.25,               # fraction of outliers
+    "noise_type": "normal",         # type of the noise
+    "noise_var": 1,                 # variance of the noise
     "beta": np.array([2]),
-    "band": list(range(0, 50)),  # list(range(0, 50)) | None
+    "band": list(range(0, 50)),     # list(range(0, 50)) | None
 }
 
 method_args = {
-    "a": 0.7,
-    "method": "torrent",        # "torrent" | "bfs"
-    "basis_type": "cosine_cont",# basis used for the approximation of f, corresponding to \psi in the paper
+    "a": 0.7,                       # number of observations that Torrent removes
+    "method": "torrent",            # "torrent" | "bfs"
+    "basis_type": "cosine_cont",    # basis used for the approximation of f, corresponding to \psi in the paper
 }
 
 benchmark="spline"  # "spline" | "ols"
-n = 2**9            # number of observations
+n = 2**8            # number of observations
 print("number of observations:", n)
 
 
@@ -59,14 +59,14 @@ outlier_points=data_values.pop("outlier_points")
 
 #Estimate the function f by DecoR
 estimates_decor = get_results(**data_values, **method_args, L=L)
-ci=conf_clip(x=test_points, estimate=estimates_decor["estimate"], transformed=estimates_decor["transformed"], inliers=estimates_decor["inliers"], a=method_args["a"], L=L, alpha=0.95, basis_type=method_args["basis_type"])
+ci=get_conf(x=test_points, estimate=estimates_decor["estimate"], transformed=estimates_decor["transformed"], inliers=estimates_decor["inliers"], L=L, alpha=0.95, basis_type=method_args["basis_type"])
 y_est=basis @ estimates_decor["estimate"]
 y_est=np.ndarray((n_x, 1), buffer=y_est)
 
 #Estimate the function by the benchmark
 if benchmark=="ols":
     estimates_fourier= get_results(**data_values, method="ols", basis_type=method_args["basis_type"], L=L, a=0, outlier_points=outlier_points)
-    ci_bench=get_conf(test_points=test_points, transformed=estimates_fourier["transformed"], alpha=0.95, basis_type=method_args["basis_type"])
+    ci_bench=get_conf(x=test_points, estimate=estimates_fourier["estimate"], transformed=estimates_fourier["transformed"], inliers=np.arange(n),L=L, alpha=0.95, basis_type=method_args["basis_type"])
     y_bench= basis @ estimates_fourier["estimate"]
 elif benchmark=="spline":
     x=np.reshape(data_values["x"], (-1,1))
@@ -77,7 +77,7 @@ elif benchmark=="spline":
 else:
     raise ValueError("benchmark not implemented")
 
-#Compute the L^2-error and L^1-error
+# compute the L^2-error and L^1-error
 print("$L^2$-error: ", 1/np.sqrt(n_x)*np.linalg.norm(y_true-y_est, ord=2))
 print("$L^1$-error: ", 1/n_x*np.linalg.norm(y_true-y_est, ord=1))
 
@@ -114,7 +114,7 @@ plt.show()
 
 
 # ----------------------------------
-# Plotting the confounder
+# plotting the confounder
 # ----------------------------------
 
 plt.plot(data_values['x'], u, 'o:w', mec=ibm_cb[4] )

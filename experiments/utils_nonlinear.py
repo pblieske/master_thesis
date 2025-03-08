@@ -257,7 +257,7 @@ def get_conf(x:NDArray, estimate:NDArray, inliers: list, transformed: NDArray, a
             x: Points where confidence interval should be evaluated
             estimate: estimated coefficients
             inliers: estimated inliers from DecoR
-            alpha: level for the confidence interval
+            alpha: level of coverage for the confidence interval
             w: weight to take into acount the variance, estiamted using only the inliers : (1-w)*variance_large+w*variance_small
         Returns:
             ci=[ci_l, ci_u]: the lower and upper bound for the confidence interval

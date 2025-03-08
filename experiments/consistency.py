@@ -25,7 +25,7 @@ The "process_type" can either be an Ornstein-Uhlenbeck process or a band-limited
 The "basis_type" is the basis for which the confounder is sparse. This is also the basis used by DecoR.
 The "fraction" variable is the fraction of outliers. For example "0.25" means that a fourth of the datapoints 
 is confounded in the "basis"-domain.
-The "beta" variable is the $\beta$ value i.e. the true causal effect. It can be two- or one-dimensional.
+The "beta" variable chooses the underlying true, nonlinear function, see the functions_nonlinear in the synthetic_data.py file.
 The "noise_var" is the variance of the noise i.e. $\sigma_{\eta}^2$.
 The "band" variable is the indices of the band for the band-limited process. Does nothing if "ou" is selected for
 the "process_type".
