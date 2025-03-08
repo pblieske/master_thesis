@@ -13,7 +13,7 @@ from utils_nonlinear import  plot_results,  plot_settings
 """
 
 
-exp="poly"     # "uniform" | "reflected_ou" | "sigmoid" | "poly"
+exp="uniform"     # "uniform" | "reflected_ou" | "sigmoid" | "poly"
 
 
 # ----------------------------------
@@ -76,7 +76,7 @@ else:
 # Set labels, legend and title
 # ----------------------------------
 
-titles = {"uniform": "Nonlinear (Uniform)", "reflected_ou": "Nonlinear (Reflected OU)", "sigmoid": "Sigmoid function ($L^1$-error)", "poly": "Polynom Basis ($L^1$-error) "}
+titles = {"uniform": "Nonlinear (Uniform)", "reflected_ou": "Nonlinear (Reflected OU)", "sigmoid": "Sigmoid function ($L^1$-error)", "poly": "Polynom Basis ($L^1$-error) ", "test": "Test"}
 
 def get_handles():
     point_1 = Line2D([0], [0], label='GAM', marker='o',

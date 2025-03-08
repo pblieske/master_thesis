@@ -41,7 +41,7 @@ The "num_data" variable is a list of increasing natural numbers that indicate th
 """
 
 
-exp="poly"     # "uniform" | "reflected_ou" | "sigmoid" | "poly"
+exp="test"     # "uniform" | "reflected_ou" | "sigmoid" | "poly"
 
 
 # ----------------------------------
@@ -110,6 +110,6 @@ for i in range(len(noise_vars)):
 
     #Save the results using a pickle file
     res["DecoR"], res["ols"] = np.array(res["DecoR"]), np.array(res["ols"])
-    with open(path_results+"experiment_new_" + exp +'_noise_='+str(noise_vars[i])+'.pkl', 'wb') as fp:
+    with open(path_results+"experiment_" + exp +'_noise_='+str(noise_vars[i])+'.pkl', 'wb') as fp:
         pickle.dump(res, fp)
         print('Results saved successfully to file.')
