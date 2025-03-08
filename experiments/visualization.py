@@ -9,8 +9,9 @@ from utils_nonlinear import get_results, get_data, plot_settings, get_conf, conf
 from synthetic_data import functions_nonlinear
 
 """
-    We provide a visualization of a fitted curve using the cosine approximation.
-    For this we simulated only one draw for a fixed number of observations n, for Monte Carlo simulations look at consistency.py.
+    We provide a visualization of the nonlinear extensions of DecoR using the cosine approximation.
+    For this, we plot the fitted curve, outlier and the fit by Torrent on the transformed sample.
+    For this, we draw only one sample with a fixed number of observations n. For a Monte Carlo simulation, look at the script consistency.py.
 """
 
 colors, ibm_cb = plot_settings()
@@ -20,7 +21,7 @@ np.random.seed(SEED)
 random.seed(SEED)
 
 data_args = {
-    "process_type": "oure",    #  "blpnl" | "ounl" | "unifrom" | "oure"
+    "process_type": "oure",    # "uniform" | "oure"
     "basis_type": "cosine",    # "cosine" | "haar"
     "fraction": 0.25,
     "noise_type": "normal",

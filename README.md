@@ -3,18 +3,27 @@
 # Inference of Nonlinear Causal Effects in Time Series in the Presence of Confounding
 
 
-> [!CAUTION]
-> Under construction!
-
 Master's Thesis write by Pio Blieske at the Seminar of Statistics at ETH Zürich under the supervision of Jonas Peters and Felix Schur. The repository was originally forked from https://github.com/fschur/robust_deconfounding.
 
 
 ## Abstract
 
-Put abstract here.
+Estimating causal effects between time series is of interest in many scientific fields such
+as climate science, epidemiology, and economics, but remains challenging due to possible
+confounding. This thesis focuses on the inference of nonlinear causal effects between two
+time series in the presence of a third unobserved, confounding time series. We assume
+sparsity of the confounder in the frequency domain, corresponding in applications, for
+example, to a seasonal periodicity. This allows us to reduce the confounding problem to
+an adversarial outlier problem, a technique known as deconfounding by robust regression
+(DecoR). We use a regularized version of the robust regression algorithm Torrent to solve
+the adversarial outlier problem and provide upper bounds for the estimation error. For
+two different asymptotic settings, we prove the consistency of the nonlinear extensions of
+DecoR under suitable assumptions. We validate the nonlinear extensions of DecoR through
+a simulation study on synthetic data. In addition, we demonstrate its effectiveness with
+an application to a real-world example of environmental epidemiology.
 
 
-## Reproducing the results
+## Reproducing the Results
 
 For full support of all scripts in the repository, for instance to reproduce the experiments, further dependencies need
 to be installed. 
