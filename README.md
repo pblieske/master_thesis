@@ -35,7 +35,7 @@ The structure of the repository consists mainly of two folders. DecoR and the ro
 ```bash
 python setupy.py install
 ``` 
-In the other folder, experiments, all the scripts for the simulations and the real-world data example can be found. For the consistency experiment, the plot is produced using a sperate script plot_consistency.py, for all the other experiment there is only one file for the simulation and plotting. The simulations are only rerun if the variable "run_exp" at the start of the file is set to True, else the saved results are plotted. To run the a script e.g. use:
+In the other folder, experiments, all the scripts for the simulations and the real-world data example can be found. For the consistency experiment, the plot is produced using a sperate script plot_consistency.py, for all the other experiment there is only one file for the simulation and plotting. The simulations are only rerun if the variable "run_exp" at the start of the file is set to "True", else the saved results are plotted. To run the a script e.g. use:
 ```bash
 python experiments/ozone.py
 ``` 

@@ -1,5 +1,5 @@
 import numpy as np
-import random
+import random, tqdm
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from robust_deconfounding.utils import  get_funcbasis
@@ -7,12 +7,12 @@ from utils_nonlinear import get_data, plot_settings, get_results, err_boot
 from synthetic_data import functions_nonlinear
 
 """
-    We plot the regularization path including the standard deviation of the three out-of-boostrap gernerlization error estimation on the transformed sample. 
+    We plot the regularization path including the standard error of the three out-of-boostrap gernerlization error estimation methods on the transformed sample. 
     The three methods are clipping, taking the smallest share and take the median of the residuals.
 """
 
 # ----------------------------------
-# Parameter
+# Parameters
 # ----------------------------------
 
 B=500                   # Number of bootsrap samples to draw
@@ -46,7 +46,7 @@ print("number of coefficients:", L)
 
 
 # ----------------------------------
-# run experiments
+# Run the experiment
 # ----------------------------------
 
 SEED = 1
@@ -69,14 +69,14 @@ R=get_funcbasis(x=data_values["x"], L=L, type=method_args["basis_type"])
 xn = data_values["basis"].T @ R / n
 yn = data_values["basis"].T @ data_values['y'] / n
 
-# Associate memory
+# Allocate memory
 err_cap, err_inl, err_m=np.full([n_lmbd, B], float(0)), np.full([n_lmbd, B], float(0)) ,np.full([n_lmbd, B], float(0))
 estimates_decor = get_results( **data_values, **method_args, L=L, lmbd=0, K=K)
 basis=get_funcbasis(x=test_points, L=L, type=method_args["basis_type"])
 err_true=np.full([n_lmbd], np.nan)
 
 # Draw B boostrap samples
-for i in range(n_lmbd):
+for i in tqdm.tqdm(range(n_lmbd)):
     boot=err_boot(transformed=estimates_decor['transformed'], a=method_args['a'], lmbd=Lmbd[i], K=K, B=B)
     err_cap[i,:], err_inl[i,:], err_m[i,:]=boot["err_cap"], boot["err_inl"], boot["err_m"]
     estimates_reg= get_results(**data_values, **method_args, L=L, K=K, lmbd=Lmbd[i])
@@ -84,76 +84,59 @@ for i in range(n_lmbd):
     err_true[i]=1/n_x*np.linalg.norm(y_true-y_est, ord=1)
 
 # Compute the average estimated error
-err_cap_m, err_inl_m, err_m_m=np.mean(err_cap, axis=1), np.mean(err_inl, axis=1), np.mean(err_m, axis=1)
+err_est=np.array([np.mean(err_cap, axis=1), np.mean(err_inl, axis=1), np.mean(err_m, axis=1)])
 
 # Compute the standard deviation
-err_cap_sd, err_inl_sd, err_m_sd=np.linalg.norm(err_cap-np.repeat(err_cap_m.reshape(-1,1), B, axis=1), axis=1, ord=2)/(np.sqrt(B-1)), np.linalg.norm(err_inl-np.repeat(err_inl_m.reshape(-1,1), B, axis=1), axis=1, ord=2)/(np.sqrt(B-1)), np.linalg.norm(err_m-np.repeat(err_m_m.reshape(-1,1), B, axis=1), axis=1, ord=2)/(np.sqrt(B-1))
+err_sd=np.array([np.linalg.norm(err_cap-np.repeat(err_est[0].reshape(-1,1), B, axis=1), axis=1, ord=2)/(np.sqrt(B-1)), np.linalg.norm(err_inl-np.repeat(err_est[1].reshape(-1,1), B, axis=1), axis=1, ord=2)/(np.sqrt(B-1)), np.linalg.norm(err_m-np.repeat(err_est[2].reshape(-1,1), B, axis=1), axis=1, ord=2)/(np.sqrt(B-1))])
 
 # Compute the indices minimizing the estimated perdiction error
-indx_cap, indx_inl, indx_m=np.argmin(err_cap_m), np.argmin(err_inl_m), np.argmin(err_m_m)
-lmbd_cap, lmbd_inl, lmbd_m=Lmbd[indx_cap], Lmbd[indx_inl], Lmbd[indx_m]
-lmbd_cap_1sd, lmbd_inl_1sd, lmbd_m_1sd=Lmbd[min(np.arange(indx_cap,n_lmbd)[err_cap_m[indx_cap:n_lmbd]>err_cap_m[indx_cap]+err_cap_sd[indx_cap]])], Lmbd[min(np.arange(indx_inl,n_lmbd)[err_inl_m[indx_inl:n_lmbd]>err_inl_m[indx_inl]+err_inl_sd[indx_inl]])], Lmbd[min(np.arange(indx_m,n_lmbd)[err_m_m[indx_m:n_lmbd]>err_m_m[indx_m]+err_m_sd[indx_m]])]
-
+indx_cap, indx_inl, indx_m=np.argmin(err_est[0]), np.argmin(err_est[1]), np.argmin(err_est[2])
+lmbd_min=np.array([Lmbd[indx_cap], Lmbd[indx_inl], Lmbd[indx_m]])
+lmbd_se=np.array([Lmbd[min(np.arange(indx_cap,n_lmbd)[err_est[0][indx_cap:n_lmbd]>err_est[0][indx_cap]+err_sd[0][indx_cap]])], Lmbd[min(np.arange(indx_inl,n_lmbd)[err_est[1][indx_inl:n_lmbd]>err_est[1][indx_inl]+err_sd[1][indx_inl]])], Lmbd[min(np.arange(indx_m,n_lmbd)[err_est[2][indx_m:n_lmbd]>err_est[2][indx_m]+err_sd[2][indx_m]])]])
 
 # ----------------------------------
 # plotting
 # ----------------------------------
 
 fig, axs = plt.subplots(1, 3, figsize=(12, 5), layout='constrained')
+titles=np.array(["Clipping", "Omitting", "Median"])     # Titles of the subplots
 
-#P lot the clipping
-axs[0].plot(Lmbd, err_cap_m, color=ibm_cb[1])
-axs[0].fill_between(Lmbd, y1=err_cap_m-err_cap_sd, y2=err_cap_m+err_cap_sd, color=ibm_cb[1], alpha=0.1)
-axs[0].axvline(x=lmbd_cap, linestyle="dashed", color=ibm_cb[2])
-axs[0].text(lmbd_cap/5, 0.5*min(err_cap_m)+0.5*max(err_cap_m), "$\lambda_{min}$", color=ibm_cb[2], rotation=90)
-axs[0].axvline(x=lmbd_cap_1sd, linestyle="dashed", color=ibm_cb[3])
-axs[0].text(lmbd_cap_1sd/5, 0.5*min(err_cap_m)+0.5*max(err_cap_m), "$\lambda_{1sd}$", color=ibm_cb[3], rotation=90)
-axs[0].set_xscale('log')
-
-# Plot the inliers
-axs[1].plot(Lmbd, err_inl_m, color=ibm_cb[1])
-axs[1].fill_between(Lmbd, y1=err_inl_m-err_inl_sd, y2=err_inl_m+err_inl_sd, color=ibm_cb[1], alpha=0.1)
-axs[1].axvline(x=lmbd_inl, linestyle="dashed", color=ibm_cb[2])
-axs[1].text(lmbd_inl/5, 0.5*min(err_inl_m)+0.5*max(err_inl_m), "$\lambda_{min}$", color=ibm_cb[2], rotation=90)
-axs[1].axvline(x=lmbd_inl_1sd, linestyle="dashed", color=ibm_cb[3])
-axs[1].text(lmbd_inl_1sd/5, 0.5*min(err_inl_m)+0.5*max(err_inl_m), "$\lambda_{1sd}$", color=ibm_cb[3], rotation=90)
-axs[1].set_xscale('log')
-
-# Plot the median
-axs[2].plot(Lmbd, err_m_m, color=ibm_cb[1])
-axs[2].fill_between(Lmbd, y1=err_m_m-err_m_sd, y2=err_m_m+err_m_sd, color=ibm_cb[1], alpha=0.1)
-axs[2].axvline(x=lmbd_m, linestyle="dashed", color=ibm_cb[2])
-axs[2].text(lmbd_m/5, 0.5*min(err_m_m)+0.5*max(err_m_m), "$\lambda_{min}$", color=ibm_cb[2], rotation=90)
-axs[2].axvline(x=lmbd_m_1sd, linestyle="dashed", color=ibm_cb[3])
-axs[2].text(lmbd_m_1sd/5, 0.5*min(err_m_m)+0.5*max(err_m_m), "$\lambda_{1sd}$", color=ibm_cb[3], rotation=90)
-axs[2].set_xscale('log')
-
-# Plot the true error
+# Plot the true error and scale the axis
 for i in range(3):
+
+    # Adjust the axis
+    axs[i].set_xscale('log')
+    axs[i].set_xlabel("$\lambda$")
+    axs[i].ticklabel_format(axis='y', style='sci', scilimits=(-4,-4))
+
+    # Plot the estimated generalization error
+    axs[i].plot(Lmbd, err_est[i], color=ibm_cb[1])
+    axs[i].fill_between(Lmbd, y1=err_est[i]-err_sd[i], y2=err_est[i]+err_sd[i], color=ibm_cb[1], alpha=0.1)
+    axs[i].axvline(x=lmbd_min[i], linestyle="dashed", color=ibm_cb[2])
+    axs[i].text(lmbd_min[i]/5, 0.5*min(err_est[i])+0.5*max(err_est[i]), "$\lambda_{min}$", color=ibm_cb[2], rotation=90)
+    axs[i].axvline(x=lmbd_se[i], linestyle="dashed", color=ibm_cb[3])
+    axs[i].text(lmbd_se[i]/5, 0.5*min(err_est[i])+0.5*max(err_est[i]), "$\lambda_{1-SE}$", color=ibm_cb[3], rotation=90)
+
+    # Plot the true underlying error
     if i!=1:
         axs[i].plot(Lmbd, err_true/10000+0.00015, color='black', alpha=0.65)
         axs[i].set_ylim([0.00018, 0.00055])
     else:
         axs[i].plot(Lmbd, err_true/15000+0.0001, color='black', alpha=0.65)
         axs[i].set_ylim([0.00012, 0.0004])
+    
+    axs[i].set_title(titles[i])
 
-# Labeling
-axs[0].set_xlabel("$\lambda$")
-axs[1].set_xlabel("$\lambda$")
-axs[2].set_xlabel("$\lambda$")
 axs[0].set_ylabel("Estimated Generalization Error")
-axs[0].set_title("Clipping")
-axs[1].set_title("Omitting")
-axs[2].set_title("Median")
 
 # Legend   
 def get_handles():
-    point_1 = Line2D([0], [0], label="true loss", markersize=10,
-                     color="black", linestyle='-', alpha=0.65)
-    point_2 = Line2D([0], [0], label="estimated", markersize=10,
+    point_1 = Line2D([0], [0], label="estimated", markersize=10,
                      color=ibm_cb[1], linestyle='-')
-    point_3 = Line2D([0], [0], label="std. error", markersize=0, linewidth=10,
-                     color=ibm_cb[1], linestyle='-', alpha=0.1)
+    point_2 = Line2D([0], [0], label="std. error", markersize=0, linewidth=10,
+                     color=ibm_cb[1], linestyle='-', alpha=0.1)   
+    point_3 = Line2D([0], [0], label="true loss", markersize=10,
+                     color="black", linestyle='-', alpha=0.65)
     return [point_1, point_2, point_3]
 
 fig.subplots_adjust(right=10)
