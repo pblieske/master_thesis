@@ -39,3 +39,4 @@ In the other folder, experiments, all the scripts for the simulations and the re
 ```bash
 python experiments/ozone.py
 ``` 
+All scripts contain a description of what they do at the beginning.

@@ -1,15 +1,21 @@
 import numpy as np
 import random, os, pickle
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 from utils_nonlinear import get_results, get_data, plot_settings, check_eigen
 
 """
-    We check the eigenvalue condition of the consistency theorem numerical.
-    For this, we use a Monte-Carlo simulation and plot the disribution afterwards using in a histogramm.
+    We check the eigenvalue condition of the consistency theorem for the nonlinear extensions of DecoR numerical.
+    For this, we use a Monte Carlo simulation and plot the disribution afterwards in a histogramm.
+    The experiments have aleardy been run with the following paramter configurations:
+    - nois_vars=0, n=2**8
+    - nois_vars=0, n=2**10
+    - nois_vars=4, n=2**8
+    - nois_vars=4, n=2**10
 """
 
-run_exp=False        # Set to True for running the whole experiment and False to plot an experiment which was already run
-n = 2 ** 10          # number of observations 
+run_exp=False       # Set to True for running the whole experiment and False to plot an experiment which was already run
+n = 2 ** 8          # number of observations 
 noise_var= 0        # variance of the noise
 
 
@@ -17,8 +23,8 @@ noise_var= 0        # variance of the noise
 # Parameters
 # ----------------------------------
 
-m=1000      # number of Monte-Carlos drawn  
-L=max(np.floor(1/(1 if noise_var==0 else 5)**n**0.5).astype(int),1)     # number of coefficients used
+m=1000              # number of Monte-Carlos drawn  
+L=max(np.floor(1/(1 if noise_var==0 else 5)**n**0.5).astype(int),1) # number of coefficients used
 
 data_args = {
     "process_type": "uniform",      # "uniform" | "oure"
@@ -48,11 +54,10 @@ np.random.seed(SEED)
 random.seed(SEED)
 
 if run_exp:
-    for i in range(m):
+    for i in tqdm(range(m)):
         #Generate the data and run DecoR
         data_values = get_data(n, **data_args, noise_var=noise_var)
-        u=data_values.pop("u")
-        outlier_points=data_values.pop("outlier_points")
+        u, outlier_points=data_values.pop("u"), data_values.pop("outlier_points")
         estimates_decor = get_results(**data_values, **method_args, L=L)
         #Check the eigenvalue condition
         T[i]=check_eigen(P=estimates_decor["transformed"]["xn"], S=estimates_decor["inliers"], G=outlier_points)["fraction"]

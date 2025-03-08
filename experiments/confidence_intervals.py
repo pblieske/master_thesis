@@ -8,17 +8,17 @@ from utils_nonlinear import get_results, get_data, get_conf, bootstrap, plot_set
 from synthetic_data import functions_nonlinear
 
 """
-    We run a simulation study to test how the confidence intervals proposed in the thesis performs, in particualr we want to investigate the coverage.
-    There are 4 methods test, the two analytical version using the all obersvations or only the estimated inliers of the transfromed sample, bootstraping and double bootstraping.
+    We run a simulation study to test how the confidence intervals proposed in the thesis perform, in particualr we want to investigate their coverage.
+    There are 4 methods tested, the two analytical versions using the all obersvations or only the estimated inliers of the transfromed sample, bootstraping and double bootstraping.
     The experiment can take several hours to run, therefore the values are alread saved. To rerun the experiment, set the "run_exp" variable to True.
     The underlying true function can be selected over the variable "f".
 """
 
 run_exp=False       # Set to True for running the whole experiment and False to plot an experiment which was already run
-f="sine"            # "sine" | "sigmoid", the underlying true function
+f="sigmoid"         # "sine" | "sigmoid", the underlying true function
 
 # ----------------------------------
-# Parameters
+# parameters
 # ----------------------------------
 
 test_points=np.array([0.1, 0.5, 0.9])                           # points for which the results are plotted
@@ -41,7 +41,7 @@ method_args = {
 }
 
 m = 200                                         # Number of Monte Carlo samples to draw
-L=max(np.floor(1/4*n**(1/2)).astype(int),2)     # number of basis functions
+L = max(np.floor(1/4*n**(1/2)).astype(int),2)     # number of basis functions
 
 colors, ibm_cb = plot_settings()                                    # import colors for plotting
 path_results=os.path.join(os.path.dirname(__file__), "results/")    # Path to the results
@@ -59,6 +59,7 @@ n_x=len(test_points)            # number of test points
 n_alpha=len(alpha)              # number of coverage levels to be considered
 y_true=functions_nonlinear(np.ndarray((n_x,1), buffer=test_points), data_args["beta"][0])   # underlying true functions value
 basis=get_funcbasis(x=test_points, L=L, type=method_args['basis_type'])                     # basis expansion for the test points
+
 # Initialize storage for the obtained coverage levels
 cov_l, cov_b, cov_db, cov_h=np.full([n_alpha, n_x], np.nan) , np.full([n_alpha, n_x], np.nan), np.full([n_alpha, n_x], np.nan), np.full([n_alpha, n_x], np.nan)
 
@@ -74,11 +75,12 @@ if run_exp:
         y_est=basis@ estimates_decor["estimate"]
 
         # Bootstraping and double bootstraping
-        M=100       # number of samples for the first level of the double bootstrap
-        B=200       # number of samples drawn for the bootstrap
+        M=100   # number of samples for the first level of the double bootstrap
+        B=200   # number of samples drawn for the bootstrap
 
         # Perform double bootstraping to estimate the acutal coverage levels
         cov_double=double_bootstrap(x_test=test_points, transformed=estimates_decor["transformed"], estimate=estimates_decor["estimate"], a=method_args["a"], L=L, basis_type=method_args["basis_type"], M=M, B=B)
+        
         # Boostrapping
         boot=bootstrap(x_test=test_points, transformed=estimates_decor["transformed"], a=method_args["a"], L=L, basis_type=method_args["basis_type"], M=B)
         n_double=len(cov_double['nominal'])
@@ -88,7 +90,6 @@ if run_exp:
             # Get the adjuste alpha from the double bootstrap. This is done for every point seperately since the coverage can differ.
             ci_db=np.full([n_x,2], np.nan)
             for j in range(n_x):
-                #ind_1=np.min(np.concatenate((np.arange(n_double)[alpha[i]<=cov_double['actual'][:,j]], [int(B/2)-1])))
                 ind_h=np.max(np.concatenate((np.arange(n_double)[alpha[i]>=cov_double['actual'][:,j]], [0])))
                 ind_alpha=np.min([ind_h+1, int(B/2)-1])
                 alpha_boot=cov_double['nominal'][ind_alpha]
@@ -135,7 +136,7 @@ for i in range(0, n_plots):
     axs[i].plot(alpha, cov_b[ :,i], '--o', color=ibm_cb[3])
     axs[i].plot(alpha, cov_h[ :,i], '--o', color=ibm_cb[4])
     axs[i].plot([alpha_min, alpha_max], [alpha_min, alpha_max], '--', color="black")
-    #Labels
+    # Labels
     axs[i].set_xlabel('nominal coverage')
     axs[i].set_ylabel('est. actual coverage')
     axs[i].set_title('x=' + str(test_points[i]))

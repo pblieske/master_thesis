@@ -1,23 +1,22 @@
 import os
-from robust_deconfounding import DecoR
-from robust_deconfounding.robust_regression import Torrent
-from robust_deconfounding.utils import cosine_basis, get_funcbasis, get_funcbasis_multivariate
-from utils_nonlinear import get_results, plot_settings, get_conf, conf_help
-
-from pygam import GAM, s, intercept
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from pygam import GAM, s, intercept
 from matplotlib.lines import Line2D
+
+from robust_deconfounding.utils import cosine_basis, get_funcbasis, get_funcbasis_multivariate
+from utils_nonlinear import get_results, plot_settings, get_conf, conf_help
 
 """
     We apply the nonlinear extension of DecoR to the ozon dataset to estimate the influence of the daily ozone level (X_t) onto the number of deaths (Y_t).
     For this, we use a delay of the effect of one day and include as a second covariate the daily mean temperature to adjust for heatwaves. The effects
-    are asumed to be additive. We compare it with the estimation from:
-    "Time series regression studies in environmental epidemiology"
-    Authors: Bhaskaran, Krishnan and Gasparrini, Antonio and Hajat, Shakoor and Smeeth, Liam and Armstrong, Ben
-    url: https://academic.oup.com/ije/article/42/4/1187/657875
+    are asumed to be additive. We compare it with the state of the art estimation from:
+        "Time series regression studies in environmental epidemiology"
+        Authors: Bhaskaran, Krishnan and Gasparrini, Antonio and Hajat, Shakoor and Smeeth, Liam and Armstrong, Ben
+        url: https://academic.oup.com/ije/article/42/4/1187/657875
 """
+
 
 path_data=os.path.join(os.path.dirname(__file__), "data/")      # Path of data
 colors, ibm_cb = plot_settings()                                # Colors for plotting     
@@ -28,7 +27,7 @@ colors, ibm_cb = plot_settings()                                # Colors for plo
 # ----------------------------------
 
 df = pd.read_stata(path_data+"ozone.dta")
-n=df.shape[0]                               #number of samples
+n=df.shape[0]                               # number of samples
 x=np.array(df.loc[ : , "ozone"])            
 y=np.array(df.loc[: , "numdeaths"])
 u=np.array(df.loc[:, "temperature"])
@@ -39,13 +38,13 @@ date=np.array(df.loc[:, "date"])
 # Plot the two time series
 # ----------------------------------
 
-fig, axs = plt.subplots(2, 1)
+fig, axs = plt.subplots(2, 1, figsize=(8, 5))
 
-#Plotting
+# Plotting
 axs[0].plot(date, x,'o', marker='.', color="black", markersize=3)
 axs[1].plot(date, y, 'o', marker='.', color="black", markersize=3)
 
-#Set labels, adjust grid and title
+# Set labels, adjust grid and title
 axs[0].set_xlabel('Date')
 axs[0].set_ylabel('Ozone ($\mu g/m^3$)')
 axs[1].set_xlabel('Date')
@@ -63,8 +62,8 @@ plt.show()
 # Normalize the data
 # ----------------------------------
 
-#Adjust for delay from x to y in days
-delay=1     #Delay between ozon exposure and outcome in days
+# Adjust for delay from x to y in days
+delay=1     # Delay between ozon exposure and outcome in days
 x=x[0:(n-delay)]
 y=y[delay:n]
 x_min=np.min(x)
@@ -76,8 +75,9 @@ t_min=np.min(temp)
 t_max=np.max(temp)
 temp_norm=(temp-t_min)/(t_max-t_min)
 
-#Compute the design matrix
+# Compute the design matrix
 X=np.stack((x_norm, temp_norm))
+
 
 # ----------------------------------
 # Deconfounding and Estimation of Causal Relationship
@@ -89,15 +89,14 @@ method_args = {
     "basis_type": "cosine_cont",# basis used for the approximation of f
 }
 
-bench_mark="spline"         #Benchmark type
-L=6                         #Number of coefficinet for DecoR regression only on ozone levels
-L_adjst=np.array([6, 6])    #Number of coefficients, [ozone, temperature]
+bench_mark="spline"         # Benchmark type
+L=6                         # Number of coefficinet for DecoR regression only on ozone levels
+L_adjst=np.array([6, 6])    # Number of coefficients, [ozone, temperature]
 
-# If method_args["method"] in ["torrent_cv", "torrent_reg"]:
 diag=np.concatenate((np.array([0]), np.array([i**2 for i in range(1,L_adjst[0]+1)]), np.array([i**4 for i in range(1,L_adjst[1]+1)])))
 K=np.diag(diag)
 Lmbd=np.array([10**(i/40) for i in range(-300, 80)])
-n_x=200     #Resolution of x-axis
+n_x=200                     # Resolution of x-axis
 
 # Compute matrices to obtain estimations of y
 test_points=np.linspace(0, 1, num=n_x)
@@ -122,7 +121,7 @@ ci_adjst=np.stack((y_adjst-ci_adjst_help['qt']*sigma, y_adjst+ci_adjst_help['qt'
 
 # Fit benchmark for comparison and to make the confounding visable    
 if bench_mark=="spline":
-    gam = GAM(s(0)+intercept, lam=5).fit(np.reshape(X.T, (-1,2)), y) #, lam=Lmbd) 
+    gam = GAM(s(0)+intercept, lam=5).fit(np.reshape(X.T, (-1,2)), y)
     y_bench=gam.predict(test_points_adjst.T)
     ci_bench=gam.confidence_intervals(test_points_adjst.T, width=0.95)
 else:
@@ -130,30 +129,6 @@ else:
     y_bench=basis @ estimates_fourier["estimate"]
     ci_bench=get_conf(x=test_points, **estimates_fourier, alpha=0.95, basis_type=method_args["basis_type"])
 
-"""
-# ----------------------------------
-# A try to estimate the number of death caused by ozone
-# ----------------------------------
-
-ind=(x>=60)     #index of observation with ozone lever higher than 60 \mu g/m^3
-x_high=(x[ind]-x_min)/(x_max-x_min)
-t_high=temp_norm[ind]
-x_lim=(60-x_min)/(x_max-x_min)
-n_high=len(x_high)
-
-#Estimate the effect of lowering the ozon level to 60
-basis_pred=get_funcbasis_multivariate(x=np.stack((x_high, t_high)), L=L_adjst, type=method_args["basis_type"])
-basis_limit=get_funcbasis_multivariate(x=np.stack((np.repeat(x_lim, n_high), t_high)), L=L_adjst, type=method_args["basis_type"])
-y_caused=basis_pred @ estimates_decor_adjst["estimate"] -basis_limit @ estimates_decor_adjst["estimate"]
-
-#Compute the upper and lower bound using a 0.95 confidence interval
-ci_pred=get_conf(x=np.stack((x_high, t_high)), **estimates_decor_adjst, L=L_adjst, basis_type=method_args["basis_type"])
-ci_lim=get_conf(x=np.stack((np.repeat(x_lim, n_high), t_high)), **estimates_decor_adjst, L=L_adjst, basis_type=method_args["basis_type"])
-
-#Compute the mean per year
-num_deaths={"mean": sum(y_caused)/5, "lower bound": sum(ci_pred[:,0] -ci_lim[:,1])/5, "upper bound": sum(ci_pred[:,1] -ci_lim[:,0])/5}
-print("Number of deaths caused per year trough a ozone levels over 60 mg/m^2: " , num_deaths)
-"""
 
 # ----------------------------------
 # plotting
@@ -161,18 +136,18 @@ print("Number of deaths caused per year trough a ozone levels over 60 mg/m^2: " 
 
 test_ozone=(test_points)*(x_max-x_min)+x_min
 
-#Compute estimate from Bhaskaran et al. 2013
+# Compute estimate from Bhaskaran et al. 2013
 y_ref=np.exp(0.0007454149*test_ozone)*np.mean(y)
 y_ref_l=np.exp(0.00042087681*test_ozone)*np.mean(y)
 y_ref_u=np.exp(0.0010698931*test_ozone)*np.mean(y)
 
-#Plot the difference estimations
+# Plot the difference estimations
 plt.scatter(x=x, y=y, color='w', edgecolors="gray", s=4) 
 plt.plot(test_ozone, y_bench, '-', color=ibm_cb[4], linewidth=1.5)
 plt.plot(test_ozone, y_adjst, '-', color=ibm_cb[1], linewidth=1.5)
 plt.plot(test_ozone, y_ref, '--', color=ibm_cb[2], linewidth=1)
 
-#Plot confidence intervals
+# Plot confidence intervals
 plt.fill_between(test_ozone, y1=ci_bench[:, 0], y2=ci_bench[:, 1], color=ibm_cb[4], alpha=0.4)
 plt.fill_between(test_ozone, y1=ci_adjst[:, 0], y2=ci_adjst[:, 1], color=ibm_cb[1], alpha=0.4)
 plt.fill_between(test_ozone, y1=y_ref_l, y2=y_ref_u, color=ibm_cb[2], alpha=0.4)
@@ -184,7 +159,7 @@ def get_handles():
     point_4= Line2D([0], [0], label="GAM" , color=ibm_cb[4], linestyle='-')
     return [point_1,  point_2, point_3, point_4]
 
-#Labeling
+# Labeling
 plt.xlabel("Ozone ($\mu g/m^3$)")
 plt.ylabel("# Deaths")
 plt.title("Influence of Ozone on Health")
@@ -192,6 +167,7 @@ plt.legend(handles=get_handles(), loc="upper left")
 plt.grid(linestyle='dotted')
 plt.tight_layout()
 plt.show()
+
 
 # ----------------------------------
 # Plot the estimated outliers
@@ -207,6 +183,7 @@ plt.title("Histogramm of Excluded Frequencies")
 plt.tight_layout()
 plt.show()
 
+
 # ----------------------------------
 # Plot the influence of temperature on #death
 # ----------------------------------
@@ -214,7 +191,7 @@ plt.show()
 y_temp=basis_temp @ estimates_decor_adjst["estimate"]
 test_temp=(test_points)*(t_max-t_min)+t_min
 
-#compute the confidence interval
+# compute the confidence interval
 ci_adjst=np.stack((y_adjst-ci_adjst_help['qt']*sigma, y_adjst+ci_adjst_help['qt']*sigma)).T
 H=basis_temp[:,(L_adjst[0]+1):(L_adjst[1]+L_adjst[0]+1)]@(ci_adjst_help['H'])[(L_adjst[0]+1):(L_adjst[0]+L_adjst[1]+1), :]
 sigma=ci_adjst_help['sigma']*np.sqrt(np.diag(H@H.T))
