@@ -13,8 +13,8 @@ from robust_deconfounding.utils import get_funcbasis
 """
     We test the out-of-bootrstrap generalization error estimations method. For this end, we do the regularization mainly over the parameter lambda 
     and keep the number of coefficients L constant. We compare it to the unregularized torrent with L being of order n^(1/2).
-    Note that the script can take several hours to run for m=100, therefore the results are saved in the coresponding folder.
-    To rerun the experiment, set the "run_exp" variable to True.
+    Note that the script can take several hours to run for m=100, therefore the results are saved in the corresponding folder.
+    To rerun the experiment, set the "run_exp" variable to "True".
 """
 
 run_exp=False           # Set to True for running the whole experiment and False to plot an experiment which was already run
@@ -32,7 +32,7 @@ B=100                   # number of sample to draw for the bootstrap
 m=100                   # Number of Monte Carlo samples to draw
                                                                            
 Lmbd=np.array([np.exp(i/n_lmbd*(np.log(Lmbd_max)-np.log(Lmbd_min))+np.log(Lmbd_min)) for i in range(0, n_lmbd)])      # grid of regularization paramters   
-noise_vars = [0, 1, 4]                  # Variance of the noise
+noise_vars = [0, 1, 4]                      # Variance of the noise
 num_data = [32, 64, 128, 256, 1024, 8192]   # number of observations n
 
 data_args = {
@@ -48,15 +48,16 @@ method_args = {
     "basis_type": "cosine_cont",    # "cosine_cont" | "cosine_disc" | "poly"
 }
 
-methods_plot=np.array(["tor", "omit", "omit_1sd"])              # Three methods that should be plotted
-methods=np.array(["tor", "clip", "omit", "median", "clip_1sd", "omit_1sd", "median_1sd"])   # Different methods to be teste
+methods_plot=np.array(["tor", "clip", "clip_1sd"])              # Three methods that should be plotted
+methods=np.array(["tor", "clip", "omit", "median", "clip_1sd", "omit_1sd", "median_1sd"])   # Different methods to be tested
 n_method=len(methods)                                               # number of methods
+
 colors, ibm_cb = plot_settings()                                    # import colors for plotting
 path_results=os.path.join(os.path.dirname(__file__), "results/")    # Path to the results
 
 
 # ----------------------------------
-# run experiments
+# run the experiment
 # ----------------------------------
 
 SEED = 5
@@ -186,7 +187,7 @@ for i in range(len(noise_vars)):
             err_add[j]=(sum((df.loc[(df['n']==num_data[j]) & (df['method']==methods[l])])['value'])/m)/err.iat[0, j+1]
         err.loc[l]=[methods[l]]+list(err_add)
 
-    # Print the dataframe contain the results
+    # Print the dataframe containing the results
     print(err)
 
     # Plotting
@@ -199,11 +200,10 @@ pool.close
 
 
 # ----------------------------------
-# Labeling the plot
+# labeling the plot
 # ----------------------------------
 
 labels={'tor': 'Not regularized', 'clip':'Clipping', 'omit':'Omitting', 'median':'Median', 'clip_1sd':'Clipping 1-S.E.', 'omit_1sd':'Omitting 1-S.E.', 'median_1sd':'Median 1-S.E.' }
-
 
 def get_handles():
     point_1 = Line2D([0], [0], label=labels[methods_plot[0]], marker='X',
@@ -220,7 +220,7 @@ def get_handles():
                      color=ibm_cb[2], linestyle='-')
     return [point_1, point_2, point_3, point_4, point_5, point_6]
 
-#Labeling
+#Labeling and adjusting axis
 plt.xlabel("number of data points")
 plt.ylabel("$L^1$-error")
 plt.title("Regularization with Bootstraping")
