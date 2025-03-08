@@ -12,7 +12,8 @@ from utils_nonlinear import  plot_results,  plot_settings
     The experiment can be selected by the variable "exp".
 """
 
-exp="uniform"     # "uniform" | "reflected_ou" | "sigmoid" | "poly"
+
+exp="poly"     # "uniform" | "reflected_ou" | "sigmoid" | "poly"
 
 
 # ----------------------------------
@@ -68,7 +69,6 @@ else:
     for i in range(len(noise_vars)):
         with open(path_results+"experiment_" + exp +'_noise_='+str(noise_vars[i])+'.pkl', 'rb') as fp:
             res = pickle.load(fp)
-        print(res)
         plot_results(res, num_data, m, colors=colors[i])
 
 
@@ -94,14 +94,15 @@ def get_handles():
 if exp=="sigmoid" or exp=="poly":
     ax1.set_ylabel("DecoR")
     ax2.set_ylabel("GAM")
+    plt.legend(handles=get_handles(), loc="center right")
 else:
     plt.ylabel("$L^1$-error")
+    plt.legend(handles=get_handles(), loc="upper right")
 
 plt.xlabel("number of data points")
 plt.title(titles[exp]) 
 plt.xscale('log')
 plt.xlim(left=num_data[0] - 2)
-plt.legend(handles=get_handles(), loc="center right")
 plt.tight_layout()
 
 plt.show()

@@ -82,62 +82,10 @@ def get_results(x: NDArray, y: NDArray, basis: NDArray, a: float, L: int|NDArray
             algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=lmbd)
         else:
             raise ValueError("Invalid method")
-        """
-        elif method =="torrent_cv":
-            robust_algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=0)
-            cv=robust_algo.cv(x=basis.T @ R/n, y =basis.T @ y/n, Lmbd=lmbd)
-            err_cv=cv["pred_err"]
-            lmbd_cv=lmbd[np.argmin(err_cv)]
-            algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=lmbd_cv)
-        elif method =="torrent_cv_se":
-            robust_algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=0)
-            cv=robust_algo.cv(x=basis.T @ R/n, y=basis.T @ y/n, Lmbd=lmbd)
-            err_cv=cv["pred_err"]
-            # Find the index of the minimal estimated error
-            indx_min=np.argmin(err_cv)
-            lmbd_cv=lmbd[indx_min]
-            # Compute the variance
-            estimates_decor = get_results(x=x, y=y, basis=basis, method="torrent_reg", basis_type=basis_type, a=a, L=L, lmbd=lmbd[indx_min], K=K)
-            conf=conf_help(**estimates_decor, L=L, alpha=0.95)
-            sigma=conf["sigma"]/10
-            try:
-                indx_se=max(np.array(range(indx_min))[np.array(err_cv[0:indx_min]>=err_cv[indx_min]+sigma)])
-            except:
-                indx_se=0 #int(np.ceil(indx_min/4))
-            lmbd_se=lmbd[indx_se]
-            algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=lmbd_se)
-        elif method =="torrent_cv2":
-            n_lmbd=len(lmbd)
-            err_cv=np.full([n_lmbd], np.nan)
-            #Perform cross-validation
-            for i in range(n_lmbd):
-                robust_algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=lmbd[i])
-                err_cv[i]=robust_algo.cv2(x=basis.T @ R/n, y =basis.T @ y/n, k=20)
-            # Find the index of the minimal estimated error
-            indx_min=np.argmin(err_cv)
-            lmbd_cv=lmbd[indx_min]
-            algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=lmbd_cv)
-        elif method == "torrent_boot":
-            n_lmbd=len(lmbd)
-            err_inl, err_cap=np.full([n_lmbd], np.nan), np.full([n_lmbd], np.nan)
-            #Perform cross-validation
-            for i in range(n_lmbd):
-                robust_algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=lmbd[i])
-                err_cv[i]=robust_algo.cv2(x=basis.T @ R/n, y =basis.T @ y/n, k=20)
-            # Find the index of the minimal estimated error
-            indx_min=np.argmin(err_cv)
-            lmbd_cv=lmbd[indx_min]
-            algo = Torrent_reg(a=a, fit_intercept=False, K=K, lmbd=lmbd_cv)
-        """
 
         algo = DecoR(algo, basis)
         algo.fit(R, y)
 
-        """
-        if method =="torrent_cv":
-            return {"estimate": algo.estimate, "inliers": algo.inliniers, "transformed": algo.get_transformed, "S":S}
-        else:
-        """
         return {"estimate": algo.estimate, "inliers": algo.inliniers, "transformed": algo.get_transformed}
         
     # Benchamrk methods
@@ -193,12 +141,6 @@ def get_data(n: int, process_type: str, basis_type: str, fraction: float, beta: 
         generator= OUReflectedNonlinearDataGenerator(basis_type=basis_type, beta=beta, noise_var=noise_var, noise_type=noise_type)
     else:
         raise ValueError("process_type not implemented")
-    """
-    elif process_type=="blpnl":
-        generator = BLPNonlinearDataGenerator(basis_type=basis_type, beta=beta, noise_var=noise_var, band=band, noise_type=noise_type)
-    elif process_type=="ounl":
-        generator = OUNonlinearDataGenerator(basis_type=basis_type, beta=beta, noise_var=noise_var, noise_type=noise_type)
-    """
 
     if basis_type == "cosine":
         basis = cosine_basis(n)
