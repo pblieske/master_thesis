@@ -17,7 +17,7 @@ exp="uniform"     # "uniform" | "reflected_ou" | "sigmoid" | "poly"
 
 
 # ----------------------------------
-# Load the plot setting and experiment configurations
+# load the plot settings and experiment configurations
 # ----------------------------------
 
 colors, ibm_cb = plot_settings()
@@ -34,7 +34,7 @@ m, noise_vars, num_data=  config["m"], np.array(config["noise_vars"]), np.array(
 
 
 # ----------------------------------
-# Load data and plotting
+# load data and plotting
 # ----------------------------------
 
 if exp=="sigmoid" or exp=="poly":  
@@ -73,7 +73,7 @@ else:
 
 
 # ----------------------------------
-# Set labels, legend and title
+# set labels, legend and title
 # ----------------------------------
 
 titles = {"uniform": "Nonlinear (Uniform)", "reflected_ou": "Nonlinear (Reflected OU)", "sigmoid": "Sigmoid function ($L^1$-error)", "poly": "Polynom Basis ($L^1$-error) ", "test": "Test"}

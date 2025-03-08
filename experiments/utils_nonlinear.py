@@ -351,7 +351,7 @@ def check_eigen(P:NDArray, S: list, G:list, lmbd=0, K=np.array([0])) -> dict:
     """
     Checks if the eigenvalue condition from theorem 4.2 holds.
     Arguments:
-        x
+        P: tranfromed x variable
         S: estimated set of inliers from decoR
         G: true inliers
         lmbd: regualrization parameter
@@ -378,7 +378,16 @@ def check_eigen(P:NDArray, S: list, G:list, lmbd=0, K=np.array([0])) -> dict:
 
 def bootstrap(x_test:NDArray, transformed:NDArray,  a: float, L: int|NDArray, basis_type:str, M=500) -> NDArray:
     """
-        Bootstrap!
+    Checks if the eigenvalue condition from theorem 4.2 holds.
+    Arguments:
+        x_test: points to evaluate
+        transformed: transformed sample
+        a: paramter for Torrent
+        L: number of basis functions for the approximation of f
+        basis_type: type of basis for the approximation of f
+        M: number of bootstrap samples to draw
+    Returns:
+        boot: bootstraps, evaluated at x_test
     """
 
     xn=transformed["xn"]
@@ -401,8 +410,20 @@ def bootstrap(x_test:NDArray, transformed:NDArray,  a: float, L: int|NDArray, ba
 
 def double_bootstrap(x_test:NDArray, transformed:NDArray, estimate:NDArray, a: float, L: int|NDArray, basis_type:str, M=100, B=200) -> dict:
     """
-        Returns the esimtated coverage using double bootstraping.
+    Returns an esimtation of the coverage using double bootstraping.
+    Arguments:
+        x_test: points to evaluate
+        transformed: transformed sample
+        a: paramter for Torrent
+        L: number of basis functions for the approximation of f
+        basis_type: type of basis for the approximation of f
+        M: number of outer bootstrap samples to draw
+        B: number of inner bootstrap samples to draw
+    Returns: dictonary {'nominal': nominal_alpha, 'actual': actual_alpha}
+        nominal_alpha: original, nominal coverage
+        acutal_alpha: the estimated acutal coverage
     """
+
 
     xn=transformed["xn"]
     yn=transformed["yn"]
@@ -410,18 +431,23 @@ def double_bootstrap(x_test:NDArray, transformed:NDArray, estimate:NDArray, a: f
     n=xn.shape[0]
     n_alpha=int(B/2)
 
+    # Compute initail estimation
     basis=get_funcbasis(x=x_test, L=L, type=basis_type)
     y_est=basis @ estimate
+
+    # Allocate memory
     nominal_alpha=np.array([2*i / B for i in range(int(B/2))])
     cov=np.full([M, int(B/2), len(x_test)], np.nan)
 
     for i in range(M):
+        # Draw a first level bootstrap sample
         ind=np.random.choice(np.arange(n), size=n, replace=True)
         R, y=xn[ind,:], yn[ind]
         algo1 = Torrent_reg(a=a, fit_intercept=False, lmbd=0, K=np.array([0]))
         algo1.fit(R, y)
         y_1=basis@ algo1.coef
 
+        # Draw second level bootstraps
         boot_double=np.full([B, len(x_test)], np.nan)
         for j in range(B):
             ind_double=np.random.choice(np.arange(n), size=n, replace=True)
@@ -430,9 +456,11 @@ def double_bootstrap(x_test:NDArray, transformed:NDArray, estimate:NDArray, a: f
             algo.fit(R_double, y_double)
             boot_double[j, :]=basis @ algo.coef
 
+        # Compute confidence interval of the second bootstrap level
         boot_double=np.sort(boot_double, axis=0)
         cov[i,:, :]=(2*y_1-boot_double[range(B-1,int(B/2)-1, -1),:]<= np.repeat([y_est],  int(B/2), axis=0)) &  (np.repeat([y_est],  int(B/2), axis=0) <= 2*y_1-boot_double[0:int(B/2), :])
 
+    # Compute the estimated, actual coverage
     actual_alpha=np.full([n_alpha, len(x_test)], np.nan)
     for i in range(n_alpha):
         actual_alpha[i, :]=np.sum(cov[:,(n_alpha-1-i),:], axis=0)/M
