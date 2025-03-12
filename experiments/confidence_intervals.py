@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from tqdm import tqdm
 from robust_deconfounding.utils import  get_funcbasis
-from utils_nonlinear import get_results, get_data, get_conf, bootstrap, plot_settings, double_bootstrap
+from utils_nonlinear import get_results, get_data, get_conf, bootstrap, plot_settings, double_bootstrap, conf_clip
 from synthetic_data import functions_nonlinear
 
 """
@@ -14,8 +14,8 @@ from synthetic_data import functions_nonlinear
     The underlying true function can be selected over the variable "f".
 """
 
-run_exp=False       # Set to True for running the whole experiment and False to plot an experiment which was already run
-f="sigmoid"         # "sine" | "sigmoid", the underlying true function
+run_exp=True       # Set to True for running the whole experiment and False to plot an experiment which was already run
+f="sine"         # "sine" | "sigmoid", the underlying true function
 
 # ----------------------------------
 # parameters
@@ -79,14 +79,15 @@ if run_exp:
         B=200   # number of samples drawn for the bootstrap
 
         # Perform double bootstraping to estimate the acutal coverage levels
-        cov_double=double_bootstrap(x_test=test_points, transformed=estimates_decor["transformed"], estimate=estimates_decor["estimate"], a=method_args["a"], L=L, basis_type=method_args["basis_type"], M=M, B=B)
+        #cov_double=double_bootstrap(x_test=test_points, transformed=estimates_decor["transformed"], estimate=estimates_decor["estimate"], a=method_args["a"], L=L, basis_type=method_args["basis_type"], M=M, B=B)
         
         # Boostrapping
         boot=bootstrap(x_test=test_points, transformed=estimates_decor["transformed"], a=method_args["a"], L=L, basis_type=method_args["basis_type"], M=B)
-        n_double=len(cov_double['nominal'])
+        #n_double=len(cov_double['nominal'])
 
         for i in range(n_alpha):
 
+            """
             # Get the adjuste alpha from the double bootstrap. This is done for every point seperately since the coverage can differ.
             ci_db=np.full([n_x,2], np.nan)
             for j in range(n_x):
@@ -94,11 +95,14 @@ if run_exp:
                 ind_alpha=np.min([ind_h+1, int(B/2)-1])
                 alpha_boot=cov_double['nominal'][ind_alpha]
                 ci_db[j,:]=np.array([2*y_est[j]-boot[int(np.ceil((1+alpha_boot)/2*B)),j], 2*y_est[j]-boot[int(np.floor((1-alpha_boot)/2*B)),j]])
+            """
+            ci_db=conf_clip(x=test_points, **estimates_decor, L=L, alpha=alpha[i], basis_type=method_args["basis_type"], a=0.75)
 
             # Compute the confidence intervals
             ci_h=get_conf(x=test_points, **estimates_decor, L=L, alpha=alpha[i], basis_type=method_args["basis_type"], w=0)
             ci_b=np.stack(([2*y_est-boot[int(np.ceil((1+alpha[i])/2*B)),:], 2*y_est-boot[int(np.floor((1-alpha[i])/2*B)),:]]), axis=-1)
             ci_l=get_conf(x=test_points, **estimates_decor, L=L, alpha=alpha[i], basis_type=method_args["basis_type"], w=1)
+            ci_h=conf_clip(x=test_points, **estimates_decor, L=L, alpha=alpha[i], basis_type=method_args["basis_type"], a=0.75)
 
             # Check if true the function f is contained
             T_h[i,_,:]=(ci_h[:,1]>=y_true[:,0]) & (y_true[:,0]>=ci_h[:, 0])
@@ -111,13 +115,13 @@ if run_exp:
          cov_l[i, :], cov_b[i,:], cov_db[i,:], cov_h[i,:]=np.sum(T_l[i, :, :], axis=0)/m, np.sum(T_b[i, :, :], axis=0)/m, np.sum(T_db[i, :, :], axis=0)/m, np.sum(T_h[i,:,:], axis=0)/m
 
     #Save the results using a pickle file
-    with open(path_results+"confidence_interval_" + str(data_args["beta"])+ '.pkl', 'wb') as fp:
+    with open(path_results+"confidence_interval_IQR" + str(data_args["beta"])+ '.pkl', 'wb') as fp:
             cov={'cov_l': cov_l, 'cov_b': cov_b, 'cov_db': cov_db, 'cov_h': cov_h}
             pickle.dump(cov, fp)
 
 else:
     # Loading the file with the saved results
-    with open(path_results+"confidence_interval_" + str(data_args["beta"])+'.pkl', 'rb') as fp:
+    with open(path_results+"confidence_interval_IQR" + str(data_args["beta"])+'.pkl', 'rb') as fp:
         cov = pickle.load(fp)
         cov_l, cov_b, cov_db, cov_h= cov['cov_l'], cov['cov_b'], cov['cov_db'], cov['cov_h']
 

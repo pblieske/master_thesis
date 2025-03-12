@@ -17,7 +17,7 @@ from robust_deconfounding.utils import get_funcbasis
     To rerun the experiment, set the "run_exp" variable to "True".
 """
 
-run_exp=False           # Set to True for running the whole experiment and False to plot an experiment which was already run
+run_exp=True           # Set to True for running the whole experiment and False to plot an experiment which was already run
 
 
 # ----------------------------------
@@ -32,7 +32,7 @@ B=100                   # number of sample to draw for the bootstrap
 m=100                   # Number of Monte Carlo samples to draw
                                                                            
 Lmbd=np.array([np.exp(i/n_lmbd*(np.log(Lmbd_max)-np.log(Lmbd_min))+np.log(Lmbd_min)) for i in range(0, n_lmbd)])      # grid of regularization paramters   
-noise_vars = [0, 1, 4]                      # Variance of the noise
+noise_vars = [ 1, 4]                      # Variance of the noise
 num_data = [32, 64, 128, 256, 1024, 8192]   # number of observations n
 
 data_args = {
@@ -60,7 +60,7 @@ path_results=os.path.join(os.path.dirname(__file__), "results/")    # Path to th
 # run the experiment
 # ----------------------------------
 
-SEED = 5
+SEED = 1
 np.random.seed(SEED)
 random.seed(SEED)
 
@@ -150,13 +150,13 @@ for i in range(len(noise_vars)):
         for mthd in methods:
             res[mthd]=np.array(res[mthd])
     
-        with open(path_results+"experiment_ridge_decor_hope="+str(noise_vars[i])+'.pkl', 'wb') as fp:
+        with open(path_results+"experiment_ridge_decor_hope_2="+str(noise_vars[i])+'.pkl', 'wb') as fp:
             pickle.dump(res, fp)
             print('Results saved successfully to file.')
 
     else:
         # Loading the file with the saved results
-        with open(path_results+"experiment_ridge_decor_hope="+str(noise_vars[i])+'.pkl', 'rb') as fp:
+        with open(path_results+"experiment_ridge_decor_hope_2="+str(noise_vars[i])+'.pkl', 'rb') as fp:
             res = pickle.load(fp)
     
     # Compute the relative error and arragne results in a dataframe for plotting

@@ -319,9 +319,13 @@ def conf_clip(x:NDArray, estimate:NDArray, transformed: NDArray, a: float, inlie
 
     #Estimate the variance
     r=yn- xn@estimate.T
-    df=n-L_tot
+    df=an-L_tot
     r = np.abs(yn - xn@ estimate.T)
+    r_1=yn - xn@ estimate.T
+
     # Compute error using hard thersholding
+    delta=np.sort(r)[an]
+    r_huber=sp.special.huber(r, delta)
     """
     m=np.sort(r)[an]
 
@@ -330,15 +334,18 @@ def conf_clip(x:NDArray, estimate:NDArray, transformed: NDArray, a: float, inlie
     print(sigma_2)
     """
     sigma_2=(np.sort(r)[int(n/2)]*1.4826)**2
-    print(sigma_2)
+    sigma_2=((np.sort(r_1)[int(n*0.75)]-np.sort(r_1)[int(n*0.25)])* 1.349)**2
+   
+    #sigma_2=np.sum(r_huber)/df
+
     H_help=np.linalg.solve(xn.T @ xn + lmbd*K, xn.T)
     H=basis @ H_help
     sigma=np.sqrt(sigma_2 * np.diag(H @ H.T))
 
     #Compute the confidence interval
-    qt=sp.stats.t.ppf((1-alpha)/2, an-L_tot) #*np.sqrt(np.pi/2)*np.e/(4*n)
+    qt=sp.stats.t.ppf((1-alpha)/2, df) #*np.sqrt(np.pi/2)*np.e/(4*n)
 
-    #qt=sp.stats.norm.ppf((1-alpha)/2, loc=0, scale=1)
+    qt=sp.stats.norm.ppf((1-alpha)/2, loc=0, scale=1)
 
     ci_u=basis@estimate.T - qt*sigma
     ci_l=basis@estimate.T + qt*sigma

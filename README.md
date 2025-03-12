@@ -13,14 +13,16 @@ as climate science, epidemiology, and economics, but remains challenging due to 
 confounding. This thesis focuses on the inference of nonlinear causal effects between two
 time series in the presence of a third unobserved, confounding time series. We assume
 sparsity of the confounder in the frequency domain, corresponding in applications, for
-example, to a seasonal periodicity. This allows us to reduce the confounding problem to
-an adversarial outlier problem, a technique known as deconfounding by robust regression
-(DecoR). We use a regularized version of the robust regression algorithm Torrent to solve
-the adversarial outlier problem and provide upper bounds for the estimation error. For
-two different asymptotic settings, we prove the consistency of the nonlinear extensions of
-DecoR under suitable assumptions. We validate the nonlinear extensions of DecoR through
-a simulation study on synthetic data. In addition, we demonstrate its effectiveness with
-an application to a real-world example of environmental epidemiology.
+example, to a seasonal periodicity. By developing a new transformation for the data,
+we leverage the sparsity assumption to reduce the confounding problem to an adversarial
+outlier problem, a technique known as deconfounding by robust regression (DecoR). We
+then use the robust regression algorithm Torrent to solve the adversarial outlier problem.
+To improve the estimation accuracy, we extend Torrent to a regularized version, which
+allows the incorporation of a smoothness penalty in DecoR, and provide upper bounds for
+the estimation error. For two different asymptotic settings, we prove the consistency of
+the nonlinear extensions of DecoR under suitable assumptions. We validate the nonlinear
+extensions of DecoR by a simulation study on synthetic data. In addition, we demonstrate
+its effectiveness with an application to a real-world example of environmental epidemiology.
 
 
 ## Reproducing the Results
