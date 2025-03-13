@@ -17,7 +17,7 @@ from robust_deconfounding.utils import get_funcbasis
     To rerun the experiment, set the "run_exp" variable to "True".
 """
 
-run_exp=True           # Set to True for running the whole experiment and False to plot an experiment which was already run
+run_exp=False           # Set to True for running the whole experiment and False to plot an experiment which was already run
 
 
 # ----------------------------------
@@ -29,10 +29,10 @@ Lmbd_max=10**(1)        # largest regularization paramter lambda to be considere
 n_lmbd=100              # number of lambda to test
 L_cv=50                 # number of coefficient for the reuglarized torrent
 B=100                   # number of sample to draw for the bootstrap
-m=100                   # Number of Monte Carlo samples to draw
+m=200                   # Number of Monte Carlo samples to draw
                                                                            
 Lmbd=np.array([np.exp(i/n_lmbd*(np.log(Lmbd_max)-np.log(Lmbd_min))+np.log(Lmbd_min)) for i in range(0, n_lmbd)])      # grid of regularization paramters   
-noise_vars = [ 1, 4]                      # Variance of the noise
+noise_vars = [0, 1, 4]                      # Variance of the noise
 num_data = [32, 64, 128, 256, 1024, 8192]   # number of observations n
 
 data_args = {
@@ -150,13 +150,13 @@ for i in range(len(noise_vars)):
         for mthd in methods:
             res[mthd]=np.array(res[mthd])
     
-        with open(path_results+"experiment_ridge_decor_hope_2="+str(noise_vars[i])+'.pkl', 'wb') as fp:
+        with open(path_results+"experiment_ridge_decor="+str(noise_vars[i])+'.pkl', 'wb') as fp:
             pickle.dump(res, fp)
             print('Results saved successfully to file.')
 
     else:
         # Loading the file with the saved results
-        with open(path_results+"experiment_ridge_decor_hope_2="+str(noise_vars[i])+'.pkl', 'rb') as fp:
+        with open(path_results+"experiment_ridge_decor="+str(noise_vars[i])+'.pkl', 'rb') as fp:
             res = pickle.load(fp)
     
     # Compute the relative error and arragne results in a dataframe for plotting
@@ -194,7 +194,7 @@ for i in range(len(noise_vars)):
     df=df.loc[df['method'].isin(methods_plot) & (df['n']> 32)]
     sns.lineplot(data=df, x="n", y="value", hue="method", style="method",
                  markers=[ "X", "o", "D"], dashes=False, errorbar=("ci", 95), err_style="band",
-                 palette=[colors[i][0], colors[i][1]], legend=True)
+                 palette=[colors[i][0], colors[i][1], colors[i][1]], legend=True)
 
 pool.close
 
