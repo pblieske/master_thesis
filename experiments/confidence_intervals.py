@@ -14,8 +14,8 @@ from synthetic_data import functions_nonlinear
     The underlying true function can be selected over the variable "f".
 """
 
-run_exp=True       # Set to True for running the whole experiment and False to plot an experiment which was already run
-f="sine"           # "sine" | "sigmoid", the underlying true function
+run_exp=False      # Set to True for running the whole experiment and False to plot an experiment which was already run
+f="sigmoid"           # "sine" | "sigmoid", the underlying true function
 
 # ----------------------------------
 # parameters
@@ -102,7 +102,7 @@ if run_exp:
             ci_h=get_conf(x=test_points, **estimates_decor, L=L, alpha=alpha[i], basis_type=method_args["basis_type"], w=0)
             ci_b=np.stack(([2*y_est-boot[int(np.ceil((1+alpha[i])/2*B)),:], 2*y_est-boot[int(np.floor((1-alpha[i])/2*B)),:]]), axis=-1)
             ci_l=get_conf(x=test_points, **estimates_decor, L=L, alpha=alpha[i], basis_type=method_args["basis_type"], w=1)
-            ci_h=conf_clip(x=test_points, **estimates_decor, L=L, alpha=alpha[i], basis_type=method_args["basis_type"], a=0.75)
+            #ci_h=conf_clip(x=test_points, **estimates_decor, L=L, alpha=alpha[i], basis_type=method_args["basis_type"], a=0.75)
 
             # Check if true the function f is contained
             T_h[i,_,:]=(ci_h[:,1]>=y_true[:,0]) & (y_true[:,0]>=ci_h[:, 0])
@@ -115,13 +115,13 @@ if run_exp:
          cov_l[i, :], cov_b[i,:], cov_db[i,:], cov_h[i,:]=np.sum(T_l[i, :, :], axis=0)/m, np.sum(T_b[i, :, :], axis=0)/m, np.sum(T_db[i, :, :], axis=0)/m, np.sum(T_h[i,:,:], axis=0)/m
 
     #Save the results using a pickle file
-    with open(path_results+"confidence_interval_IQR" + str(data_args["beta"])+ '.pkl', 'wb') as fp:
+    with open(path_results+"confidence_interval_" + str(data_args["beta"])+ '.pkl', 'wb') as fp:
             cov={'cov_l': cov_l, 'cov_b': cov_b, 'cov_db': cov_db, 'cov_h': cov_h}
             pickle.dump(cov, fp)
 
 else:
     # Loading the file with the saved results
-    with open(path_results+"confidence_interval_IQR" + str(data_args["beta"])+'.pkl', 'rb') as fp:
+    with open(path_results+"confidence_interval_" + str(data_args["beta"])+'.pkl', 'rb') as fp:
         cov = pickle.load(fp)
         cov_l, cov_b, cov_db, cov_h= cov['cov_l'], cov['cov_b'], cov['cov_db'], cov['cov_h']
 
@@ -136,8 +136,8 @@ alpha_min, alpha_max=np.min(alpha), np.max(alpha)
 
 for i in range(0, n_plots):
     axs[i].plot(alpha, cov_l[ :,i], '--o', color=ibm_cb[1])
-    axs[i].plot(alpha, cov_db[ :,i], '--o', color=ibm_cb[2])
-    axs[i].plot(alpha, cov_b[ :,i], '--o', color=ibm_cb[3])
+    axs[i].plot(alpha, cov_db[ :,i], '--o', color=ibm_cb[3])
+    axs[i].plot(alpha, cov_b[ :,i], '--o', color=ibm_cb[2])
     axs[i].plot(alpha, cov_h[ :,i], '--o', color=ibm_cb[4])
     axs[i].plot([alpha_min, alpha_max], [alpha_min, alpha_max], '--', color="black")
     # Labels
@@ -150,14 +150,14 @@ def get_handles():
     point_1 = Line2D([0], [0], label="inliers", marker='o', markersize=10,
                      color=ibm_cb[1], linestyle='--')
     point_2 = Line2D([0], [0], label="double \n bootstrap", marker='o', markersize=10,
-                     color=ibm_cb[2], linestyle='--')
+                     color=ibm_cb[3], linestyle='--')
     point_3 = Line2D([0], [0], label="all", marker='o', markersize=10,
                      color=ibm_cb[4], linestyle='--')
     point_4 = Line2D([0], [0], label="bootstrap", marker='o', markersize=10,
-                     color=ibm_cb[3], linestyle='--')
-    return [ point_3, point_4, point_2, point_1]
+                     color=ibm_cb[2], linestyle='--')
+    return [ point_3, point_2, point_4, point_1]
 
 fig.subplots_adjust(right=10)
 fig.legend(handles=get_handles(), loc='outside right center')
-plt.tight_layout(rect=[0, 0, 0.89, 1.0])
+#plt.tight_layout(rect=[0, 0, 0.89, 1.0])
 plt.show()

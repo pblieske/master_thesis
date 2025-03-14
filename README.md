@@ -42,4 +42,4 @@ In the other folder, experiments, all the scripts for the simulations and the re
 ```bash
 python experiments/ozone.py
 ``` 
-All scripts contain a description of what they do at the beginning. The remaining folder are used for testing.
+All scripts contain a description of what they do at the beginning. The remaining folders are used for testing.

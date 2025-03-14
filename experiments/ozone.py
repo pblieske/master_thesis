@@ -120,13 +120,13 @@ H=basis_adjst[:,1:(L_adjst[0]+1)]@(ci_adjst_help['H'])[1:(L_adjst[0]+1), :]
 sigma=ci_adjst_help['sigma']*np.sqrt(np.diag(H@H.T))
 ci_adjst=np.stack((y_adjst-ci_adjst_help['qt']*sigma, y_adjst+ci_adjst_help['qt']*sigma)).T
 
-"""
+
 
 # Regularized
 Lmbd_min=10**(-8)       # smallest regularization parameter lambda to be considered
 Lmbd_max=10**(1)        # largest regularization paramter lambda to be considered
 n_lmbd=100              # number of lambda to test
-L_cv=np.array([20, 20]) # number of coefficient for the reuglarized torrent
+L_cv=np.array([25, 25]) # number of coefficient for the reuglarized torrent
 B=200                   # number of sample to draw for the bootstrap                                                                        
 Lmbd=np.array([np.exp(i/n_lmbd*(np.log(Lmbd_max)-np.log(Lmbd_min))+np.log(Lmbd_min)) for i in range(0, n_lmbd)])      # grid of regularization paramters   
 
@@ -142,12 +142,12 @@ err_sd= np.full([n_lmbd], float(0))
 basis= cosine_basis(n-1)
 R=get_funcbasis_multivariate(x=X, L=L_cv)
 tranformed={ 'xn': basis.T @ R/ n, 'yn' : basis.T @ y / n}
-
+"""
 # Compute the estimator of DecoR and the regulaized DecoR
 for i in tqdm(range(n_lmbd)):
-    err_b=err_boot(transformed=tranformed, a=0.8, lmbd=Lmbd[i], K=K, B=B)
-    err_m[i]= sum(err_b['err_cap'])/B
-    err_sd[i]= np.linalg.norm(err_b['err_cap']-err_m[i])/(B-1)
+    err_b=err_boot(transformed=tranformed, a=0.9, lmbd=Lmbd[i], K=K, B=B)
+    err_m[i]= sum(err_b['err_m'])/B
+    err_sd[i]= np.linalg.norm(err_b['err_m']-err_m[i])/(B-1)
 
 # Get lambda minimizing the estimated error
 ind=np.argmin(err_m)
@@ -156,20 +156,21 @@ lmbd_min=Lmbd[ind]
 # Compute the indices minimizing the estimated perdiction error
 lmbd_1se=Lmbd[min(np.arange(ind,n_lmbd)[err_m[ind:n_lmbd]>err_m[ind]+err_sd[ind]])]
 print(lmbd_1se)
+"""
 
 # Run Torrent and compute the error
-estimates_reg = get_results(x=X, y=y, basis=basis, a=0.8, method="torrent_reg", basis_type=method_args["basis_type"], L=L_cv, K=K, lmbd=lmbd_min)
+estimates_reg = get_results(x=X, y=y, basis=basis, a=0.9, method="torrent_reg", basis_type=method_args["basis_type"], L=L_cv, K=K, lmbd=0.00001)
 y_tor=basis_cv @ estimates_reg["estimate"]
 y_adjst=np.ndarray((n_x, 1), buffer=y_tor)
 
-ci_adjst_help=conf_help(**estimates_reg, L=L_cv, K=K, lmbd=lmbd_min, alpha=0.8)
+ci_adjst_help=conf_help(**estimates_reg, L=L_cv, K=K, lmbd=0.00001, alpha=0.9)
 H=basis_cv[:,1:(L_cv[0]+1)]@(ci_adjst_help['H'])[1:(L_cv[0]+1), :]
 sigma=ci_adjst_help['sigma']*np.sqrt(np.diag(H@H.T))
 sigma=np.ndarray((n_x, 1), buffer=sigma)
 ci_adjst=np.stack((y_adjst-ci_adjst_help['qt']*sigma, y_adjst+ci_adjst_help['qt']*sigma)).T
-ci_adjst=np.ndarray((n_x, 2), buffer=ci_adjst)
+ci_adjst=ci_adjst.reshape((n_x, 2))
 
-"""
+
 
 # Fit benchmark for comparison and to make the confounding visable    
 if bench_mark=="spline":
