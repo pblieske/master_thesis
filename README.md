@@ -1,4 +1,5 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+![example workflow](https://github.com/pblieske/master_thesis/actions/workflows/python-app.yml/badge.svg)
 
 # Inference of Nonlinear Causal Effects in Time Series in the Presence of Confounding
 
