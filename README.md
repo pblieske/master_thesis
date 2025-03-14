@@ -1,5 +1,5 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-![example workflow](https://github.com/pblieske/master_thesis/actions/workflows/python-app.yml/badge.svg)
+[![Tests](https://github.com/pblieske/master_thesis/actions/workflows/python-app.yml/badge.svg)](https://github.com/pblieske/master_thesis/actions/workflows/python-app.yml)
 
 # Inference of Nonlinear Causal Effects in Time Series in the Presence of Confounding
 
@@ -42,4 +42,4 @@ In the other folder, experiments, all the scripts for the simulations and the re
 ```bash
 python experiments/ozone.py
 ``` 
-All scripts contain a description of what they do at the beginning.
+All scripts contain a description of what they do at the beginning. The remaining folder are used for testing.
