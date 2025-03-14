@@ -1,7 +1,7 @@
 import numpy as np
 import unittest
 
-from robust_deconfounding.robust_regression import BFS, Torrent
+from robust_deconfounding.robust_regression import BFS, Torrent, Torrent_reg
 from robust_deconfounding.decor import DecoR
 from robust_deconfounding.utils import cosine_basis
 
@@ -30,6 +30,10 @@ class TestAlgos(unittest.TestCase):
     def test_fit_bfs(self):
         algo = BFS(0.8, fit_intercept=True)
         self.helper(algo, 10)
+
+    def test_fit_tor_reg(self):
+        algo = Torrent_reg(0.8, fit_intercept=True)
+        self.helper(algo, 300)
 
     def test_DecoR(self):
         np.random.seed(0)
