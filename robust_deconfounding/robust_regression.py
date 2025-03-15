@@ -169,8 +169,8 @@ class Torrent_reg(BaseRobustRegression):
         a (float): Proportion of data considered as inliers.
         max_iter (int): Maximum number of iterations.
         predicted_inliers (list): List to track inliers over iterations.
-        lambda: the regularization parameter
-        K: positive semi-definite matrix for the ridg-epenalty
+        lambda (float): the regularization parameter
+        K (array): positive semi-definite matrix for the ridge-penalty
     """
 
     def __init__(self, a: float, fit_intercept: bool = False, max_iter: int = 100, K=np.array([0]), lmbd=0):
