@@ -10,7 +10,7 @@ from robust_deconfounding.utils import cosine_basis, get_funcbasis, get_funcbasi
 from utils_nonlinear import get_results, plot_settings, get_conf, conf_help, err_boot
 
 """
-    We apply the nonlinear extension of DecoR to the ozon dataset to estimate the influence of the daily ozone level (X_t) onto the number of deaths (Y_t).
+    We apply the nonlinear extension of DecoR to the ozone dataset to estimate the influence of the daily ozone level (X_{t-1}) onto the number of deaths (Y_t).
     For this, we use a delay of the effect of one day and include as a second covariate the daily mean temperature to adjust for heatwaves. The effects
     are asumed to be additive. We compare it with the state of the art estimation from:
         "Time series regression studies in environmental epidemiology"
@@ -119,57 +119,6 @@ ci_adjst_help=conf_help(**estimates_decor_adjst, L=L_adjst, alpha=0.95)
 H=basis_adjst[:,1:(L_adjst[0]+1)]@(ci_adjst_help['H'])[1:(L_adjst[0]+1), :]
 sigma=ci_adjst_help['sigma']*np.sqrt(np.diag(H@H.T))
 ci_adjst=np.stack((y_adjst-ci_adjst_help['qt']*sigma, y_adjst+ci_adjst_help['qt']*sigma)).T
-
-
-
-# Regularized
-Lmbd_min=10**(-8)       # smallest regularization parameter lambda to be considered
-Lmbd_max=10**(1)        # largest regularization paramter lambda to be considered
-n_lmbd=100              # number of lambda to test
-L_cv=np.array([25, 25]) # number of coefficient for the reuglarized torrent
-B=200                   # number of sample to draw for the bootstrap                                                                        
-Lmbd=np.array([np.exp(i/n_lmbd*(np.log(Lmbd_max)-np.log(Lmbd_min))+np.log(Lmbd_min)) for i in range(0, n_lmbd)])      # grid of regularization paramters   
-
-# Compute the basis and regularization matrix K for the smoothness penalty
-basis_cv=get_funcbasis_multivariate(x=test_points_adjst, L=L_cv, type=method_args["basis_type"])
-diag=np.concatenate((np.array([0]), np.array([i**4 for i in range(1,L_cv[0]+1)]),  np.array([i**4 for i in range(1, L_cv[1]+1)])))
-K=np.diag(diag)
-
-err_m= np.full([n_lmbd], float(0))
-err_sd= np.full([n_lmbd], float(0))
-
-# Basis expansion
-basis= cosine_basis(n-1)
-R=get_funcbasis_multivariate(x=X, L=L_cv)
-tranformed={ 'xn': basis.T @ R/ n, 'yn' : basis.T @ y / n}
-"""
-# Compute the estimator of DecoR and the regulaized DecoR
-for i in tqdm(range(n_lmbd)):
-    err_b=err_boot(transformed=tranformed, a=0.9, lmbd=Lmbd[i], K=K, B=B)
-    err_m[i]= sum(err_b['err_m'])/B
-    err_sd[i]= np.linalg.norm(err_b['err_m']-err_m[i])/(B-1)
-
-# Get lambda minimizing the estimated error
-ind=np.argmin(err_m)
-lmbd_min=Lmbd[ind]
-
-# Compute the indices minimizing the estimated perdiction error
-lmbd_1se=Lmbd[min(np.arange(ind,n_lmbd)[err_m[ind:n_lmbd]>err_m[ind]+err_sd[ind]])]
-print(lmbd_1se)
-"""
-
-# Run Torrent and compute the error
-estimates_reg = get_results(x=X, y=y, basis=basis, a=0.9, method="torrent_reg", basis_type=method_args["basis_type"], L=L_cv, K=K, lmbd=0.00001)
-y_tor=basis_cv @ estimates_reg["estimate"]
-y_adjst=np.ndarray((n_x, 1), buffer=y_tor)
-
-ci_adjst_help=conf_help(**estimates_reg, L=L_cv, K=K, lmbd=0.00001, alpha=0.9)
-H=basis_cv[:,1:(L_cv[0]+1)]@(ci_adjst_help['H'])[1:(L_cv[0]+1), :]
-sigma=ci_adjst_help['sigma']*np.sqrt(np.diag(H@H.T))
-sigma=np.ndarray((n_x, 1), buffer=sigma)
-ci_adjst=np.stack((y_adjst-ci_adjst_help['qt']*sigma, y_adjst+ci_adjst_help['qt']*sigma)).T
-ci_adjst=ci_adjst.reshape((n_x, 2))
-
 
 
 # Fit benchmark for comparison and to make the confounding visable    
