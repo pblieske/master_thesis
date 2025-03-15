@@ -11,8 +11,8 @@ from synthetic_data import functions_nonlinear
 from robust_deconfounding.utils import get_funcbasis
 
 """
-    We test the out-of-bootrstrap generalization error estimations method. For this end, we do the regularization mainly over the parameter lambda 
-    and keep the number of coefficients L constant. We compare it to the unregularized torrent with L being of order n^(1/2).
+    We test the out-of-bootstrap generalization error estimation methods. For this end, we do the regularization mainly over the parameter lambda 
+    and keep the number of coefficients L constant. We compare it to the unregularized Torrent with L being of order n^(1/2).
     Note that the script can take several hours to run for m=100, therefore the results are saved in the corresponding folder.
     To rerun the experiment, set the "run_exp" variable to "True".
 """

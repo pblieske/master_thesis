@@ -10,10 +10,10 @@ from robust_deconfounding.utils import get_funcbasis
 
 
 """
-    We compute the L^1-error varing the number of coefficients L and the regularization parameter \lambda. 
-    For the regularization the smoothness penalty is used.
+    We compute the L^1-error varying the number of coefficients L and the regularization parameter \lambda. 
+    For the regularization, we use the smoothness penalty.
     To plot the data from an experiment which was already run, set the "run_exp" variable to "False", to rerun the experiment to "True".
-    The experiments have aleardy been run with the following paramter configurations:
+    The experiments have already been run with the following parameter configurations:
     - nois_vars=0, n=2**6
     - nois_vars=0, n=2**8
     - nois_vars=4, n=2**6
@@ -28,7 +28,7 @@ run_exp=False       # Set to True for running the whole experiment and False to 
 # parameters varied in the thesis
 # ----------------------------------
 
-noise_vars = 1      # variance of the noise
+noise_vars = 4      # variance of the noise
 n = 2 ** 8          # number of observations
 
 
