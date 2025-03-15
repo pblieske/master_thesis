@@ -6,8 +6,8 @@ from utils_nonlinear import get_results, get_data, plot_settings, check_eigen
 
 """
     We check the eigenvalue condition of the consistency theorem for the nonlinear extensions of DecoR numerical.
-    For this, we use a Monte Carlo simulation and plot the disribution afterwards in a histogramm.
-    The experiments have aleardy been run with the following paramter configurations:
+    For this, we use a Monte Carlo simulation and plot the distribution afterwards in a histogram.
+    The experiments have already been run with the following parameter configurations:
     - nois_vars=0, n=2**8
     - nois_vars=0, n=2**10
     - nois_vars=4, n=2**8
