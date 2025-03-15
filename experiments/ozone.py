@@ -172,7 +172,7 @@ plt.show()
 
 
 # ----------------------------------
-# Plot the estimated outliers
+# Plot a histogram of the estimated outliers
 # ----------------------------------
 
 inl=estimates_decor_adjst["inliers"]
