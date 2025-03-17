@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
 from robust_deconfounding.utils import get_funcbasis
-from utils_nonlinear import get_results, get_data, plot_settings, get_conf, conf_clip
+from utils_nonlinear import get_results, get_data, plot_settings, get_conf
 from synthetic_data import functions_nonlinear
 
 """
@@ -16,7 +16,7 @@ from synthetic_data import functions_nonlinear
 
 colors, ibm_cb = plot_settings()
 
-SEED = 3 #4
+SEED = 4
 np.random.seed(SEED)
 random.seed(SEED)
 
@@ -59,14 +59,14 @@ outlier_points=data_values.pop("outlier_points")
 
 #Estimate the function f by DecoR
 estimates_decor = get_results(**data_values, **method_args, L=L)
-ci=conf_clip(x=test_points, estimate=estimates_decor["estimate"], transformed=estimates_decor["transformed"], inliers=estimates_decor["inliers"], a=method_args["a"], L=L, alpha=0.95, basis_type=method_args["basis_type"])
+ci=get_conf(x=test_points, estimate=estimates_decor["estimate"], transformed=estimates_decor["transformed"], inliers=estimates_decor["inliers"], L=L, alpha=0.95, basis_type=method_args["basis_type"])
 y_est=basis @ estimates_decor["estimate"]
 y_est=np.ndarray((n_x, 1), buffer=y_est)
 
 #Estimate the function by the benchmark
 if benchmark=="ols":
     estimates_fourier= get_results(**data_values, method="ols", basis_type=method_args["basis_type"], L=L, a=0, outlier_points=outlier_points)
-    ci_bench=get_conf(x=test_points, estimate=estimates_fourier["estimate"], transformed=estimates_fourier["transformed"], inliers=np.arange(n), a=method_args["a"], L=L, basis_type=method_args["basis_type"])
+    ci_bench=get_conf(x=test_points, estimate=estimates_fourier["estimate"], transformed=estimates_fourier["transformed"], inliers=np.arange(n), L=L, basis_type=method_args["basis_type"])
     y_bench= basis @ estimates_fourier["estimate"]
 elif benchmark=="spline":
     x=np.reshape(data_values["x"], (-1,1))
